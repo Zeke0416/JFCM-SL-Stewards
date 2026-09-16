@@ -33,6 +33,9 @@ export default function Transactions() {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
+  // FIX: Added the auto-exempt smart dictionary to match Mission Readiness
+  const exemptKeywords = ['love gift', 'compassion', 'honorarium', 'allowance', 'benevolence', 'remittance', 'tithe'];
+
   useEffect(() => {
     if (user) fetchInitialData();
   }, [user]);
@@ -161,7 +164,6 @@ export default function Transactions() {
       <div className="bento-card p-4 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           
-          {/* UPGRADED TABS: High contrast, deep shadow containers */}
           <div className="flex gap-1.5 p-1.5 bg-slate-200/70 dark:bg-slate-900/80 rounded-xl w-fit border border-slate-300 dark:border-slate-800 shadow-inner">
             <button onClick={() => setActiveTab('ALL')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'ALL' ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-md transform scale-[1.02]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'}`}>All Records</button>
             <button onClick={() => setActiveTab('INCOME')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'INCOME' ? 'bg-emerald-600 text-white shadow-md transform scale-[1.02]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'}`}>Income</button>
@@ -213,87 +215,93 @@ export default function Transactions() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]/50 bg-transparent">
-                {sortedTransactions.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group">
-                    <td className="p-4 text-slate-600 dark:text-slate-300 font-medium">{tx.date}</td>
-                    
-                    <td className="p-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300">
-                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${tx.type === 'INCOME' ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
-                        {tx.type}
-                      </span>
-                    </td>
-                    
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500">{tx.categories?.export_code}</span>
-                        <span className="font-medium text-slate-700 dark:text-slate-200">{tx.categories?.name}</span>
-                      </div>
-                    </td>
-                    
-                    <td className="p-4">
-                      <div className="text-slate-900 dark:text-white font-medium">{tx.payee_name || '—'}</div>
-                      <div className="text-slate-500 dark:text-slate-500 text-[11px] mt-0.5 truncate max-w-[200px]" title={tx.remarks || ''}>{tx.remarks || '—'}</div>
-                    </td>
-                    
-                    <td className="p-4">
-                      <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
-                        <UserCircle className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                        <span className="text-[11px] font-medium">
-                          {tx.profiles?.full_name}
-                        </span>
-                      </div>
-                    </td>
+                {sortedTransactions.map((tx) => {
+                  // FIX: Auto Exempt Logic dynamically applied in rendering
+                  const categoryName = tx.categories?.name?.toLowerCase() || '';
+                  const isAutoExempt = exemptKeywords.some(keyword => categoryName.includes(keyword));
 
-                    <td className="p-4">
-                      {tx.type === 'INCOME' ? (
-                        <span className="text-slate-400 dark:text-slate-600 text-[10px] font-medium">—</span>
-                      ) : tx.receipt_url ? (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#27272A]">
-                          <Paperclip className="h-3 w-3 text-emerald-500" /> Attached
+                  return (
+                    <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group">
+                      <td className="p-4 text-slate-600 dark:text-slate-300 font-medium">{tx.date}</td>
+                      
+                      <td className="p-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300">
+                          <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${tx.type === 'INCOME' ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                          {tx.type}
                         </span>
-                      ) : tx.receipt_exempt ? (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#27272A]">
-                          <CheckCircle2 className="h-3 w-3 text-slate-500" /> Exempt
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#27272A]">
-                          <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Missing
-                        </span>
-                      )}
-                    </td>
+                      </td>
+                      
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500">{tx.categories?.export_code}</span>
+                          <span className="font-medium text-slate-700 dark:text-slate-200">{tx.categories?.name}</span>
+                        </div>
+                      </td>
+                      
+                      <td className="p-4">
+                        <div className="text-slate-900 dark:text-white font-medium">{tx.payee_name || '—'}</div>
+                        <div className="text-slate-500 dark:text-slate-500 text-[11px] mt-0.5 truncate max-w-[200px]" title={tx.remarks || ''}>{tx.remarks || '—'}</div>
+                      </td>
+                      
+                      <td className="p-4">
+                        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                          <UserCircle className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+                          <span className="text-[11px] font-medium">
+                            {tx.profiles?.full_name}
+                          </span>
+                        </div>
+                      </td>
 
-                    <td className="p-4 text-right font-mono text-xs font-medium">
-                       <span className={tx.type === 'INCOME' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'}>
-                         {tx.type === 'INCOME' ? '+' : '-'}₱{Number(tx.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-                       </span>
-                    </td>
+                      <td className="p-4">
+                        {tx.type === 'INCOME' ? (
+                          <span className="text-slate-400 dark:text-slate-600 text-[10px] font-medium">—</span>
+                        ) : tx.receipt_url ? (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#27272A]">
+                            <Paperclip className="h-3 w-3 text-emerald-500" /> Attached
+                          </span>
+                        ) : (tx.receipt_exempt || isAutoExempt) ? (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#27272A]">
+                            <CheckCircle2 className="h-3 w-3 text-slate-500" /> Exempt
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#27272A]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Missing
+                          </span>
+                        )}
+                      </td>
 
-                    <td className="p-4 text-right space-x-0.5">
-                      <button 
-                        onClick={() => handleViewDetails(tx)}
-                        className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#27272A] rounded-lg transition-colors"
-                        title="View Details"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </button>
-                      <button 
-                        onClick={() => handleEdit(tx)}
-                        className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#27272A] rounded-lg transition-colors"
-                        title="Edit Transaction"
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteTransaction(tx.id, tx.remarks || tx.payee_name || 'Transaction')}
-                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
-                        title="Delete Transaction"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      <td className="p-4 text-right font-mono text-xs font-medium">
+                         <span className={tx.type === 'INCOME' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'}>
+                           {tx.type === 'INCOME' ? '+' : '-'}₱{Number(tx.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                         </span>
+                      </td>
+
+                      <td className="p-4 text-right space-x-0.5">
+                        <button 
+                          onClick={() => handleViewDetails(tx)}
+                          className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#27272A] rounded-lg transition-colors"
+                          title="View Details"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
+                        <button 
+                          onClick={() => handleEdit(tx)}
+                          className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#27272A] rounded-lg transition-colors"
+                          title="Edit Transaction"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteTransaction(tx.id, tx.remarks || tx.payee_name || 'Transaction')}
+                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                          title="Delete Transaction"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

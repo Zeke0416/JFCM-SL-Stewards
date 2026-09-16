@@ -174,7 +174,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
       setTimeout(() => {
         onSuccess();
         onClose();
-      }, 700);
+      }, 1000);
     }
   };
 
@@ -182,9 +182,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
 
   if (!isOpen) return null;
 
-  // Render the modal directly into the document.body using React Portals
   return createPortal(
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 transition-opacity">
+    <div className="fixed top-0 left-0 w-screen h-screen z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 transition-opacity m-0">
       <div className="w-full max-w-2xl bg-white dark:bg-[#121212] rounded-3xl shadow-2xl relative max-h-[95vh] flex flex-col p-0 overflow-hidden border border-slate-200 dark:border-[#27272A] animate-modal">
         
         {successAnim ? (
@@ -299,12 +298,13 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
                   {useBreakdown ? (
                     <div className="space-y-3 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
                       {breakdownItems.map((item, index) => (
-                        <div key={index} className="flex gap-2.5 items-center">
+                        // FIX: Added w-full, min-w-0, and shrink-0 to prevent mobile horizontal overflow
+                        <div key={index} className="flex gap-2 items-center w-full">
                           <input 
                             type="text" 
                             placeholder="Item name (e.g. Rice, Supplies)" 
                             required 
-                            className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white shadow-sm" 
+                            className="flex-1 min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-900 dark:text-white shadow-sm" 
                             value={item.name} 
                             onChange={e => { const newItems = [...breakdownItems]; newItems[index].name = e.target.value; setBreakdownItems(newItems); }} 
                           />
@@ -313,11 +313,11 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
                             step="0.01" 
                             placeholder="₱ Amount" 
                             required 
-                            className="w-32 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white shadow-sm" 
+                            className="w-24 sm:w-32 min-w-0 shrink-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-900 dark:text-white shadow-sm" 
                             value={item.amount} 
                             onChange={e => { const newItems = [...breakdownItems]; newItems[index].amount = e.target.value; setBreakdownItems(newItems); }} 
                           />
-                          <button type="button" onClick={() => setBreakdownItems(breakdownItems.filter((_, i) => i !== index))} className="p-2 text-red-400 hover:text-red-600 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40"><Trash2 className="h-4 w-4" /></button>
+                          <button type="button" onClick={() => setBreakdownItems(breakdownItems.filter((_, i) => i !== index))} className="p-2 shrink-0 text-red-400 hover:text-red-600 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40"><Trash2 className="h-4 w-4" /></button>
                         </div>
                       ))}
                       <button type="button" onClick={() => setBreakdownItems([...breakdownItems, {name: '', amount: ''}])} className="text-xs font-bold text-brand dark:text-emerald-400 hover:underline flex items-center gap-1 pt-1">
