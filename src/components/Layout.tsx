@@ -1,0 +1,205 @@
+import { useState, useEffect } from 'react';
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Receipt, LogOut, FileSpreadsheet, CheckCircle, Settings, Moon, Sun, ShieldCheck, Menu, X, AlertTriangle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import ForcePasswordChangeModal from './ForcePasswordChangeModal';
+
+export default function Layout() {
+  const location = useLocation();
+  const { darkMode, toggleDarkMode } = useTheme();
+  const { user } = useAuth();
+  
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [signOutModalOpen, setSignOutModalOpen] = useState(false);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [userRole, setUserRole] = useState<string>('auditor'); 
+
+  // --- SWIPE GESTURE LOGIC ---
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isRightSwipe && !mobileMenuOpen && touchStart < 50) { 
+      setMobileMenuOpen(true);
+    }
+    if (isLeftSwipe && mobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) checkUserStatus();
+  }, [user]);
+
+  const checkUserStatus = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('must_change_password, role')
+      .eq('id', user?.id)
+      .single();
+    
+    if (data) {
+      if (data.must_change_password) setMustChangePassword(true);
+      if (data.role) setUserRole(data.role);
+    }
+  };
+
+  const handleConfirmSignOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const navigation = [
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Transactions', href: '/transactions', icon: Receipt },
+    { name: 'Mission Readiness', href: '/mission-readiness', icon: CheckCircle },
+    { name: 'Export Center', href: '/export-center', icon: FileSpreadsheet },
+  ];
+
+  if (userRole === 'admin') {
+    navigation.push({ name: 'System Admin', href: '/admin', icon: Settings });
+  }
+
+  return (
+    <div 
+      className="flex h-screen bg-[#F4F6F4] dark:bg-[#0A0A0A] text-slate-800 dark:text-slate-100 transition-colors duration-200 overflow-hidden"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
+      
+      {mustChangePassword && user && (
+        <ForcePasswordChangeModal userId={user.id} onSuccess={() => setMustChangePassword(false)} />
+      )}
+
+      {/* Click-Outside Backdrop Overlay */}
+      <div 
+        className={`md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30 transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* Subtle Edge Swipe Handle */}
+      <div className="md:hidden fixed left-0 top-1/2 -translate-y-1/2 w-1.5 h-16 bg-brand dark:bg-emerald-600 rounded-r-xl z-20 opacity-30 shadow-sm pointer-events-none" />
+
+      {/* Mobile Top Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/90 dark:bg-[#121212]/90 backdrop-blur-md border-b border-slate-200 dark:border-[#27272A] z-20 flex items-center justify-between px-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <img src="/favicon.png" alt="Logo" className="h-9 w-9 object-contain drop-shadow-sm" />
+          <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">JFCM-SL Stewards</span>
+        </div>
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
+          {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
+      </div>
+
+      {/* Sidebar - Fix: z-40 on mobile, md:z-0 on desktop to allow modals to float above */}
+      <div className={`
+        fixed inset-y-0 left-0 w-64 bg-white dark:bg-[#121212] border-r border-slate-200 dark:border-[#27272A] flex flex-col shadow-2xl transition-transform duration-300 ease-in-out
+        z-40 md:z-0 md:translate-x-0 md:static md:shadow-none
+        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="h-20 hidden md:flex items-center px-6 border-b border-slate-200 dark:border-[#27272A] gap-3">
+          <img src="/favicon.png" alt="Logo" className="h-10 w-10 object-contain drop-shadow-sm" />
+          <div>
+            <h1 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-tight">JFCM-SL Stewards</h1>
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Financial Operations</p>
+          </div>
+        </div>
+        
+        <nav className="flex-1 px-4 py-6 space-y-1.5 mt-16 md:mt-0">
+          {navigation.map((item) => {
+            const isActive = location.pathname === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center px-3.5 py-3 rounded-xl text-xs font-semibold transition-all duration-150 ${
+                  isActive 
+                    ? 'bg-brand dark:bg-emerald-700 text-white shadow-sm' 
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Icon className={`mr-3 h-4 w-4 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="p-4 border-t border-slate-200 dark:border-[#27272A] space-y-2">
+          <button
+            onClick={toggleDarkMode}
+            className="flex items-center justify-between w-full px-3.5 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
+          >
+            <span className="flex items-center">
+              {darkMode ? <Sun className="mr-3 h-4 w-4 text-amber-400" /> : <Moon className="mr-3 h-4 w-4 text-slate-400" />}
+              {darkMode ? 'Light Mode' : 'Dark Mode'}
+            </span>
+            <div className={`w-8 h-4 rounded-full transition-colors relative p-0.5 ${darkMode ? 'bg-emerald-600' : 'bg-slate-300'}`}>
+              <div className={`w-3 h-3 rounded-full bg-white transition-transform ${darkMode ? 'translate-x-4' : 'translate-x-0'}`} />
+            </div>
+          </button>
+
+          <button
+            onClick={() => setSignOutModalOpen(true)}
+            className="flex items-center w-full px-3.5 py-2.5 text-xs font-medium text-red-600 dark:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+          >
+            <LogOut className="mr-3 h-4 w-4 text-red-500" />
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      {/* Fix: Removed relative z-10 so Modals inside this main block can span across the whole screen properly */}
+      <main className="flex-1 overflow-y-auto p-6 md:p-10 mt-16 md:mt-0 custom-scrollbar">
+        <div className="max-w-workspace mx-auto pb-12">
+          <Outlet />
+        </div>
+      </main>
+
+      {/* Sign Out Confirmation Modal */}
+      {signOutModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-[#121212] rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-[#27272A] space-y-5 animate-modal">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 rounded-2xl">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Confirm Sign Out</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Are you sure you want to end your secure audit session?</p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button onClick={() => setSignOutModalOpen(false)} className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+              <button onClick={handleConfirmSignOut} className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-md transition-all">Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

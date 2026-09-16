@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Montserrat', sans-serif;
+    @apply bg-brand-bg dark:bg-brand-darkBg text-slate-800 dark:text-slate-100 antialiased selection:bg-brand-light selection:text-brand-dark;
+  }
+}
+
+/* Bento Card Design System with Pure Premium Black Dark Mode */
+.bento-card {
+  @apply bg-white border border-brand-border rounded-2xl p-6 shadow-sm transition-all duration-200 hover:shadow-md;
+}
+
+.dark .bento-card {
+  @apply bg-[#121212] border-[#27272A] shadow-none;
+}
+
+/* World-class smooth modal entrance animation */
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal {
+  animation: modalEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-700;
+}
