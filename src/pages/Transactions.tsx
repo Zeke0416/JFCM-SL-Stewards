@@ -53,7 +53,20 @@ export default function Transactions() {
         supabase.from('financial_periods').select('*').eq('church_id', profile.church_id).order('month', { ascending: true })
       ]);
 
-      if (periodRes.data) setPeriods(periodRes.data);
+      if (periodRes.data) {
+        setPeriods(periodRes.data);
+        if (periodRes.data.length > 0) {
+          // FIX: Automatically default to the current calendar month / open period
+          const now = new Date();
+          const currentMonth = now.getMonth() + 1;
+          const currentPeriod = periodRes.data.find(p => p.month === currentMonth && p.status === 'OPEN') ||
+                                periodRes.data.find(p => p.status === 'OPEN') ||
+                                periodRes.data[0];
+          if (currentPeriod) {
+            setSelectedPeriodFilter(currentPeriod.id);
+          }
+        }
+      }
 
       const catMap = new Map(catRes.data?.map(c => [c.id, c]) || []);
       const profMap = new Map(profRes.data?.map(p => [p.id, p]) || []);
@@ -308,7 +321,6 @@ export default function Transactions() {
 
       {churchId && user && (
         <>
-          {/* FIX: Passing the current filter state as the defaultPeriodId */}
           <TransactionModal 
             isOpen={isModalOpen} 
             onClose={() => setIsModalOpen(false)} 
