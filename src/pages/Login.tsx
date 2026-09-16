@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Lock, Mail, ArrowRight, AlertCircle, Loader2, X } from 'lucide-react';
-
+import logo from '../assets/favicon.png';
 interface SavedAccount {
   email: string;
   fullName: string;
@@ -95,7 +95,7 @@ export default function Login() {
         {/* Header Section with Custom Favicon */}
         <div className="text-center space-y-3">
           <img 
-            src="/favicon.png" 
+            src={logo} 
             alt="JFCM-SL Logo" 
             className="mx-auto h-16 w-16 object-contain drop-shadow-md"
           />

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import ForcePasswordChangeModal from './ForcePasswordChangeModal';
+import logo from '../assets/favicon.png';
 
 export default function Layout() {
   const location = useLocation();
@@ -101,7 +102,7 @@ export default function Layout() {
       {/* Mobile Top Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/90 dark:bg-[#121212]/90 backdrop-blur-md border-b border-slate-200 dark:border-[#27272A] z-20 flex items-center justify-between px-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <img src="/favicon.png" alt="Logo" className="h-9 w-9 object-contain drop-shadow-sm" />
+          <img src={logo} alt="Logo" className="h-9 w-9 object-contain drop-shadow-sm" />
           <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">JFCM-SL Stewards</span>
         </div>
         <button 
