@@ -33,7 +33,7 @@ export default function ExportCenter() {
     
     const { data: txs } = await supabase.from('transactions').select('*, categories(name, export_code, type)').eq('financial_period_id', selectedPeriod).order('date', { ascending: true });
     
-    // FIX 1: Fetch reconciliation data directly from the financial_periods table to sync with Mission Readiness
+    // Fetch reconciliation data directly from the financial_periods table
     const { data: currentPeriod } = await supabase.from('financial_periods').select('*').eq('id', selectedPeriod).single();
     const recon = currentPeriod;
 
@@ -59,16 +59,62 @@ export default function ExportCenter() {
     const getSum = (code: string, type: string) => sums[`${code}_${type}`] || 0;
     const processedKeys = new Set<string>();
 
-    const buildSection = (prefix: string, title: string, type: 'INCOME' | 'EXPENSE', items: {c: string, n: string}[]) => {
+    const buildStandardSection = (prefix: string, title: string, type: 'INCOME' | 'EXPENSE', items: {c: string, n: string}[]) => {
       const rows: any[] = [];
       const activeItems = items.filter(i => !hideEmpty || getSum(i.c, type) !== 0);
 
       if (activeItems.length > 0 || !hideEmpty) {
-        rows.push([null, prefix, title]);
+        // Section header label in Column C
+        rows.push([null, null, `${prefix} - ${title}`]);
         activeItems.forEach(i => {
-          rows.push([null, i.c, i.n, null, null, getSum(i.c, type)]);
+          rows.push([null, i.c, i.n, null, getSum(i.c, type)]);
           processedKeys.add(`${i.c}_${type}`);
         });
+      }
+      return rows;
+    };
+
+    // Special builder for Project Expenses (D.1, D.2, D.3) to list itemized breakdown nodes individually
+    const buildProjectSection = (prefix: string, title: string, items: {c: string, n: string}[]) => {
+      const rows: any[] = [];
+      let hasContent = false;
+      const sectionRows: any[] = [];
+
+      items.forEach(i => {
+        const matchingTxs = txs.filter(t => t.categories?.export_code === i.c && t.type === 'EXPENSE');
+        if (matchingTxs.length > 0) {
+          hasContent = true;
+          sectionRows.push([null, i.c, i.n, null, null]); 
+          processedKeys.add(`${i.c}_EXPENSE`);
+
+          matchingTxs.forEach(tx => {
+            const breakdownMatch = tx.remarks?.match(/\[Breakdown: (.*?)\]/);
+            if (breakdownMatch) {
+              const pairs = breakdownMatch[1].split(', ');
+              // FIX: Explicitly typed 'pair' as a string here
+              pairs.forEach((pair: string) => {
+                const lastColon = pair.lastIndexOf(': ₱');
+                if (lastColon !== -1) {
+                  const itemName = pair.substring(0, lastColon).trim();
+                  const itemAmount = parseFloat(pair.substring(lastColon + 3)) || 0;
+                  sectionRows.push([null, null, `  - ${itemName}`, null, itemAmount]);
+                } else {
+                  sectionRows.push([null, null, `  - ${pair}`, null, Number(tx.amount)]);
+                }
+              });
+            } else {
+              sectionRows.push([null, null, `  - ${tx.payee_name || tx.remarks || 'Expense Item'}`, null, Number(tx.amount)]);
+            }
+          });
+        } else if (!hideEmpty) {
+          hasContent = true;
+          sectionRows.push([null, i.c, i.n, null, 0]);
+        }
+      });
+
+      if (hasContent || !hideEmpty) {
+        rows.push([null, null, `${prefix} - ${title}`]);
+        rows.push(...sectionRows);
       }
       return rows;
     };
@@ -89,68 +135,72 @@ export default function ExportCenter() {
       [null, null, null, 'STATEMENT OF CASH RECEIPTS AND DISBURSEMENTS'],
       [null, null, null, `FOR THE PERIOD ENDED - ${periodName}`],
       [],
-      ['A.', 'BEGINNING BALANCE', null, null, null, beginningBalance],
-      ['B.', 'CASH RECEIPTS'],
-      ...buildSection('B.1', 'Income', 'INCOME', b1),
-      ...buildSection('B.2', 'Other Receipts', 'INCOME', b2),
+      [null, null, 'A. BEGINNING BALANCE', null, beginningBalance],
+      [null, null, 'B. CASH RECEIPTS'],
+      ...buildStandardSection('B.1', 'Income', 'INCOME', b1),
+      ...buildStandardSection('B.2', 'Other Receipts', 'INCOME', b2),
     ];
 
     Object.keys(sums).forEach(key => {
       const [code, type] = key.split('_');
       if (type === 'INCOME' && !processedKeys.has(key) && sums[key] !== 0) {
         const catName = txs.find(t => t.categories?.export_code === code)?.categories?.name || 'Uncategorized';
-        mprData.push([null, code, `*${catName} (Auto-Appended)`, null, null, sums[key]]);
+        mprData.push([null, code, `*${catName} (Auto-Appended)`, null, sums[key]]);
       }
     });
 
     mprData.push(
-      ['TOTAL = (A + B)', null, null, null, null, totalAandB],
-      ['C.', 'CASH DISBURSEMENTS'],
-      ...buildSection('C.1', 'Operating Expenses', 'EXPENSE', c1),
-      ...buildSection('C.2', 'Other Disbursements', 'EXPENSE', c2),
-      ['D.', 'PROJECT EXPENSES'],
-      ...buildSection('D.1', 'Acquisition', 'EXPENSE', d1),
-      ...buildSection('D.2', 'Seminars/Conferences & Education', 'EXPENSE', d2),
-      ...buildSection('D.3', 'Special Events', 'EXPENSE', d3),
+      [null, null, 'TOTAL = (A + B)', null, totalAandB],
+      [null, null, 'C. CASH DISBURSEMENTS'],
+      ...buildStandardSection('C.1', 'Operating Expenses', 'EXPENSE', c1),
+      ...buildStandardSection('C.2', 'Other Disbursements', 'EXPENSE', c2),
+      [null, null, 'D. PROJECT EXPENSES'],
+      ...buildProjectSection('D.1', 'Acquisition', d1),
+      ...buildProjectSection('D.2', 'Seminars/Conferences & Education', d2),
+      ...buildProjectSection('D.3', 'Special Events', d3),
     );
 
     Object.keys(sums).forEach(key => {
       const [code, type] = key.split('_');
       if (type === 'EXPENSE' && !processedKeys.has(key) && sums[key] !== 0) {
         const catName = txs.find(t => t.categories?.export_code === code)?.categories?.name || 'Uncategorized';
-        mprData.push([null, code, `*${catName} (Auto-Appended)`, null, null, sums[key]]);
+        mprData.push([null, code, `*${catName} (Auto-Appended)`, null, sums[key]]);
       }
     });
 
+    const totalCash = (Number(recon?.cib_savings)||0) + (Number(recon?.cib_current)||0) + (Number(recon?.cib_time_deposit)||0) + (Number(recon?.coh_petty_cash)||0) + (Number(recon?.coh_undeposited)||0) + (Number(recon?.coh_advances)||0);
+    const rawDiff = (totalAandB - totalExpense) - totalCash;
+    const cleanDifference = Number(rawDiff.toFixed(2)); // Fixed floating-point precision error
+
     mprData.push(
-      ['TOTAL ENDING BALANCE = (A + B) - (C + D)', null, null, null, null, totalAandB - totalExpense],
+      [null, null, 'TOTAL ENDING BALANCE = (A + B) - (C + D)', null, totalAandB - totalExpense],
       [],
-      ['CASH BREAKDOWN'],
+      [null, null, 'CASH BREAKDOWN'],
       [null, '1000', 'CASH IN-BANK'],
-      [null, null, 'Savings Account', null, null, Number(recon?.cib_savings) || 0],
-      [null, null, 'Current Account', null, null, Number(recon?.cib_current) || 0],
-      [null, null, 'Time Deposit & Other Deposit', null, null, Number(recon?.cib_time_deposit) || 0],
+      [null, null, 'Savings Account', null, Number(recon?.cib_savings) || 0],
+      [null, null, 'Current Account', null, Number(recon?.cib_current) || 0],
+      [null, null, 'Time Deposit & Other Deposit', null, Number(recon?.cib_time_deposit) || 0],
       [null, '1000', 'CASH ON-HAND'],
-      [null, null, 'Petty Cash Fund', null, null, Number(recon?.coh_petty_cash) || 0],
-      [null, null, 'Undeposited / Unremitted Amount', null, null, Number(recon?.coh_undeposited) || 0],
-      [null, null, 'Advances', null, null, Number(recon?.coh_advances) || 0],
-      ['TOTAL = (Cash In-Bank + Cash On-Hand)', null, null, null, null, (Number(recon?.cib_savings)||0) + (Number(recon?.cib_current)||0) + (Number(recon?.cib_time_deposit)||0) + (Number(recon?.coh_petty_cash)||0) + (Number(recon?.coh_undeposited)||0) + (Number(recon?.coh_advances)||0)],
-      ['DIFFERENCE = [(Total Ending Balance - Total Cash (CIB + COH)]', null, null, null, null, (totalAandB - totalExpense) - ((Number(recon?.cib_savings)||0) + (Number(recon?.cib_current)||0) + (Number(recon?.cib_time_deposit)||0) + (Number(recon?.coh_petty_cash)||0) + (Number(recon?.coh_undeposited)||0) + (Number(recon?.coh_advances)||0))],
+      [null, null, 'Petty Cash Fund', null, Number(recon?.coh_petty_cash) || 0],
+      [null, null, 'Undeposited / Unremitted Amount', null, Number(recon?.coh_undeposited) || 0],
+      [null, null, 'Advances', null, Number(recon?.coh_advances) || 0],
+      [null, null, 'TOTAL = (Cash In-Bank + Cash On-Hand)', null, totalCash],
+      [null, null, 'DIFFERENCE = [(Total Ending Balance - Total Cash (CIB + COH)]', null, cleanDifference],
       [],
       [],
-      ['Date Prepared', null, null, null, null, null],
+      [null, null, 'Date Prepared', null, null],
       [],
-      ['Prepared by', null, '________________________________', null, null, null],
+      [null, null, 'Prepared by', null, '________________________________'],
       [],
-      ['Noted by', null, '________________________________', null, null, null],
+      [null, null, 'Noted by', null, '________________________________'],
       [],
-      ['Notes:'],
-      ['1', null, 'Expenditure) if the amount is more than Php 2,500.00.', null, null, null],
-      ['2', null, 'Improvements on rented Building/Fellowship House amounting to Php20,000.00 and above shall be CAPITALIZED and booked to Leasehold Improvement', null, null, null],
-      ['3', null, 'Improvements on owned Building/Fellowship House shall be CAPITALIZED and booked to Building/Fellowship House', null, null, null],
-      ['4', null, 'Salaries & Wages and Rentals shall be recorded as Expense at Gross Amount', null, null, null],
-      ['5', null, 'Disbursed but not remitted Payables and Contributions (EE + ER) such as Withholding Tax, Expanded Withholding Tax, SSS, PhilHealth and Pag-Ibig shall be redeposited and recorded in the SCRD under Other Receipts', null, null, null],
-      ['6', null, 'xerox copy of Contract, if any, should be forwarded to IF-CO.', null, null, null],
+      [null, null, 'Notes:'],
+      [null, '1', 'Expenditure) if the amount is more than Php 2,500.00.', null, null],
+      [null, '2', 'Improvements on rented Building/Fellowship House amounting to Php20,000.00 and above shall be CAPITALIZED and booked to Leasehold Improvement', null, null],
+      [null, '3', 'Improvements on owned Building/Fellowship House shall be CAPITALIZED and booked to Building/Fellowship House', null, null],
+      [null, '4', 'Salaries & Wages and Rentals shall be recorded as Expense at Gross Amount', null, null],
+      [null, '5', 'Disbursed but not remitted Payables and Contributions (EE + ER) such as Withholding Tax, Expanded Withholding Tax, SSS, PhilHealth and Pag-Ibig shall be redeposited and recorded in the SCRD under Other Receipts', null, null],
+      [null, '6', 'xerox copy of Contract, if any, should be forwarded to IF-CO.', null, null],
     );
 
     let formattedEndDate = periodName;
@@ -165,11 +215,11 @@ export default function ExportCenter() {
 
     const mprSheet = XLSX.utils.aoa_to_sheet(mprData);
     
-    // FIX 2: Reduced Column C width from 85 to 45
-    mprSheet['!cols'] = [{wch: 5}, {wch: 12}, {wch: 45}, {wch: 10}, {wch: 15}, {wch: 20}];
+    // Column C width reduced to 45, values in Column E
+    mprSheet['!cols'] = [{wch: 5}, {wch: 12}, {wch: 45}, {wch: 10}, {wch: 22}];
     
-    // FIX 3 & 4: Freeze columns A, B, and C (xSplit: 3) and strictly ensure no protection
-    mprSheet['!views'] = [{ state: 'frozen', xSplit: 3, ySplit: 0 }];
+    // Freeze columns A through C (xSplit: 3) and ensure workbook is unprotected
+    mprSheet['!views'] = [{ state: 'frozen', xSplit: 3, ySplit: 0, topLeftCell: 'D1' }];
     mprSheet['!protect'] = undefined;
 
     const ledgerData = txs.map(tx => ({
