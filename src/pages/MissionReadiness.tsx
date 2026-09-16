@@ -187,7 +187,7 @@ export default function MissionReadiness() {
   });
 
   const systemEndingBalance = recon.beginning_balance + stats.totalIncome - stats.totalExpense;
-  const discrepancy = actualEndingBalance - systemEndingBalance;
+  const discrepancy = Number((actualEndingBalance - systemEndingBalance).toFixed(2));
   
   const isBalanced = discrepancy === 0;
   const isReady = isBalanced && missingReceipts.length === 0 && transactions.length > 0;

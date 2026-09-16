@@ -113,14 +113,14 @@ export default function Layout() {
         </button>
       </div>
 
-      {/* Sidebar - Fix: z-40 on mobile, md:z-0 on desktop to allow modals to float above */}
       <div className={`
         fixed inset-y-0 left-0 w-64 bg-white dark:bg-[#121212] border-r border-slate-200 dark:border-[#27272A] flex flex-col shadow-2xl transition-transform duration-300 ease-in-out
         z-40 md:z-0 md:translate-x-0 md:static md:shadow-none
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="h-20 hidden md:flex items-center px-6 border-b border-slate-200 dark:border-[#27272A] gap-3">
-          <img src="/favicon.png" alt="Logo" className="h-10 w-10 object-contain drop-shadow-sm" />
+          {/* FIX: Changed hardcoded "/favicon.png" to the dynamic {logo} import */}
+          <img src={logo} alt="Logo" className="h-10 w-10 object-contain drop-shadow-sm" />
           <div>
             <h1 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-tight">JFCM-SL Stewards</h1>
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Financial Operations</p>
@@ -173,14 +173,12 @@ export default function Layout() {
         </div>
       </div>
 
-      {/* Fix: Removed relative z-10 so Modals inside this main block can span across the whole screen properly */}
       <main className="flex-1 overflow-y-auto p-6 md:p-10 mt-16 md:mt-0 custom-scrollbar">
         <div className="max-w-workspace mx-auto pb-12">
           <Outlet />
         </div>
       </main>
 
-      {/* Sign Out Confirmation Modal */}
       {signOutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-white dark:bg-[#121212] rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-[#27272A] space-y-5 animate-modal">

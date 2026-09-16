@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Download, FileSpreadsheet, Settings} from 'lucide-react';
+import { Download, FileSpreadsheet, Settings } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { FinancialPeriod } from '../types/database.types';
 
@@ -32,7 +32,10 @@ export default function ExportCenter() {
     const periodName = periods.find(p => p.id === selectedPeriod)?.period_name || 'Export';
     
     const { data: txs } = await supabase.from('transactions').select('*, categories(name, export_code, type)').eq('financial_period_id', selectedPeriod).order('date', { ascending: true });
-    const { data: recon } = await supabase.from('period_reconciliations').select('*').eq('financial_period_id', selectedPeriod).single();
+    
+    // FIX 1: Fetch reconciliation data directly from the financial_periods table to sync with Mission Readiness
+    const { data: currentPeriod } = await supabase.from('financial_periods').select('*').eq('id', selectedPeriod).single();
+    const recon = currentPeriod;
 
     if (!txs || txs.length === 0) {
       alert("No transactions found for this period.");
@@ -78,7 +81,7 @@ export default function ExportCenter() {
     const d2 = [{c: '6251', n: 'Doctrination'}, {c: '6252', n: 'Equipping Seminar'}, {c: '6253', n: 'National Consultation'}, {c: '6254', n: 'General Consultation'}, {c: '6261', n: 'Training Seminar (External)'}, {c: '6262', n: 'Pastor/Missionary Education'}];
     const d3 = [{c: '6301', n: 'Feeding Program'}, {c: '6302', n: 'Project Activity (Fund Raising)'}, {c: '6351', n: 'Outdoor Fellowship'}, {c: '6352', n: 'Foundation Day'}, {c: '6353', n: 'Youth Camp'}, {c: '6354', n: 'Christmas Celebration'}, {c: '6355', n: 'Sportsfest'}, {c: '6356', n: 'Retreat'}, {c: '6357', n: 'Anniversary Celebration'}, {c: '6358', n: 'Water Baptism'}, {c: '6359', n: 'Other Special Events'}];
 
-    const beginningBalance = recon?.beginning_balance || 0;
+    const beginningBalance = Number(recon?.beginning_balance) || 0;
     const totalAandB = beginningBalance + totalIncome;
 
     const mprData: any[] = [
@@ -124,15 +127,15 @@ export default function ExportCenter() {
       [],
       ['CASH BREAKDOWN'],
       [null, '1000', 'CASH IN-BANK'],
-      [null, null, 'Savings Account', null, null, recon?.cib_savings || 0],
-      [null, null, 'Current Account', null, null, recon?.cib_current || 0],
-      [null, null, 'Time Deposit & Other Deposit', null, null, recon?.cib_time_deposit || 0],
+      [null, null, 'Savings Account', null, null, Number(recon?.cib_savings) || 0],
+      [null, null, 'Current Account', null, null, Number(recon?.cib_current) || 0],
+      [null, null, 'Time Deposit & Other Deposit', null, null, Number(recon?.cib_time_deposit) || 0],
       [null, '1000', 'CASH ON-HAND'],
-      [null, null, 'Petty Cash Fund', null, null, recon?.coh_petty_cash || 0],
-      [null, null, 'Undeposited / Unremitted Amount', null, null, recon?.coh_undeposited || 0],
-      [null, null, 'Advances', null, null, recon?.coh_advances || 0],
-      ['TOTAL = (Cash In-Bank + Cash On-Hand)', null, null, null, null, (recon?.cib_savings||0) + (recon?.cib_current||0) + (recon?.cib_time_deposit||0) + (recon?.coh_petty_cash||0) + (recon?.coh_undeposited||0) + (recon?.coh_advances||0)],
-      ['DIFFERENCE = [(Total Ending Balance - Total Cash (CIB + COH)]', null, null, null, null, (totalAandB - totalExpense) - ((recon?.cib_savings||0) + (recon?.cib_current||0) + (recon?.cib_time_deposit||0) + (recon?.coh_petty_cash||0) + (recon?.coh_undeposited||0) + (recon?.coh_advances||0))],
+      [null, null, 'Petty Cash Fund', null, null, Number(recon?.coh_petty_cash) || 0],
+      [null, null, 'Undeposited / Unremitted Amount', null, null, Number(recon?.coh_undeposited) || 0],
+      [null, null, 'Advances', null, null, Number(recon?.coh_advances) || 0],
+      ['TOTAL = (Cash In-Bank + Cash On-Hand)', null, null, null, null, (Number(recon?.cib_savings)||0) + (Number(recon?.cib_current)||0) + (Number(recon?.cib_time_deposit)||0) + (Number(recon?.coh_petty_cash)||0) + (Number(recon?.coh_undeposited)||0) + (Number(recon?.coh_advances)||0)],
+      ['DIFFERENCE = [(Total Ending Balance - Total Cash (CIB + COH)]', null, null, null, null, (totalAandB - totalExpense) - ((Number(recon?.cib_savings)||0) + (Number(recon?.cib_current)||0) + (Number(recon?.cib_time_deposit)||0) + (Number(recon?.coh_petty_cash)||0) + (Number(recon?.coh_undeposited)||0) + (Number(recon?.coh_advances)||0))],
       [],
       [],
       ['Date Prepared', null, null, null, null, null],
@@ -161,7 +164,13 @@ export default function ExportCenter() {
     mprData[2][3] = `FOR THE PERIOD ENDED - ${formattedEndDate}`;
 
     const mprSheet = XLSX.utils.aoa_to_sheet(mprData);
-    mprSheet['!cols'] = [{wch: 5}, {wch: 12}, {wch: 85}, {wch: 10}, {wch: 15}, {wch: 20}];
+    
+    // FIX 2: Reduced Column C width from 85 to 45
+    mprSheet['!cols'] = [{wch: 5}, {wch: 12}, {wch: 45}, {wch: 10}, {wch: 15}, {wch: 20}];
+    
+    // FIX 3 & 4: Freeze columns A, B, and C (xSplit: 3) and strictly ensure no protection
+    mprSheet['!views'] = [{ state: 'frozen', xSplit: 3, ySplit: 0 }];
+    mprSheet['!protect'] = undefined;
 
     const ledgerData = txs.map(tx => ({
       "Date": tx.date,
@@ -205,7 +214,6 @@ export default function ExportCenter() {
             </select>
           </div>
 
-          {/* FIXED: Dark mode compatible surface box instead of blinding white */}
           <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex items-start gap-3">
               <Settings className="h-5 w-5 text-slate-400 mt-0.5 shrink-0" />
