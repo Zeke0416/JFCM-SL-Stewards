@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Receipt, LogOut, FileSpreadsheet, CheckCircle, Settings, Moon, Sun, ShieldCheck, Menu, X, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, Receipt, LogOut, FileSpreadsheet, CheckCircle, Settings, Moon, Sun, Menu, X, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -85,7 +85,7 @@ export default function Layout() {
     >
       
       {mustChangePassword && user && (
-        <ForcePasswordChangeModal userId={user.id} onSuccess={() => setMustChangePassword(false)} />
+        <ForcePasswordChangeModal onSuccess={() => setMustChangePassword(false)} />
       )}
 
       {/* Click-Outside Backdrop Overlay */}

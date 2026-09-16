@@ -512,6 +512,24 @@ export default function Admin() {
               )}
             </div>
 
+            {/* RESTORED: Add Year Form */}
+            {isAddingYear && (
+              <form onSubmit={handleAddYear} className="bg-slate-50/50 dark:bg-[#1A1A1A] p-4 rounded-xl border border-slate-200 dark:border-[#27272A] flex flex-wrap items-end gap-4 animate-in fade-in">
+                <div className="space-y-1.5 flex-1 min-w-[150px]">
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Year</label>
+                  <input type="number" required className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newYear.year} onChange={e => setNewYear({...newYear, year: parseInt(e.target.value)})} />
+                </div>
+                <div className="space-y-1.5 flex-1 min-w-[150px]">
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Approved Budget</label>
+                  <input type="number" required className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newYear.budget} onChange={e => setNewYear({...newYear, budget: e.target.value})} />
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <button type="button" onClick={() => setIsAddingYear(false)} className="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-[#121212] border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+                  <button type="submit" className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold text-white bg-brand dark:bg-emerald-700 rounded-xl shadow-sm hover:bg-brand-dark dark:hover:bg-emerald-800 transition-colors">Save Year</button>
+                </div>
+              </form>
+            )}
+
             <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-[#27272A]">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -601,6 +619,31 @@ export default function Admin() {
               </button>
             )}
           </div>
+
+          {/* RESTORED: Add Category Form */}
+          {isAddingCat && (
+            <form onSubmit={handleAddCategory} className="bg-slate-50/50 dark:bg-[#1A1A1A] p-4 rounded-xl border border-slate-200 dark:border-[#27272A] flex flex-wrap items-end gap-4 animate-in fade-in">
+              <div className="space-y-1.5 flex-1 min-w-[120px]">
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Type</label>
+                <select className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newCat.type} onChange={e => setNewCat({...newCat, type: e.target.value as 'INCOME' | 'EXPENSE'})}>
+                  <option value="EXPENSE">Expense</option>
+                  <option value="INCOME">Income</option>
+                </select>
+              </div>
+              <div className="space-y-1.5 flex-1 min-w-[120px]">
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Account Code</label>
+                <input type="text" required placeholder="e.g. 501" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newCat.code} onChange={e => setNewCat({...newCat, code: e.target.value})} />
+              </div>
+              <div className="space-y-1.5 flex-[2] min-w-[200px]">
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Category Name</label>
+                <input type="text" required placeholder="e.g. Honorarium" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newCat.name} onChange={e => setNewCat({...newCat, name: e.target.value})} />
+              </div>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <button type="button" onClick={() => setIsAddingCat(false)} className="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-[#121212] border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+                <button type="submit" className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold text-white bg-brand dark:bg-emerald-700 rounded-xl shadow-sm hover:bg-brand-dark dark:hover:bg-emerald-800 transition-colors">Save</button>
+              </div>
+            </form>
+          )}
 
           <div className="max-h-[500px] overflow-y-auto custom-scrollbar rounded-xl border border-slate-200 dark:border-[#27272A]">
             <table className="w-full text-left text-xs border-collapse relative">

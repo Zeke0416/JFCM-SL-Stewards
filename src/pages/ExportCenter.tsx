@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Download, FileSpreadsheet, Settings, Info } from 'lucide-react';
+import { Download, FileSpreadsheet, Settings} from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { FinancialPeriod } from '../types/database.types';
 

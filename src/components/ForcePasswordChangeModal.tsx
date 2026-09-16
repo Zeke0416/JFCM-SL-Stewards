@@ -3,11 +3,10 @@ import { supabase } from '../lib/supabase';
 import { Lock, ShieldAlert, Loader2, CheckCircle2 } from 'lucide-react';
 
 interface Props {
-  userId: string;
   onSuccess: () => void;
 }
 
-export default function ForcePasswordChangeModal({ userId, onSuccess }: Props) {
+export default function ForcePasswordChangeModal({ onSuccess }: Props) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
