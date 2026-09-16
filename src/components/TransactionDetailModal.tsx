@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { X, Receipt, UserCircle, Calendar, Tag, FileText, Clock } from 'lucide-react';
+import { X, Receipt, UserCircle, Calendar, Tag, FileText, Clock, Layers } from 'lucide-react';
 import type { Transaction, Category } from '../types/database.types';
 
 type EnrichedTransaction = Transaction & { 
@@ -15,6 +15,26 @@ interface TransactionDetailModalProps {
 
 export default function TransactionDetailModal({ isOpen, onClose, transaction }: TransactionDetailModalProps) {
   if (!isOpen || !transaction) return null;
+
+  // Parse breakdown details from remarks if they exist
+  const fullRemarks = transaction.remarks || '';
+  const breakdownMatch = fullRemarks.match(/\[Breakdown: (.*?)\]/);
+  
+  let generalRemarks = fullRemarks;
+  let breakdownList: { name: string; amount: number }[] = [];
+
+  if (breakdownMatch) {
+    generalRemarks = fullRemarks.replace(/\[Breakdown:.*?\]/, '').trim();
+    const itemsText = breakdownMatch[1];
+    breakdownList = itemsText.split(', ').map(pair => {
+      const lastColonIndex = pair.lastIndexOf(': ₱');
+      if (lastColonIndex === -1) return { name: pair, amount: 0 };
+      return {
+        name: pair.substring(0, lastColonIndex).trim(),
+        amount: parseFloat(pair.substring(lastColonIndex + 3)) || 0
+      };
+    });
+  }
 
   // Render the modal directly into the document.body using React Portals
   return createPortal(
@@ -84,13 +104,45 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
             </p>
           </div>
 
-          <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
+          {/* Remarks & Structured Itemized Breakdown Section */}
+          <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
               <FileText className="h-3.5 w-3.5" /> Remarks & Itemized Breakdown
             </span>
-            <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap bg-white dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 font-medium mt-1">
-              {transaction.remarks || 'No remarks recorded.'}
-            </p>
+            
+            {/* General Remarks Display */}
+            {generalRemarks && (
+              <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap bg-white dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 font-medium">
+                {generalRemarks}
+              </p>
+            )}
+
+            {/* Itemized List Display */}
+            {breakdownList.length > 0 ? (
+              <div className="space-y-2 bg-white dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">
+                  <Layers className="h-3 w-3" /> Itemized Sub-Items Breakdown
+                </div>
+                <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {breakdownList.map((item, index) => (
+                    <div key={index} className="py-2 flex justify-between items-center text-xs first:pt-0 last:pb-0">
+                      <span className="font-medium text-slate-800 dark:text-slate-200">• {item.name}</span>
+                      <span className="font-mono font-bold text-slate-900 dark:text-white">₱{item.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-slate-200 dark:border-slate-800 pt-2.5 mt-2 flex justify-between items-center text-xs">
+                  <span className="font-bold text-slate-500">Breakdown Total:</span>
+                  <span className="font-mono font-black text-brand dark:text-emerald-400">
+                    ₱{breakdownList.reduce((acc, curr) => acc + curr.amount, 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+            ) : !generalRemarks && (
+              <p className="text-xs text-slate-400 italic bg-white dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 font-medium">
+                No remarks recorded.
+              </p>
+            )}
           </div>
 
           <div className="bg-slate-100 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
@@ -116,6 +168,6 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
         </div>
       </div>
     </div>,
-    document.body // Injects modal completely outside the React DOM tree
+    document.body
   );
 }
