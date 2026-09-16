@@ -33,7 +33,6 @@ export default function Transactions() {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  // FIX: Added the auto-exempt smart dictionary to match Mission Readiness
   const exemptKeywords = ['love gift', 'compassion', 'honorarium', 'allowance', 'benevolence', 'remittance', 'tithe'];
 
   useEffect(() => {
@@ -216,7 +215,6 @@ export default function Transactions() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]/50 bg-transparent">
                 {sortedTransactions.map((tx) => {
-                  // FIX: Auto Exempt Logic dynamically applied in rendering
                   const categoryName = tx.categories?.name?.toLowerCase() || '';
                   const isAutoExempt = exemptKeywords.some(keyword => categoryName.includes(keyword));
 
@@ -310,6 +308,7 @@ export default function Transactions() {
 
       {churchId && user && (
         <>
+          {/* FIX: Passing the current filter state as the defaultPeriodId */}
           <TransactionModal 
             isOpen={isModalOpen} 
             onClose={() => setIsModalOpen(false)} 
@@ -317,6 +316,7 @@ export default function Transactions() {
             churchId={churchId} 
             userId={user.id} 
             initialData={editingTx} 
+            defaultPeriodId={selectedPeriodFilter !== 'ALL' ? selectedPeriodFilter : (periods.find(p => p.status === 'OPEN')?.id || undefined)}
           />
           <TransactionDetailModal
             isOpen={isDetailModalOpen}

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { X, AlertCircle, Search, Check, ChevronDown, ToggleLeft, ToggleRight, ListPlus, Trash2, Calculator, Loader2, CheckCircle2 } from 'lucide-react';
 import type { Category, TransactionType, FinancialPeriod, Transaction } from '../types/database.types';
 
+// FIX: Added defaultPeriodId property
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -11,9 +12,10 @@ interface TransactionModalProps {
   churchId: string;
   userId: string;
   initialData?: Transaction | null;
+  defaultPeriodId?: string; 
 }
 
-export default function TransactionModal({ isOpen, onClose, onSuccess, churchId, userId, initialData }: TransactionModalProps) {
+export default function TransactionModal({ isOpen, onClose, onSuccess, churchId, userId, initialData, defaultPeriodId }: TransactionModalProps) {
   const [type, setType] = useState<TransactionType>('INCOME');
   const [categories, setCategories] = useState<Category[]>([]);
   const [periods, setPeriods] = useState<FinancialPeriod[]>([]);
@@ -107,7 +109,15 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
     const { data: periodData } = await supabase.from('financial_periods').select('*').eq('church_id', churchId).order('month', { ascending: true });
     if (periodData) {
       setPeriods(periodData);
-      if (!initialData && periodData.length > 0) setSelectedPeriodId(periodData[0].id);
+      // FIX: Smart logic prioritizing selected dropdown filter, then open month, then default index 0
+      if (!initialData && periodData.length > 0) {
+        if (defaultPeriodId && periodData.some(p => p.id === defaultPeriodId)) {
+          setSelectedPeriodId(defaultPeriodId);
+        } else {
+          const openPeriod = periodData.find(p => p.status === 'OPEN');
+          setSelectedPeriodId(openPeriod ? openPeriod.id : periodData[0].id);
+        }
+      }
     }
   };
 
@@ -298,7 +308,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
                   {useBreakdown ? (
                     <div className="space-y-3 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
                       {breakdownItems.map((item, index) => (
-                        // FIX: Added w-full, min-w-0, and shrink-0 to prevent mobile horizontal overflow
                         <div key={index} className="flex gap-2 items-center w-full">
                           <input 
                             type="text" 
