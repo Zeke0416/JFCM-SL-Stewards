@@ -1,0 +1,20 @@
+{
+  "name": "JFCM-SL Stewards",
+  "short_name": "Stewards",
+  "start_url": "/JFCM-SL-Stewards/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "/JFCM-SL-Stewards/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/JFCM-SL-Stewards/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
