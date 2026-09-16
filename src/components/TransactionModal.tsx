@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase';
 import { X, AlertCircle, Search, Check, ChevronDown, ToggleLeft, ToggleRight, ListPlus, Trash2, Calculator, Loader2, CheckCircle2 } from 'lucide-react';
 import type { Category, TransactionType, FinancialPeriod, Transaction } from '../types/database.types';
 
-// FIX: Added defaultPeriodId property
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -109,7 +108,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
     const { data: periodData } = await supabase.from('financial_periods').select('*').eq('church_id', churchId).order('month', { ascending: true });
     if (periodData) {
       setPeriods(periodData);
-      // FIX: Smart logic prioritizing selected dropdown filter, then open month, then default index 0
       if (!initialData && periodData.length > 0) {
         if (defaultPeriodId && periodData.some(p => p.id === defaultPeriodId)) {
           setSelectedPeriodId(defaultPeriodId);
@@ -224,10 +222,31 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
                 </div>
               )}
 
+              {/* HIGH-CONTRAST COLOR-CODED TABS */}
               {!initialData && (
-                <div className="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
-                  <button type="button" onClick={() => setType('INCOME')} className={`py-2.5 text-xs font-bold rounded-xl transition-all ${type === 'INCOME' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}>Income / Receipt</button>
-                  <button type="button" onClick={() => setType('EXPENSE')} className={`py-2.5 text-xs font-bold rounded-xl transition-all ${type === 'EXPENSE' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}>Expense / Disbursement</button>
+                <div className="grid grid-cols-2 gap-2 bg-slate-200/70 dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-300 dark:border-slate-800 shadow-inner">
+                  <button 
+                    type="button" 
+                    onClick={() => setType('INCOME')} 
+                    className={`py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm ${
+                      type === 'INCOME' 
+                        ? 'bg-emerald-600 text-white shadow-md transform scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50'
+                    }`}
+                  >
+                    Income / Receipt
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setType('EXPENSE')} 
+                    className={`py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm ${
+                      type === 'EXPENSE' 
+                        ? 'bg-amber-600 text-white shadow-md transform scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50'
+                    }`}
+                  >
+                    Expense / Disbursement
+                  </button>
                 </div>
               )}
 
@@ -379,6 +398,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
 
       </div>
     </div>,
-    document.body // Injects modal completely outside the React DOM tree
+    document.body
   );
 }
