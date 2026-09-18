@@ -1,30 +1,29 @@
 // ==========================================
 // EXPORT CENTER COMPONENT
-// Purpose: Generates ComBud-compatible Excel reports with unassigned transaction validation.
+// Purpose: Generates ComBud-compatible Excel reports using ExcelJS for precise grid styling.
 // ==========================================
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Download, FileSpreadsheet, Settings, AlertTriangle, X } from 'lucide-react';
-import * as XLSX from 'xlsx';
-import type { FinancialPeriod } from '../types/database.types';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import type { FinancialPeriod, MPRReport } from '../types/database.types';
 
 export default function ExportCenter() {
   const { user } = useAuth();
+  const [churchId, setChurchId] = useState('');
   const [periods, setPeriods] = useState<FinancialPeriod[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState('');
   const [loading, setLoading] = useState(false);
+  
   const [hideEmpty, setHideEmpty] = useState(true);
+  const [exportFullYear, setExportFullYear] = useState(false);
 
-  // Unassigned Validation Modal State
   const [showUnassignedModal, setShowUnassignedModal] = useState(false);
   const [unassignedCount, setUnassignedCount] = useState(0);
 
-  /**
-   * Fetches initial financial periods for export selection on component mount.
-   * Purpose: Populates the period dropdown.
-   */
   useEffect(() => {
     if (user) fetchInitialData();
   }, [user]);
@@ -32,6 +31,7 @@ export default function ExportCenter() {
   const fetchInitialData = async () => {
     const { data: profile } = await supabase.from('profiles').select('church_id').eq('id', user?.id).single();
     if (profile) {
+      setChurchId(profile.church_id);
       const { data: periodData } = await supabase.from('financial_periods').select('*').eq('church_id', profile.church_id).order('month', { ascending: false });
       if (periodData) {
         setPeriods(periodData);
@@ -40,79 +40,198 @@ export default function ExportCenter() {
     }
   };
 
+  const getMonthShort = (periodName: string) => periodName.split(' ')[0].substring(0,3);
+
   /**
-   * Validates transactions for unassigned items before generating the Excel export.
-   * Purpose: Prevents exporting reports containing unclassified accounts.
+   * Generates the perfectly styled MPR Sheet using ExcelJS
    */
-  const handleExport = async () => {
-    setLoading(true);
-    const periodName = periods.find(p => p.id === selectedPeriod)?.period_name || 'Export';
-    
-    const { data: txs } = await supabase.from('transactions').select('*, categories(name, export_code, type)').eq('financial_period_id', selectedPeriod).order('date', { ascending: true });
+  const generateMPRSheet = (workbook: ExcelJS.Workbook, mpr: MPRReport | null, periodName: string, sheetName: string) => {
+    const sheet = workbook.addWorksheet(sheetName);
 
-    if (!txs || txs.length === 0) {
-      alert("No transactions found for this period.");
-      setLoading(false); 
-      return;
-    }
+    sheet.columns = [
+      { width: 15 }, // A: Date
+      { width: 45 }, // B: Title & Preacher
+      { width: 45 }, // C: Objective
+      { width: 20 }, // D: Text (Scripture)
+      { width: 15 }  // E: Attendance
+    ];
 
-    // VALIDATION: Check if any transaction is unassigned
-    const unassignedItems = txs.filter(tx => !tx.category_id || tx.categories?.export_code === '???');
-    if (unassignedItems.length > 0) {
-      setUnassignedCount(unassignedItems.length);
-      setShowUnassignedModal(true);
-      setLoading(false);
-      return;
+    sheet.addRow([null, null, null, 'JESUS FIRST CHRISTIAN MINISTRIES']);
+    sheet.addRow([null, null, null, 'MONTHLY PROGRESS REPORT']);
+    sheet.addRow([]);
+    sheet.addRow(['Church', 'JFCM Sapang Lamig', null, null, 'Applicable Month / Year', periodName]);
+    sheet.addRow(['P/M', mpr?.pm_name || '', null, null, 'Overseer', mpr?.overseer_name || '']);
+    sheet.addRow([]);
+    sheet.addRow(['1.0 WORSHIP SERVICE']);
+    const headerRow = sheet.addRow(['Date', 'Title & Preacher', 'Objective', 'Text', 'Attendance']);
+
+    sheet.getCell('D1').font = { bold: true };
+    sheet.getCell('D2').font = { bold: true };
+    sheet.getCell('A7').font = { bold: true };
+    headerRow.font = { bold: true };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    ['A','B','C','D','E'].forEach(col => {
+      sheet.getCell(`${col}8`).border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
+    });
+
+    let r = 9;
+    let totalAdults = 0;
+    let totalChildren = 0;
+    let serviceCount = 0;
+
+    const services = mpr?.worship_services || Array.from({ length: 5 }, (_, i) => ({ week: i+1, dateStr: '', title: '', preacher: '', objective: '', text: '', adults: 0, children: 0 }));
+
+    services.forEach(ws => {
+      if (ws.adults > 0 || ws.children > 0 || ws.title || ws.preacher) serviceCount++;
+      totalAdults += ws.adults;
+      totalChildren += ws.children;
+
+      const titleStr = ws.title?.trim() || '';
+      const preacherStr = ws.preacher?.trim() || '';
+      let combinedTitlePreacher = titleStr;
+      
+      if (preacherStr) {
+        combinedTitlePreacher += combinedTitlePreacher ? `\n(${preacherStr})` : `(${preacherStr})`;
+      }
+
+      sheet.addRow([ws.dateStr, combinedTitlePreacher, ws.objective, ws.text, ws.adults]);
+      sheet.addRow(['', '', '', '', ws.children]);
+
+      sheet.getCell(`B${r}`).alignment = { wrapText: true, vertical: 'middle', horizontal: 'center' };
+      sheet.getCell(`C${r}`).alignment = { wrapText: true, vertical: 'middle', horizontal: 'center' };
+      sheet.getCell(`A${r}`).alignment = { vertical: 'middle', horizontal: 'center' };
+      sheet.getCell(`D${r}`).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      
+      sheet.getCell(`E${r}`).alignment = { vertical: 'middle', horizontal: 'center' };
+      sheet.getCell(`E${r+1}`).alignment = { vertical: 'middle', horizontal: 'center' };
+
+      sheet.mergeCells(`A${r}:A${r+1}`);
+      sheet.mergeCells(`B${r}:B${r+1}`);
+      sheet.mergeCells(`C${r}:C${r+1}`);
+      sheet.mergeCells(`D${r}:D${r+1}`);
+
+      for (let i = 0; i < 2; i++) {
+        ['A','B','C','D','E'].forEach(col => {
+          sheet.getCell(`${col}${r+i}`).border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
+        });
+      }
+      r += 2;
+    });
+
+    const avgAdults = serviceCount > 0 ? Math.round(totalAdults / serviceCount) : 0;
+    const avgChildren = serviceCount > 0 ? Math.round(totalChildren / serviceCount) : 0;
+
+    sheet.addRow([null, null, null, 'Average', avgAdults]);
+    sheet.addRow([null, null, null, null, avgChildren]);
+    sheet.mergeCells(`D${r}:D${r+1}`);
+    sheet.getCell(`D${r}`).alignment = { vertical: 'middle', horizontal: 'center' };
+    sheet.getCell(`E${r}`).alignment = { vertical: 'middle', horizontal: 'center' };
+    sheet.getCell(`E${r+1}`).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    for (let i = 0; i < 2; i++) {
+      ['D','E'].forEach(col => {
+        sheet.getCell(`${col}${r+i}`).border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
+      });
     }
-    
-    // Fetch reconciliation data directly from the financial_periods table
-    const { data: currentPeriod } = await supabase.from('financial_periods').select('*').eq('id', selectedPeriod).single();
-    const recon = currentPeriod;
+    r += 2;
+
+    sheet.addRow([]); r++;
+    sheet.addRow(['2.0 PROJECTS']);
+    sheet.getCell(`A${r}`).font = { bold: true };
+    r++;
+
+    const projs = mpr?.projects || [];
+    projs.forEach(p => {
+      sheet.addRow(['', p.type, p.name]);
+      r++;
+    });
+
+    sheet.addRow([]); r++;
+    const projHeader = sheet.addRow(['Project Name', null, 'Schedule', 'Actual', null]);
+    sheet.mergeCells(`A${r}:B${r}`);
+    sheet.mergeCells(`D${r}:E${r}`);
+    projHeader.font = { bold: true };
+    sheet.getCell(`A${r}`).alignment = { horizontal: 'center' };
+    sheet.getCell(`C${r}`).alignment = { horizontal: 'center' };
+    sheet.getCell(`D${r}`).alignment = { horizontal: 'center' };
+
+    ['A','B','C','D','E'].forEach(col => {
+      sheet.getCell(`${col}${r}`).border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
+    });
+    r++;
+
+    projs.forEach(p => {
+      sheet.addRow([p.name, '', p.schedule, p.actual, '']);
+      sheet.mergeCells(`A${r}:B${r}`);
+      sheet.mergeCells(`D${r}:E${r}`);
+      sheet.getCell(`C${r}`).alignment = { wrapText: true, vertical: 'top' };
+      sheet.getCell(`D${r}`).alignment = { wrapText: true, vertical: 'top' };
+
+      ['A','B','C','D','E'].forEach(col => {
+        sheet.getCell(`${col}${r}`).border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
+      });
+      r++;
+    });
+  };
+
+  /**
+   * Generates the clean SCRD Sheet without cluttered gridlines
+   */
+  const generateSCRDSheet = (workbook: ExcelJS.Workbook, txs: any[], recon: any, periodName: string, sheetName: string) => {
+    const sheet = workbook.addWorksheet(sheetName, {
+      views: [{ state: 'frozen', xSplit: 3, ySplit: 3, topLeftCell: 'D4' }]
+    });
+
+    sheet.columns = [
+      { width: 8 },  // A
+      { width: 14 }, // B
+      { width: 50 }, // C
+      { width: 15 }, // D
+      { width: 25 }  // E
+    ];
 
     const sums: Record<string, number> = {};
     let totalIncome = 0;
     let totalExpense = 0;
 
-    txs.forEach((tx: any) => {
+    txs.forEach(tx => {
       const code = tx.categories?.export_code || 'UNCATEGORIZED';
-      const type = tx.type;
-      const key = `${code}_${type}`;
-      
+      const key = `${code}_${tx.type}`;
       sums[key] = (sums[key] || 0) + Number(tx.amount);
-      if (type === 'INCOME') totalIncome += Number(tx.amount);
-      if (type === 'EXPENSE') totalExpense += Number(tx.amount);
+      if (tx.type === 'INCOME') totalIncome += Number(tx.amount);
+      if (tx.type === 'EXPENSE') totalExpense += Number(tx.amount);
     });
 
     const getSum = (code: string, type: string) => sums[`${code}_${type}`] || 0;
     const processedKeys = new Set<string>();
 
-    const buildStandardSection = (prefix: string, title: string, type: 'INCOME' | 'EXPENSE', items: {c: string, n: string}[]) => {
+    const buildSection = (prefix: string, title: string, type: 'INCOME' | 'EXPENSE', items: any[]) => {
       const rows: any[] = [];
-      const activeItems = items.filter((i: {c: string, n: string}) => !hideEmpty || getSum(i.c, type) !== 0);
-
+      const activeItems = items.filter(i => !hideEmpty || getSum(i.c, type) !== 0);
       if (activeItems.length > 0 || !hideEmpty) {
         rows.push([null, null, `${prefix} - ${title}`]);
-        activeItems.forEach((i: {c: string, n: string}) => {
+        activeItems.forEach(i => {
           rows.push([null, i.c, i.n, null, getSum(i.c, type)]);
           processedKeys.add(`${i.c}_${type}`);
         });
+        rows.push([]); 
       }
       return rows;
     };
 
-    const buildProjectSection = (prefix: string, title: string, items: {c: string, n: string}[]) => {
+    const buildProjectSection = (prefix: string, title: string, items: any[]) => {
       const rows: any[] = [];
       let hasContent = false;
-      const sectionRows: any[] = [];
+      const secRows: any[] = [];
 
-      items.forEach((i: {c: string, n: string}) => {
-        const matchingTxs = txs.filter((t: any) => t.categories?.export_code === i.c && t.type === 'EXPENSE');
-        if (matchingTxs.length > 0) {
+      items.forEach(i => {
+        const matches = txs.filter(t => t.categories?.export_code === i.c && t.type === 'EXPENSE');
+        if (matches.length > 0) {
           hasContent = true;
-          sectionRows.push([null, i.c, i.n, null, null]); 
+          secRows.push([null, i.c, i.n, null, null]); 
           processedKeys.add(`${i.c}_EXPENSE`);
-
-          matchingTxs.forEach((tx: any) => {
+          matches.forEach(tx => {
             const breakdownMatch = tx.remarks?.match(/\[Breakdown: (.*?)\]/);
             if (breakdownMatch) {
               const pairs = breakdownMatch[1].split(', ');
@@ -121,24 +240,25 @@ export default function ExportCenter() {
                 if (lastColon !== -1) {
                   const itemName = pair.substring(0, lastColon).trim();
                   const itemAmount = parseFloat(pair.substring(lastColon + 3)) || 0;
-                  sectionRows.push([null, null, `  - ${itemName}`, null, itemAmount]);
+                  secRows.push([null, null, `  - ${itemName}`, null, itemAmount]);
                 } else {
-                  sectionRows.push([null, null, `  - ${pair}`, null, Number(tx.amount)]);
+                  secRows.push([null, null, `  - ${pair}`, null, Number(tx.amount)]);
                 }
               });
             } else {
-              sectionRows.push([null, null, `  - ${tx.payee_name || tx.remarks || 'Expense Item'}`, null, Number(tx.amount)]);
+              secRows.push([null, null, `  - ${tx.payee_name || tx.remarks || 'Expense Item'}`, null, Number(tx.amount)]);
             }
           });
         } else if (!hideEmpty) {
           hasContent = true;
-          sectionRows.push([null, i.c, i.n, null, 0]);
+          secRows.push([null, i.c, i.n, null, 0]);
         }
       });
-
+      
       if (hasContent || !hideEmpty) {
         rows.push([null, null, `${prefix} - ${title}`]);
-        rows.push(...sectionRows);
+        rows.push(...secRows);
+        rows.push([]); 
       }
       return rows;
     };
@@ -151,35 +271,33 @@ export default function ExportCenter() {
     const d2 = [{c: '6251', n: 'Doctrination'}, {c: '6252', n: 'Equipping Seminar'}, {c: '6253', n: 'National Consultation'}, {c: '6254', n: 'General Consultation'}, {c: '6261', n: 'Training Seminar (External)'}, {c: '6262', n: 'Pastor/Missionary Education'}];
     const d3 = [{c: '6301', n: 'Feeding Program'}, {c: '6302', n: 'Project Activity (Fund Raising)'}, {c: '6351', n: 'Outdoor Fellowship'}, {c: '6352', n: 'Foundation Day'}, {c: '6353', n: 'Youth Camp'}, {c: '6354', n: 'Christmas Celebration'}, {c: '6355', n: 'Sportsfest'}, {c: '6356', n: 'Retreat'}, {c: '6357', n: 'Anniversary Celebration'}, {c: '6358', n: 'Water Baptism'}, {c: '6359', n: 'Other Special Events'}];
 
-    const beginningBalance = Number(recon?.beginning_balance) || 0;
-    const totalAandB = beginningBalance + totalIncome;
-
-    const mprData: any[] = [
+    const begBal = Number(recon?.beginning_balance) || 0;
+    const scrdData: any[] = [
       [null, null, null, 'JESUS FIRST CHRISTIAN MINISTRIES INCORPORATED - Sapang Lamig, CSJDB'],
       [null, null, null, 'STATEMENT OF CASH RECEIPTS AND DISBURSEMENTS'],
       [null, null, null, `FOR THE PERIOD ENDED - ${periodName}`],
       [],
-      [null, null, 'A. BEGINNING BALANCE', null, beginningBalance],
+      [null, null, 'A. BEGINNING BALANCE', null, begBal],
       [null, null, 'B. CASH RECEIPTS'],
-      ...buildStandardSection('B.1', 'Income', 'INCOME', b1),
-      ...buildStandardSection('B.2', 'Other Receipts', 'INCOME', b2),
+      ...buildSection('B.1', 'Income', 'INCOME', b1),
+      ...buildSection('B.2', 'Other Receipts', 'INCOME', b2),
     ];
 
     Object.keys(sums).forEach((key: string) => {
       const [code, type] = key.split('_');
       if (type === 'INCOME' && !processedKeys.has(key) && sums[key] !== 0) {
         const catName = txs.find((t: any) => t.categories?.export_code === code)?.categories?.name || 'Uncategorized';
-        mprData.push([null, code, `*${catName} (Auto-Appended)`, null, sums[key]]);
+        scrdData.push([null, code, `*${catName} (Auto-Appended)`, null, sums[key]]);
       }
     });
 
-    mprData.push(
-      [null, null, 'TOTAL = (A + B)', null, totalAandB],
+    scrdData.push(
+      [null, null, 'TOTAL = (A + B)', null, begBal + totalIncome],
       [null, null, 'C. CASH DISBURSEMENTS'],
-      ...buildStandardSection('C.1', 'Operating Expenses', 'EXPENSE', c1),
-      ...buildStandardSection('C.2', 'Other Disbursements', 'EXPENSE', c2),
+      ...buildSection('C.1', 'Operating Expenses', 'EXPENSE', c1),
+      ...buildSection('C.2', 'Other Disbursements', 'EXPENSE', c2),
       [null, null, 'D. PROJECT EXPENSES'],
-      ...buildProjectSection('D.1', 'Acquisition', d1),
+      ...buildProjectSection('D.1', 'Acquisition / Construction', d1),
       ...buildProjectSection('D.2', 'Seminars/Conferences & Education', d2),
       ...buildProjectSection('D.3', 'Special Events', d3),
     );
@@ -188,76 +306,120 @@ export default function ExportCenter() {
       const [code, type] = key.split('_');
       if (type === 'EXPENSE' && !processedKeys.has(key) && sums[key] !== 0) {
         const catName = txs.find((t: any) => t.categories?.export_code === code)?.categories?.name || 'Uncategorized';
-        mprData.push([null, code, `*${catName} (Auto-Appended)`, null, sums[key]]);
+        scrdData.push([null, code, `*${catName} (Auto-Appended)`, null, sums[key]]);
       }
     });
 
     const totalCash = (Number(recon?.cib_savings)||0) + (Number(recon?.cib_current)||0) + (Number(recon?.cib_time_deposit)||0) + (Number(recon?.coh_petty_cash)||0) + (Number(recon?.coh_undeposited)||0) + (Number(recon?.coh_advances)||0);
-    const rawDiff = (totalAandB - totalExpense) - totalCash;
-    const cleanDifference = Number(rawDiff.toFixed(2));
 
-    mprData.push(
-      [null, null, 'TOTAL ENDING BALANCE = (A + B) - (C + D)', null, totalAandB - totalExpense],
+    scrdData.push(
+      [null, null, 'TOTAL ENDING BALANCE = (A + B) - (C + D)', null, (begBal + totalIncome) - totalExpense],
       [],
       [null, null, 'CASH BREAKDOWN'],
       [null, '1000', 'CASH IN-BANK'],
       [null, null, 'Savings Account', null, Number(recon?.cib_savings) || 0],
       [null, null, 'Current Account', null, Number(recon?.cib_current) || 0],
-      [null, null, 'Time Deposit & Other Deposit', null, Number(recon?.cib_time_deposit) || 0],
+      [null, null, 'Time Deposit', null, Number(recon?.cib_time_deposit) || 0],
       [null, '1000', 'CASH ON-HAND'],
       [null, null, 'Petty Cash Fund', null, Number(recon?.coh_petty_cash) || 0],
-      [null, null, 'Undeposited / Unremitted Amount', null, Number(recon?.coh_undeposited) || 0],
-      [null, null, 'Advances', null, Number(recon?.coh_advances) || 0],
+      [null, null, 'Undeposited Collections', null, Number(recon?.coh_undeposited) || 0],
+      [null, null, 'Advances / IOU', null, Number(recon?.coh_advances) || 0],
       [null, null, 'TOTAL = (Cash In-Bank + Cash On-Hand)', null, totalCash],
-      [null, null, 'DIFFERENCE = [(Total Ending Balance - Total Cash (CIB + COH)]', null, cleanDifference],
-      [],
-      [],
-      [null, null, 'Date Prepared', null, null],
-      [],
-      [null, null, 'Prepared by', null, '________________________________'],
-      [],
-      [null, null, 'Noted by', null, '________________________________'],
-      [],
-      [null, null, 'Notes:'],
-      [null, '1', 'Expenditure) if the amount is more than Php 2,500.00.', null, null],
-      [null, '2', 'Improvements on rented Building/Fellowship House amounting to Php20,000.00 and above shall be CAPITALIZED and booked to Leasehold Improvement', null, null],
-      [null, '3', 'Improvements on owned Building/Fellowship House shall be CAPITALIZED and booked to Building/Fellowship House', null, null],
-      [null, '4', 'Salaries & Wages and Rentals shall be recorded as Expense at Gross Amount', null, null],
-      [null, '5', 'Disbursed but not remitted Payables and Contributions (EE + ER) such as Withholding Tax, Expanded Withholding Tax, SSS, PhilHealth and Pag-Ibig shall be redeposited and recorded in the SCRD under Other Receipts', null, null],
-      [null, '6', 'xerox copy of Contract, if any, should be forwarded to IF-CO.', null, null],
+      [null, null, 'DIFFERENCE', null, ((begBal + totalIncome) - totalExpense) - totalCash]
     );
 
-    let formattedEndDate = periodName;
+    const boldLabels = [
+      'A. BEGINNING BALANCE', 'B. CASH RECEIPTS', 'TOTAL = (A + B)',
+      'C. CASH DISBURSEMENTS', 'D. PROJECT EXPENSES', 'TOTAL ENDING BALANCE = (A + B) - (C + D)',
+      'CASH BREAKDOWN', 'CASH IN-BANK', 'CASH ON-HAND',
+      'TOTAL = (Cash In-Bank + Cash On-Hand)', 'DIFFERENCE'
+    ];
+
+    scrdData.forEach((rowData: any[]) => {
+      const row = sheet.addRow(rowData);
+      const hasContent = rowData.some((cell: any) => cell !== null && cell !== '');
+      
+      if (hasContent) {
+        // NO GRIDLINES ADDED TO SCRD DATA ROWS - CLEAN SHEET STYLE
+        ['C'].forEach(col => {
+          const cell = sheet.getCell(`${col}${row.number}`);
+          cell.alignment = { wrapText: true, vertical: 'middle' };
+        });
+        
+        const cellE = sheet.getCell(`E${row.number}`);
+        if (typeof rowData[4] === 'number') {
+            cellE.numFmt = '#,##0.00';
+        }
+
+        const labelText = String(rowData[2] || '');
+        if (boldLabels.includes(labelText)) {
+          row.font = { bold: true };
+        } else if (labelText.startsWith('B.1') || labelText.startsWith('B.2') || labelText.startsWith('C.1') || labelText.startsWith('C.2') || labelText.startsWith('D.1') || labelText.startsWith('D.2') || labelText.startsWith('D.3')) {
+          row.font = { bold: true };
+        }
+      }
+    });
+
+    sheet.getCell('D1').font = { bold: true };
+    sheet.getCell('D2').font = { bold: true };
+  };
+
+  const handleExport = async () => {
+    setLoading(true);
     try {
-      const [monthName, year] = periodName.split(' ');
-      const monthIndex = new Date(`${monthName} 1, 2000`).getMonth();
-      const lastDay = new Date(Number(year), monthIndex + 1, 0);
-      formattedEndDate = `${lastDay.getDate()}-${monthName.substring(0,3)}-${year.substring(2)}`;
-    } catch(e) {}
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'JFCM-SL Stewards System';
 
-    mprData[2][3] = `FOR THE PERIOD ENDED - ${formattedEndDate}`;
+      if (exportFullYear) {
+        const targetYearId = periods.find(p => p.id === selectedPeriod)?.financial_year_id;
+        const targetPeriods = periods.filter(p => p.financial_year_id === targetYearId).sort((a,b) => a.month - b.month);
+        
+        const scrdGenerators: any[] = [];
+        const mprGenerators: any[] = [];
 
-    const mprSheet = XLSX.utils.aoa_to_sheet(mprData);
-    
-    mprSheet['!cols'] = [{wch: 5}, {wch: 12}, {wch: 45}, {wch: 10}, {wch: 22}];
-    mprSheet['!views'] = [{ state: 'frozen', xSplit: 3, ySplit: 0, topLeftCell: 'D1' }];
-    mprSheet['!protect'] = undefined;
+        for (const p of targetPeriods) {
+          const { data: txs } = await supabase.from('transactions').select('*, categories(name, export_code, type)').eq('financial_period_id', p.id).order('date', { ascending: true });
+          const unassignedItems = (txs || []).filter(tx => !tx.category_id || tx.categories?.export_code === '???');
+          if (unassignedItems.length > 0) throw { count: unassignedItems.length, period: p.period_name };
 
-    const ledgerData = txs.map((tx: any) => ({
-      "Date": tx.date,
-      "Acct Code": tx.categories?.export_code || '',
-      "Account Name": tx.categories?.name || '',
-      "Payee / Source": tx.payee_name || '',
-      "Remarks / Ref No": `${tx.receipt_no ? `[${tx.receipt_no}] ` : ''}${tx.remarks || ''}`,
-      "Income (Php)": tx.type === 'INCOME' ? Number(tx.amount) : '',
-      "Expense (Php)": tx.type === 'EXPENSE' ? Number(tx.amount) : '',
-    }));
-    
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, mprSheet, "SCRD Monthly Report");
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(ledgerData), "Ledger Details");
-    
-    XLSX.writeFile(workbook, `ComBud_Report_${periodName.replace(' ', '_')}.xlsx`);
+          const { data: mprData } = await supabase.from('mpr_reports').select('*').eq('financial_period_id', p.id).single();
+          const monthShort = getMonthShort(p.period_name);
+
+          scrdGenerators.push(() => generateSCRDSheet(workbook, txs || [], p, p.period_name, monthShort));
+          mprGenerators.push(() => generateMPRSheet(workbook, mprData, p.period_name, `MPR_${monthShort}`));
+        }
+
+        scrdGenerators.forEach(fn => fn());
+        mprGenerators.forEach(fn => fn());
+        
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer]), `ComBud_FullYear_Export.xlsx`);
+
+      } else {
+        const p = periods.find(x => x.id === selectedPeriod);
+        if (p) {
+          const { data: txs } = await supabase.from('transactions').select('*, categories(name, export_code, type)').eq('financial_period_id', p.id).order('date', { ascending: true });
+          const unassignedItems = (txs || []).filter(tx => !tx.category_id || tx.categories?.export_code === '???');
+          if (unassignedItems.length > 0) throw { count: unassignedItems.length, period: p.period_name };
+
+          const { data: mprData } = await supabase.from('mpr_reports').select('*').eq('financial_period_id', p.id).single();
+          const monthShort = getMonthShort(p.period_name);
+          
+          generateSCRDSheet(workbook, txs || [], p, p.period_name, monthShort);
+          generateMPRSheet(workbook, mprData, p.period_name, `MPR_${monthShort}`);
+          
+          const buffer = await workbook.xlsx.writeBuffer();
+          saveAs(new Blob([buffer]), `ComBud_${p.period_name.replace(' ', '_')}.xlsx`);
+        }
+      }
+    } catch (err: any) {
+      if (err.count) {
+        setUnassignedCount(err.count);
+        setShowUnassignedModal(true);
+      } else {
+        alert("Export failed: " + err.message);
+      }
+    }
     setLoading(false);
   };
 
@@ -265,7 +427,7 @@ export default function ExportCenter() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Export Center</h1>
-        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Generate ComBud-compatible Excel reports.</p>
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Generate perfectly styled ComBud and MPR Excel reports.</p>
       </div>
 
       <div className="bento-card max-w-2xl mx-auto mt-10 space-y-8">
@@ -273,41 +435,47 @@ export default function ExportCenter() {
           <div className="mx-auto h-16 w-16 bg-emerald-50 dark:bg-emerald-950/50 rounded-2xl flex items-center justify-center mb-4 border border-emerald-100 dark:border-emerald-900/50">
             <FileSpreadsheet className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Generate Official ComBud Report</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Downloads the structured SCRD report for the Mission Church.</p>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Generate Official Reports</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Downloads styled SCRD and MPR spreadsheets with gridlines and wrapped text.</p>
         </div>
 
         <div className="space-y-6 border-t border-brand-border dark:border-brand-darkBorder pt-6">
           <div className="space-y-1.5">
-            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Financial Period</label>
-            <select className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-xs font-semibold text-slate-900 dark:text-white shadow-sm focus:border-brand dark:focus:border-emerald-500 focus:ring-1 focus:ring-brand" value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)}>
+            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Financial Period / Year Reference</label>
+            <select className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-xs font-semibold text-slate-900 dark:text-white shadow-sm focus:border-brand" value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)}>
               {periods.map(p => <option key={p.id} value={p.id}>{p.period_name}</option>)}
             </select>
           </div>
 
-          <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-start gap-3">
               <Settings className="h-5 w-5 text-slate-400 mt-0.5 shrink-0" />
               <div>
                 <label className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
-                  <input type="checkbox" checked={hideEmpty} onChange={(e) => setHideEmpty(e.target.checked)} className="rounded text-brand dark:text-emerald-600 focus:ring-brand h-4 w-4" />
+                  <input type="checkbox" checked={hideEmpty} onChange={(e) => setHideEmpty(e.target.checked)} className="rounded text-brand h-4 w-4" />
                   Smart Export (Hide Empty Rows)
                 </label>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 ml-6">
-                  Automatically eliminates blank fields from the final Excel file, leaving only the accounts that have transactions this month. Uncheck to export the massive blank template.
-                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <FileSpreadsheet className="h-5 w-5 text-brand mt-0.5 shrink-0" />
+              <div>
+                <label className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+                  <input type="checkbox" checked={exportFullYear} onChange={(e) => setExportFullYear(e.target.checked)} className="rounded text-brand h-4 w-4" />
+                  Export Entire Year (All Months Segregated)
+                </label>
+                <p className="text-[11px] text-slate-500 mt-1 ml-6">Generates a massive workbook containing SCRD and MPR sheets for every month in the selected year.</p>
               </div>
             </div>
           </div>
 
-          <button onClick={handleExport} disabled={loading || !selectedPeriod} className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-sm text-xs font-bold text-white bg-brand dark:bg-emerald-700 hover:bg-brand-dark dark:hover:bg-emerald-800 transition-colors">
+          <button onClick={handleExport} disabled={loading || !selectedPeriod} className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-sm text-xs font-bold text-white bg-brand dark:bg-emerald-700 hover:bg-brand-dark transition-colors">
             <Download className="h-4 w-4" />
-            {loading ? 'Generating Excel File...' : 'Download ComBud Export'}
+            {loading ? 'Generating Excel Workbook...' : 'Download ComBud & MPR Export'}
           </button>
         </div>
       </div>
 
-      {/* WORLD-CLASS UNASSIGNED TRANSACTIONS WARNING MODAL */}
       {showUnassignedModal && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
           <div className="w-full max-w-md bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-3xl p-8 shadow-2xl space-y-6 text-center animate-modal">
@@ -315,22 +483,13 @@ export default function ExportCenter() {
               <AlertTriangle className="h-8 w-8" />
             </div>
             <div className="space-y-1.5">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Export Blocked: Unassigned Values Found</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                This financial period contains <strong className="text-amber-600 dark:text-amber-400">{unassignedCount} unassigned transaction(s)</strong>. All entries must be properly categorized before generating the official ComBud report.
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Export Blocked</h3>
+              <p className="text-xs text-slate-500">
+                Found <strong className="text-amber-600 dark:text-amber-400">{unassignedCount} unassigned transaction(s)</strong>. They must be categorized before export.
               </p>
             </div>
-            <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-left text-xs text-slate-600 dark:text-slate-300 space-y-1">
-              <p className="font-bold text-slate-900 dark:text-white">Next Steps:</p>
-              <p>1. Go to the <strong>Transactions Ledger</strong>.</p>
-              <p>2. Filter or review items marked as <em>Unassigned / For Review</em>.</p>
-              <p>3. Assign them to their proper ComBud account codes.</p>
-            </div>
-            <button 
-              onClick={() => setShowUnassignedModal(false)}
-              className="w-full py-3 bg-brand dark:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md hover:bg-brand-dark transition-all"
-            >
-              Review Transactions
+            <button onClick={() => setShowUnassignedModal(false)} className="w-full py-3 bg-brand dark:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md hover:bg-brand-dark transition-all">
+              Acknowledge
             </button>
           </div>
         </div>

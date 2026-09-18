@@ -10,6 +10,7 @@ import CoopLedger from './pages/CoopLedger';
 import ExportCenter from './pages/ExportCenter';
 import Admin from './pages/Admin';
 import FinancialSetup from './pages/FinancialSetup';
+import MissionaryReport from './pages/MissionaryReport'; // NEW IMPORT
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
@@ -28,6 +29,7 @@ function AppRoutes() {
         <Route path="/mission-readiness" element={<MissionReadiness />} />
         <Route path="/coop-ledger" element={<CoopLedger />} />
         <Route path="/export-center" element={<ExportCenter />} />
+        <Route path="/missionary-report" element={<MissionaryReport />} /> {/* NEW ROUTE */}
         <Route path="/financial-setup" element={<FinancialSetup />} />
         <Route path="/admin" element={<Admin />} />
       </Route>

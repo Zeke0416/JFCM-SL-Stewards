@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Receipt, LogOut, FileSpreadsheet, CheckCircle, Settings, Moon, Sun, Menu, X, AlertTriangle, Landmark, Target } from 'lucide-react';
+import { LayoutDashboard, Receipt, LogOut, FileSpreadsheet, CheckCircle, Settings, Moon, Sun, Menu, X, AlertTriangle, Landmark, Target, FileText, ChevronDown, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,28 +17,15 @@ export default function Layout() {
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [userRole, setUserRole] = useState<string>('auditor'); 
 
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const minSwipeDistance = 50;
+  // Accordion Menu State
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
+    core: true,
+    audit: true,
+    missionary: true,
+    admin: false
+  });
 
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-    
-    if (isRightSwipe && !mobileMenuOpen && touchStart < 50) setMobileMenuOpen(true);
-    if (isLeftSwipe && mobileMenuOpen) setMobileMenuOpen(false);
-  };
+  const toggleMenu = (key: string) => setOpenMenus(p => ({ ...p, [key]: !p[key] }));
 
   useEffect(() => {
     if (user) checkUserStatus();
@@ -56,21 +43,48 @@ export default function Layout() {
     await supabase.auth.signOut();
   };
 
-  const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Transactions', href: '/transactions', icon: Receipt },
-    { name: 'Mission Readiness', href: '/mission-readiness', icon: CheckCircle },
-    { name: 'SJ Koop Ledger', href: '/coop-ledger', icon: Landmark },
-    { name: 'Export Center', href: '/export-center', icon: FileSpreadsheet },
+  // Define Grouped Navigation
+  const menuGroups = [
+    {
+      key: 'core',
+      title: 'Core Operations',
+      roles: ['admin', 'auditor', 'missionary'],
+      items: [
+        { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+        { name: 'Transactions', href: '/transactions', icon: Receipt },
+        { name: 'Export Center', href: '/export-center', icon: FileSpreadsheet },
+      ]
+    },
+    {
+      key: 'audit',
+      title: 'Audit & Ledger',
+      roles: ['admin', 'auditor'],
+      items: [
+        { name: 'Mission Readiness', href: '/mission-readiness', icon: CheckCircle },
+        { name: 'SJ Koop Ledger', href: '/coop-ledger', icon: Landmark },
+      ]
+    },
+    {
+      key: 'missionary',
+      title: 'Missionary Duty',
+      roles: ['admin', 'missionary'],
+      items: [
+        { name: 'MPR Reporting', href: '/missionary-report', icon: FileText },
+      ]
+    },
+    {
+      key: 'admin',
+      title: 'Administration',
+      roles: ['admin'],
+      items: [
+        { name: 'Financial Setup', href: '/financial-setup', icon: Target },
+        { name: 'System Admin', href: '/admin', icon: Settings },
+      ]
+    }
   ];
 
-  if (userRole === 'admin') {
-    navigation.push({ name: 'Financial Setup', href: '/financial-setup', icon: Target });
-    navigation.push({ name: 'System Admin', href: '/admin', icon: Settings });
-  }
-
   return (
-    <div className="flex h-screen bg-[#F4F6F4] dark:bg-[#0A0A0A] text-slate-800 dark:text-slate-100 transition-colors duration-200 overflow-hidden" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+    <div className="flex h-screen bg-[#F4F6F4] dark:bg-[#0A0A0A] text-slate-800 dark:text-slate-100 transition-colors duration-200 overflow-hidden">
       {mustChangePassword && user && <ForcePasswordChangeModal onSuccess={() => setMustChangePassword(false)} />}
 
       <div className={`md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30 transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setMobileMenuOpen(false)} aria-hidden="true" />
@@ -87,7 +101,7 @@ export default function Layout() {
       </div>
 
       <div className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-[#121212] border-r border-slate-200 dark:border-[#27272A] flex flex-col shadow-2xl transition-transform duration-300 ease-in-out z-40 md:z-0 md:translate-x-0 md:static md:shadow-none ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="h-20 hidden md:flex items-center px-6 border-b border-slate-200 dark:border-[#27272A] gap-3">
+        <div className="h-20 hidden md:flex items-center px-6 border-b border-slate-200 dark:border-[#27272A] gap-3 shrink-0">
           <img src={logo} alt="Logo" className="h-10 w-10 object-contain drop-shadow-sm" />
           <div>
             <h1 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-tight">JFCM-SL Stewards</h1>
@@ -95,20 +109,36 @@ export default function Layout() {
           </div>
         </div>
         
-        <nav className="flex-1 px-4 py-6 space-y-1.5 mt-16 md:mt-0 overflow-y-auto custom-scrollbar">
-          {navigation.map((item) => {
-            const isActive = location.pathname === item.href;
-            const Icon = item.icon;
+        <nav className="flex-1 px-4 py-4 space-y-4 mt-16 md:mt-0 overflow-y-auto custom-scrollbar">
+          {menuGroups.map((group) => {
+            if (!group.roles.includes(userRole)) return null;
+            const isOpen = openMenus[group.key];
             return (
-              <Link key={item.name} to={item.href} onClick={() => setMobileMenuOpen(false)} className={`flex items-center px-3.5 py-3 rounded-xl text-xs font-semibold transition-all duration-150 ${isActive ? 'bg-brand dark:bg-emerald-700 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'}`}>
-                <Icon className={`mr-3 h-4 w-4 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />
-                {item.name}
-              </Link>
+              <div key={group.key} className="space-y-1">
+                <button onClick={() => toggleMenu(group.key)} className="w-full flex items-center justify-between px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                  {group.title}
+                  {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                </button>
+                {isOpen && (
+                  <div className="space-y-1">
+                    {group.items.map((item) => {
+                      const isActive = location.pathname === item.href;
+                      const Icon = item.icon;
+                      return (
+                        <Link key={item.name} to={item.href} onClick={() => setMobileMenuOpen(false)} className={`flex items-center px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${isActive ? 'bg-brand dark:bg-emerald-700 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'}`}>
+                          <Icon className={`mr-3 h-4 w-4 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />
+                          {item.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-200 dark:border-[#27272A] space-y-2">
+        <div className="p-4 border-t border-slate-200 dark:border-[#27272A] space-y-2 shrink-0">
           <button onClick={toggleDarkMode} className="flex items-center justify-between w-full px-3.5 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors">
             <span className="flex items-center">
               {darkMode ? <Sun className="mr-3 h-4 w-4 text-amber-400" /> : <Moon className="mr-3 h-4 w-4 text-slate-400" />}
@@ -137,7 +167,7 @@ export default function Layout() {
               <div className="p-3 bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 rounded-2xl"><AlertTriangle className="h-6 w-6" /></div>
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">Confirm Sign Out</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Are you sure you want to end your secure audit session?</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Are you sure you want to end your secure session?</p>
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-2">

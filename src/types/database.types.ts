@@ -148,3 +148,33 @@ export interface CoopMonthlyLog {
   rate_updated_by: string | null;
   created_at: string;
 }
+
+export interface WorshipServiceLog {
+  week: number;
+  dateStr: string;
+  title: string;
+  preacher: string;
+  objective: string;
+  text: string;
+  adults: number;
+  children: number;
+}
+
+export interface ProjectLog {
+  id: string;
+  type: string;
+  name: string;
+  schedule: string;
+  actual: string;
+}
+
+export interface MPRReport {
+  id: string;
+  church_id: string;
+  financial_period_id: string;
+  pm_name: string;
+  overseer_name: string;
+  worship_services: WorshipServiceLog[];
+  projects: ProjectLog[];
+  created_at: string;
+}
