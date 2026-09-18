@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { FileText, Save, CheckCircle2, Loader2, Calendar } from 'lucide-react';
-import type { FinancialPeriod, MPRReport, WorshipServiceLog, ProjectLog } from '../types/database.types';
+import type { FinancialPeriod, WorshipServiceLog, ProjectLog } from '../types/database.types';
 
 export default function MissionaryReport() {
   const { user } = useAuth();

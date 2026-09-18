@@ -6,14 +6,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Download, FileSpreadsheet, Settings, AlertTriangle, X } from 'lucide-react';
+import { Download, FileSpreadsheet, Settings, AlertTriangle } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import type { FinancialPeriod, MPRReport } from '../types/database.types';
 
 export default function ExportCenter() {
   const { user } = useAuth();
-  const [churchId, setChurchId] = useState('');
   const [periods, setPeriods] = useState<FinancialPeriod[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,7 +30,6 @@ export default function ExportCenter() {
   const fetchInitialData = async () => {
     const { data: profile } = await supabase.from('profiles').select('church_id').eq('id', user?.id).single();
     if (profile) {
-      setChurchId(profile.church_id);
       const { data: periodData } = await supabase.from('financial_periods').select('*').eq('church_id', profile.church_id).order('month', { ascending: false });
       if (periodData) {
         setPeriods(periodData);
@@ -39,7 +37,6 @@ export default function ExportCenter() {
       }
     }
   };
-
   const getMonthShort = (periodName: string) => periodName.split(' ')[0].substring(0,3);
 
   /**
