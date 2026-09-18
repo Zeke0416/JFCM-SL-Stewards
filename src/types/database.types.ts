@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'auditor';
+export type UserRole = 'admin' | 'auditor' | 'missionary';
 export type TransactionType = 'INCOME' | 'EXPENSE';
 export type PeriodStatus = 'OPEN' | 'UNDER_REVIEW' | 'REVIEWED' | 'READY_FOR_SUBMISSION' | 'LOCKED';
 export type DuplicateReceiptRule = 'ALLOWED' | 'WARNING' | 'BLOCKED';
@@ -15,8 +15,10 @@ export interface Profile {
   id: string;
   church_id: string;
   full_name: string;
-  role: 'admin' | 'auditor' | 'missionary'
+  role: UserRole;
   is_active: boolean;
+  must_change_password: boolean;
+  created_at: string;
 }
 
 export interface FinancialYear {
@@ -24,7 +26,9 @@ export interface FinancialYear {
   church_id: string;
   year: number;
   approved_budget: number;
+  category_targets: Record<string, number>; // NEW: Stores { category_id: target_amount }
   is_closed: boolean;
+  created_at: string;
 }
 
 export interface FinancialPeriod {
@@ -33,7 +37,15 @@ export interface FinancialPeriod {
   financial_year_id: string;
   month: number;
   period_name: string;
-  status: 'OPEN' | 'UNDER_REVIEW' | 'REVIEWED' | 'READY FOR SUBMISSION' | 'LOCKED';
+  status: 'OPEN' | 'CLOSED' | 'LOCKED';
+  beginning_balance: number;
+  cib_savings: number;
+  cib_current: number;
+  cib_time_deposit: number;
+  coh_petty_cash: number;
+  coh_undeposited: number;
+  coh_advances: number;
+  created_at: string;
 }
 
 export interface Category {
@@ -42,27 +54,23 @@ export interface Category {
   type: TransactionType;
   export_code: string;
   name: string;
-  description: string | null;
-  is_active: boolean;
   sort_order: number;
   created_at: string;
-  updated_at: string;
 }
 
 export interface Transaction {
   id: string;
   church_id: string;
   financial_period_id: string;
-  category_id: string;
+  category_id: string | null; // Allows null for unassigned transactions
   date: string;
   type: TransactionType;
-  receipt_no: string | null;
-  receipt_url?: string | null;
-  receipt_exempt?: boolean | null;
-  remarks: string | null;
-  payee_name: string | null;
   amount: number;
-  notes: string | null;
+  receipt_no: string | null;
+  payee_name: string | null;
+  remarks: string | null;
+  receipt_url: string | null;
+  receipt_exempt: boolean;
   entered_by: string;
   created_at: string;
 }
@@ -114,4 +122,29 @@ export interface SystemSettings {
   duplicate_receipt_behavior: DuplicateReceiptRule;
   created_at: string;
   updated_at: string;
+}
+
+export interface CoopWeeklyLog {
+  id: string;
+  date: string;
+  type: 'DEPOSIT' | 'WITHDRAWAL';
+  amount: number;
+  remarks: string;
+  encoded_by: string;
+}
+
+export interface CoopMonthlyLog {
+  id: string;
+  church_id: string;
+  financial_period_id: string;
+  month: number;
+  beginning_balance: number;
+  deposit: number; 
+  withdrawal: number;
+  weekly_logs: CoopWeeklyLog[];
+  interest_rate: number;
+  interest_earned: number;
+  ending_balance: number;
+  rate_updated_by: string | null;
+  created_at: string;
 }

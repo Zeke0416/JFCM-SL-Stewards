@@ -1,17 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Wallet, TrendingUp, TrendingDown, Activity, CheckCircle2, ShieldCheck, ArrowUpRight } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Activity, CheckCircle2, ShieldCheck, ArrowUpRight, Target } from 'lucide-react';
+import type { Category, FinancialYear } from '../types/database.types';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+  
+  // Dashboard Metrics
   const [metrics, setMetrics] = useState({
     totalIncome: 0,
     totalExpense: 0,
     netBalance: 0,
     transactionCount: 0
   });
+
+  // Track Progress of Category Budgets
+  const [trackedBudgets, setTrackedBudgets] = useState<{ id: string, name: string, current: number, target: number, percent: number }[]>([]);
 
   useEffect(() => {
     if (user) fetchDashboardData();
@@ -22,33 +29,64 @@ export default function Dashboard() {
     const { data: profile } = await supabase.from('profiles').select('church_id').eq('id', user?.id).single();
     
     if (profile) {
-      const { data: txs } = await supabase
-        .from('transactions')
-        .select('amount, type')
-        .eq('church_id', profile.church_id);
+      // 1. Get Categories for name resolution
+      const { data: cats } = await supabase.from('categories').select('*').eq('church_id', profile.church_id);
+      if (cats) setCategories(cats);
 
-      if (txs) {
-        let inc = 0;
-        let exp = 0;
-        txs.forEach(tx => {
-          if (tx.type === 'INCOME') inc += Number(tx.amount);
-          if (tx.type === 'EXPENSE') exp += Number(tx.amount);
-        });
+      // 2. Fetch the ACTIVE CURRENT YEAR (Most recent year)
+      const { data: latestYearData } = await supabase.from('financial_years').select('*').eq('church_id', profile.church_id).order('year', { ascending: false }).limit(1).single();
+      
+      if (latestYearData) {
+        // Fetch periods belonging ONLY to this year to guarantee YTD math
+        const { data: currentPeriods } = await supabase.from('financial_periods').select('id').eq('financial_year_id', latestYearData.id);
+        const periodIds = (currentPeriods || []).map(p => p.id);
 
-        setMetrics({
-          totalIncome: inc,
-          totalExpense: exp,
-          netBalance: inc - exp,
-          transactionCount: txs.length
-        });
+        if (periodIds.length > 0) {
+          // Fetch transactions ONLY for the current year periods
+          const { data: txs } = await supabase.from('transactions').select('amount, type, category_id').in('financial_period_id', periodIds);
+          
+          if (txs) {
+            let inc = 0;
+            let exp = 0;
+            
+            // Map running totals per category
+            const categorySums: Record<string, number> = {};
+
+            txs.forEach(tx => {
+              if (tx.type === 'INCOME') inc += Number(tx.amount);
+              if (tx.type === 'EXPENSE') exp += Number(tx.amount);
+              
+              if (tx.category_id) {
+                 categorySums[tx.category_id] = (categorySums[tx.category_id] || 0) + Number(tx.amount);
+              }
+            });
+
+            setMetrics({ totalIncome: inc, totalExpense: exp, netBalance: inc - exp, transactionCount: txs.length });
+
+            // 3. Process the Tracked Budgets against actual transactions
+            const targets = latestYearData.category_targets || {};
+            const budgetData = [];
+            
+            for (const catId in targets) {
+               if (targets[catId] > 0) {
+                  const targetAmt = targets[catId];
+                  const currentAmt = categorySums[catId] || 0;
+                  const percent = Math.min((currentAmt / targetAmt) * 100, 100);
+                  const catName = cats?.find(c => c.id === catId)?.name || 'Unknown Category';
+                  
+                  budgetData.push({ id: catId, name: catName, current: currentAmt, target: targetAmt, percent });
+               }
+            }
+            
+            setTrackedBudgets(budgetData);
+          }
+        }
       }
     }
     setLoading(false);
   };
 
-  const formatPHP = (amount: number) => {
-    return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
-  };
+  const formatPHP = (amount: number) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
 
   if (loading) return <div className="p-12 text-center text-slate-500 dark:text-slate-400 font-medium text-xs">Loading financial metrics...</div>;
 
@@ -62,8 +100,6 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-        
-        {/* Net Balance Card - Fixed light mode styling with explicit background */}
         <div className="bg-brand dark:bg-[#121212] text-white rounded-2xl p-6 shadow-sm relative overflow-hidden flex flex-col justify-between border-none dark:border dark:border-[#27272A]">
           <div className="relative z-10 space-y-1">
             <p className="text-brand-light/80 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">Net Balance YTD</p>
@@ -75,7 +111,6 @@ export default function Dashboard() {
           <Wallet className="absolute right-[-15px] bottom-[-15px] h-32 w-32 text-white opacity-10 pointer-events-none" />
         </div>
 
-        {/* Total Income */}
         <div className="bento-card flex flex-col justify-between space-y-4 bg-white dark:bg-[#121212]">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Income</p>
@@ -89,7 +124,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Total Expense */}
         <div className="bento-card flex flex-col justify-between space-y-4 bg-white dark:bg-[#121212]">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Expenses</p>
@@ -103,7 +137,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Activity */}
         <div className="bento-card flex flex-col justify-between space-y-4 bg-white dark:bg-[#121212]">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Activity Log</p>
@@ -113,11 +146,48 @@ export default function Dashboard() {
           </div>
           <div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white">{metrics.transactionCount}</h3>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Total transactions encoded</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Total transactions encoded YTD</p>
           </div>
         </div>
-
       </div>
+
+      {/* DYNAMIC CATEGORY BUDGET TRACKING (Only renders if targets are set) */}
+      {trackedBudgets.length > 0 && (
+        <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-brand dark:text-emerald-500" />
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Budget & Target Tracking YTD</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {trackedBudgets.map(budget => (
+              <div key={budget.id} className="bento-card bg-white dark:bg-[#121212] p-5 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{budget.name}</p>
+                    <p className="text-lg font-black text-slate-900 dark:text-white mt-0.5">{formatPHP(budget.current)}</p>
+                  </div>
+                  <span className="text-xs font-bold text-brand dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-900/50">
+                    {budget.percent.toFixed(1)}%
+                  </span>
+                </div>
+                
+                <div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                    <div className="bg-brand dark:bg-emerald-500 h-2.5 rounded-full transition-all duration-1000 ease-out" style={{ width: `${budget.percent}%` }}></div>
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-[10px] text-slate-400 font-medium">Target: {formatPHP(budget.target)}</p>
+                    {budget.current < budget.target && (
+                      <p className="text-[10px] text-slate-400 font-medium text-right italic">{formatPHP(budget.target - budget.current)} needed</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="bento-card xl:col-span-2 space-y-5 flex flex-col justify-between bg-white dark:bg-[#121212]">
@@ -173,7 +243,6 @@ export default function Dashboard() {
             <p className="text-[11px] text-slate-400 italic">JFCM-SL Stewards v2.6 - Production Ready</p>
           </div>
         </div>
-
       </div>
     </div>
   );

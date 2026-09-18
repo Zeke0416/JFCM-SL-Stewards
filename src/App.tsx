@@ -6,8 +6,10 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import MissionReadiness from './pages/MissionReadiness';
+import CoopLedger from './pages/CoopLedger';
 import ExportCenter from './pages/ExportCenter';
 import Admin from './pages/Admin';
+import FinancialSetup from './pages/FinancialSetup';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
@@ -24,7 +26,9 @@ function AppRoutes() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/mission-readiness" element={<MissionReadiness />} />
+        <Route path="/coop-ledger" element={<CoopLedger />} />
         <Route path="/export-center" element={<ExportCenter />} />
+        <Route path="/financial-setup" element={<FinancialSetup />} />
         <Route path="/admin" element={<Admin />} />
       </Route>
     </Routes>

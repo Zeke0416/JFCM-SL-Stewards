@@ -36,6 +36,8 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
     });
   }
 
+  const isUnassigned = !transaction.categories;
+
   // Render the modal directly into the document.body using React Portals
   return createPortal(
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-200">
@@ -80,8 +82,8 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <Tag className="h-3.5 w-3.5" /> ComBud Category
               </span>
-              <p className="text-xs font-bold text-slate-900 dark:text-white pt-1">
-                [{transaction.categories?.export_code}] {transaction.categories?.name}
+              <p className={`text-xs font-bold pt-1 ${isUnassigned ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
+                [{transaction.categories?.export_code || '???'}] {transaction.categories?.name || 'Unassigned / For Review'}
               </p>
             </div>
 

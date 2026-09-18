@@ -1,7 +1,12 @@
+// ==========================================
+// EXPORT CENTER COMPONENT
+// Purpose: Generates ComBud-compatible Excel reports with unassigned transaction validation.
+// ==========================================
+
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Download, FileSpreadsheet, Settings } from 'lucide-react';
+import { Download, FileSpreadsheet, Settings, AlertTriangle, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { FinancialPeriod } from '../types/database.types';
 
@@ -12,6 +17,14 @@ export default function ExportCenter() {
   const [loading, setLoading] = useState(false);
   const [hideEmpty, setHideEmpty] = useState(true);
 
+  // Unassigned Validation Modal State
+  const [showUnassignedModal, setShowUnassignedModal] = useState(false);
+  const [unassignedCount, setUnassignedCount] = useState(0);
+
+  /**
+   * Fetches initial financial periods for export selection on component mount.
+   * Purpose: Populates the period dropdown.
+   */
   useEffect(() => {
     if (user) fetchInitialData();
   }, [user]);
@@ -27,26 +40,40 @@ export default function ExportCenter() {
     }
   };
 
+  /**
+   * Validates transactions for unassigned items before generating the Excel export.
+   * Purpose: Prevents exporting reports containing unclassified accounts.
+   */
   const handleExport = async () => {
     setLoading(true);
     const periodName = periods.find(p => p.id === selectedPeriod)?.period_name || 'Export';
     
     const { data: txs } = await supabase.from('transactions').select('*, categories(name, export_code, type)').eq('financial_period_id', selectedPeriod).order('date', { ascending: true });
+
+    if (!txs || txs.length === 0) {
+      alert("No transactions found for this period.");
+      setLoading(false); 
+      return;
+    }
+
+    // VALIDATION: Check if any transaction is unassigned
+    const unassignedItems = txs.filter(tx => !tx.category_id || tx.categories?.export_code === '???');
+    if (unassignedItems.length > 0) {
+      setUnassignedCount(unassignedItems.length);
+      setShowUnassignedModal(true);
+      setLoading(false);
+      return;
+    }
     
     // Fetch reconciliation data directly from the financial_periods table
     const { data: currentPeriod } = await supabase.from('financial_periods').select('*').eq('id', selectedPeriod).single();
     const recon = currentPeriod;
 
-    if (!txs || txs.length === 0) {
-      alert("No transactions found for this period.");
-      setLoading(false); return;
-    }
-
     const sums: Record<string, number> = {};
     let totalIncome = 0;
     let totalExpense = 0;
 
-    txs.forEach(tx => {
+    txs.forEach((tx: any) => {
       const code = tx.categories?.export_code || 'UNCATEGORIZED';
       const type = tx.type;
       const key = `${code}_${type}`;
@@ -61,12 +88,11 @@ export default function ExportCenter() {
 
     const buildStandardSection = (prefix: string, title: string, type: 'INCOME' | 'EXPENSE', items: {c: string, n: string}[]) => {
       const rows: any[] = [];
-      const activeItems = items.filter(i => !hideEmpty || getSum(i.c, type) !== 0);
+      const activeItems = items.filter((i: {c: string, n: string}) => !hideEmpty || getSum(i.c, type) !== 0);
 
       if (activeItems.length > 0 || !hideEmpty) {
-        // Section header label in Column C
         rows.push([null, null, `${prefix} - ${title}`]);
-        activeItems.forEach(i => {
+        activeItems.forEach((i: {c: string, n: string}) => {
           rows.push([null, i.c, i.n, null, getSum(i.c, type)]);
           processedKeys.add(`${i.c}_${type}`);
         });
@@ -74,24 +100,22 @@ export default function ExportCenter() {
       return rows;
     };
 
-    // Special builder for Project Expenses (D.1, D.2, D.3) to list itemized breakdown nodes individually
     const buildProjectSection = (prefix: string, title: string, items: {c: string, n: string}[]) => {
       const rows: any[] = [];
       let hasContent = false;
       const sectionRows: any[] = [];
 
-      items.forEach(i => {
-        const matchingTxs = txs.filter(t => t.categories?.export_code === i.c && t.type === 'EXPENSE');
+      items.forEach((i: {c: string, n: string}) => {
+        const matchingTxs = txs.filter((t: any) => t.categories?.export_code === i.c && t.type === 'EXPENSE');
         if (matchingTxs.length > 0) {
           hasContent = true;
           sectionRows.push([null, i.c, i.n, null, null]); 
           processedKeys.add(`${i.c}_EXPENSE`);
 
-          matchingTxs.forEach(tx => {
+          matchingTxs.forEach((tx: any) => {
             const breakdownMatch = tx.remarks?.match(/\[Breakdown: (.*?)\]/);
             if (breakdownMatch) {
               const pairs = breakdownMatch[1].split(', ');
-              // FIX: Explicitly typed 'pair' as a string here
               pairs.forEach((pair: string) => {
                 const lastColon = pair.lastIndexOf(': ₱');
                 if (lastColon !== -1) {
@@ -141,10 +165,10 @@ export default function ExportCenter() {
       ...buildStandardSection('B.2', 'Other Receipts', 'INCOME', b2),
     ];
 
-    Object.keys(sums).forEach(key => {
+    Object.keys(sums).forEach((key: string) => {
       const [code, type] = key.split('_');
       if (type === 'INCOME' && !processedKeys.has(key) && sums[key] !== 0) {
-        const catName = txs.find(t => t.categories?.export_code === code)?.categories?.name || 'Uncategorized';
+        const catName = txs.find((t: any) => t.categories?.export_code === code)?.categories?.name || 'Uncategorized';
         mprData.push([null, code, `*${catName} (Auto-Appended)`, null, sums[key]]);
       }
     });
@@ -160,17 +184,17 @@ export default function ExportCenter() {
       ...buildProjectSection('D.3', 'Special Events', d3),
     );
 
-    Object.keys(sums).forEach(key => {
+    Object.keys(sums).forEach((key: string) => {
       const [code, type] = key.split('_');
       if (type === 'EXPENSE' && !processedKeys.has(key) && sums[key] !== 0) {
-        const catName = txs.find(t => t.categories?.export_code === code)?.categories?.name || 'Uncategorized';
+        const catName = txs.find((t: any) => t.categories?.export_code === code)?.categories?.name || 'Uncategorized';
         mprData.push([null, code, `*${catName} (Auto-Appended)`, null, sums[key]]);
       }
     });
 
     const totalCash = (Number(recon?.cib_savings)||0) + (Number(recon?.cib_current)||0) + (Number(recon?.cib_time_deposit)||0) + (Number(recon?.coh_petty_cash)||0) + (Number(recon?.coh_undeposited)||0) + (Number(recon?.coh_advances)||0);
     const rawDiff = (totalAandB - totalExpense) - totalCash;
-    const cleanDifference = Number(rawDiff.toFixed(2)); // Fixed floating-point precision error
+    const cleanDifference = Number(rawDiff.toFixed(2));
 
     mprData.push(
       [null, null, 'TOTAL ENDING BALANCE = (A + B) - (C + D)', null, totalAandB - totalExpense],
@@ -215,14 +239,11 @@ export default function ExportCenter() {
 
     const mprSheet = XLSX.utils.aoa_to_sheet(mprData);
     
-    // Column C width reduced to 45, values in Column E
     mprSheet['!cols'] = [{wch: 5}, {wch: 12}, {wch: 45}, {wch: 10}, {wch: 22}];
-    
-    // Freeze columns A through C (xSplit: 3) and ensure workbook is unprotected
     mprSheet['!views'] = [{ state: 'frozen', xSplit: 3, ySplit: 0, topLeftCell: 'D1' }];
     mprSheet['!protect'] = undefined;
 
-    const ledgerData = txs.map(tx => ({
+    const ledgerData = txs.map((tx: any) => ({
       "Date": tx.date,
       "Acct Code": tx.categories?.export_code || '',
       "Account Name": tx.categories?.name || '',
@@ -285,6 +306,35 @@ export default function ExportCenter() {
           </button>
         </div>
       </div>
+
+      {/* WORLD-CLASS UNASSIGNED TRANSACTIONS WARNING MODAL */}
+      {showUnassignedModal && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-3xl p-8 shadow-2xl space-y-6 text-center animate-modal">
+            <div className="mx-auto h-16 w-16 bg-amber-100 dark:bg-amber-950/60 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 animate-bounce">
+              <AlertTriangle className="h-8 w-8" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Export Blocked: Unassigned Values Found</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                This financial period contains <strong className="text-amber-600 dark:text-amber-400">{unassignedCount} unassigned transaction(s)</strong>. All entries must be properly categorized before generating the official ComBud report.
+              </p>
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-left text-xs text-slate-600 dark:text-slate-300 space-y-1">
+              <p className="font-bold text-slate-900 dark:text-white">Next Steps:</p>
+              <p>1. Go to the <strong>Transactions Ledger</strong>.</p>
+              <p>2. Filter or review items marked as <em>Unassigned / For Review</em>.</p>
+              <p>3. Assign them to their proper ComBud account codes.</p>
+            </div>
+            <button 
+              onClick={() => setShowUnassignedModal(false)}
+              className="w-full py-3 bg-brand dark:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md hover:bg-brand-dark transition-all"
+            >
+              Review Transactions
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
