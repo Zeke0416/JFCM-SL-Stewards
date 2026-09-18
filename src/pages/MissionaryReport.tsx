@@ -128,11 +128,18 @@ export default function MissionaryReport() {
     setProjects(updated);
   };
 
-  // Helper to dynamically auto-resize textareas to fit their content perfectly
+  // Helper to dynamically auto-resize textareas to fit their content perfectly on input and load
   const handleAutoResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
     const target = e.currentTarget;
     target.style.height = 'auto';
     target.style.height = `${target.scrollHeight}px`;
+  };
+
+  const autoResizeRef = (el: HTMLTextAreaElement | null) => {
+    if (el) {
+      el.style.height = 'auto';
+      el.style.height = `${el.scrollHeight}px`;
+    }
   };
 
   // Compute Averages
@@ -186,7 +193,6 @@ export default function MissionaryReport() {
         </button>
       </div>
 
-      {/* FIX: Replaced Flexbox with CSS Grid to enforce identical 50/50 sizing on the Name inputs */}
       <div className="bento-card p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white dark:bg-[#121212]">
         <div className="flex items-center gap-3 w-full lg:w-auto shrink-0">
           <Calendar className="h-5 w-5 text-slate-400 shrink-0" />
@@ -230,6 +236,7 @@ export default function MissionaryReport() {
                     <div className="space-y-2">
                       <textarea 
                         rows={1} 
+                        ref={autoResizeRef}
                         className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-medium text-slate-900 dark:text-white focus:border-brand resize-none shadow-sm overflow-hidden" 
                         value={ws.title} 
                         onInput={handleAutoResize}
@@ -249,6 +256,7 @@ export default function MissionaryReport() {
                   <td className="p-4 align-top">
                     <textarea 
                       rows={2} 
+                      ref={autoResizeRef}
                       className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-medium text-slate-900 dark:text-white focus:border-brand resize-none shadow-sm overflow-hidden" 
                       value={ws.objective} 
                       onInput={handleAutoResize}
