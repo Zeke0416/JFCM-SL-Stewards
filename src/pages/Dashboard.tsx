@@ -1,13 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Wallet, TrendingUp, TrendingDown, Activity, CheckCircle2, ShieldCheck, ArrowUpRight, Target } from 'lucide-react';
-import type { Category, FinancialYear } from '../types/database.types';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([]);
   
   // Dashboard Metrics
   const [metrics, setMetrics] = useState({
@@ -31,7 +29,6 @@ export default function Dashboard() {
     if (profile) {
       // 1. Get Categories for name resolution
       const { data: cats } = await supabase.from('categories').select('*').eq('church_id', profile.church_id);
-      if (cats) setCategories(cats);
 
       // 2. Fetch the ACTIVE CURRENT YEAR (Most recent year)
       const { data: latestYearData } = await supabase.from('financial_years').select('*').eq('church_id', profile.church_id).order('year', { ascending: false }).limit(1).single();
@@ -151,7 +148,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* DYNAMIC CATEGORY BUDGET TRACKING (Only renders if targets are set) */}
       {trackedBudgets.length > 0 && (
         <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2">
@@ -243,6 +239,7 @@ export default function Dashboard() {
             <p className="text-[11px] text-slate-400 italic">JFCM-SL Stewards v2.6 - Production Ready</p>
           </div>
         </div>
+
       </div>
     </div>
   );
