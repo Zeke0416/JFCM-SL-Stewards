@@ -9,6 +9,7 @@ import MissionReadiness from './pages/MissionReadiness';
 import CoopLedger from './pages/CoopLedger';
 import ExportCenter from './pages/ExportCenter';
 import Admin from './pages/Admin';
+import Tithers from './pages/Tithers';
 import FinancialSetup from './pages/FinancialSetup';
 import MissionaryReport from './pages/MissionaryReport'; // NEW IMPORT
 
@@ -29,6 +30,7 @@ function AppRoutes() {
         <Route path="/mission-readiness" element={<MissionReadiness />} />
         <Route path="/coop-ledger" element={<CoopLedger />} />
         <Route path="/export-center" element={<ExportCenter />} />
+        <Route path="/tithers" element={<Tithers />} />
         <Route path="/missionary-report" element={<MissionaryReport />} /> {/* NEW ROUTE */}
         <Route path="/financial-setup" element={<FinancialSetup />} />
         <Route path="/admin" element={<Admin />} />

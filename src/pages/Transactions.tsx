@@ -1,14 +1,11 @@
-// ==========================================
-// TRANSACTIONS PAGE COMPONENT
-// Purpose: Ledger management with search, sorting, filtering, and a Category Guide.
-// ==========================================
-
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Transaction, Category, FinancialPeriod } from '../types/database.types';
-import { Plus, Search, Receipt, UserCircle, ArrowUpDown, ArrowDown, ArrowUp, Edit2, Eye, Calendar, Trash2, Paperclip, CheckCircle2, AlertTriangle, BookOpen, X, Tag } from 'lucide-react';
+import { Plus, Search, Receipt, UserCircle, ArrowUpDown, ArrowDown, ArrowUp, Edit2, Eye, Calendar, Trash2, Paperclip, CheckCircle2, AlertTriangle, BookOpen, X, Activity, ToggleLeft, ToggleRight, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import TransactionModal from '../components/TransactionModal';
 import TransactionDetailModal from '../components/TransactionDetailModal';
+import CategoryGuideModal from '../components/CategoryGuideModal';
+import TransactionLogsModal from '../components/TransactionLogsModal';
 import { useAuth } from '../contexts/AuthContext';
 
 type EnrichedTransaction = Transaction & { 
@@ -24,17 +21,21 @@ export default function Transactions() {
   const [transactions, setTransactions] = useState<EnrichedTransaction[]>([]);
   const [periods, setPeriods] = useState<FinancialPeriod[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); 
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<EnrichedTransaction | null>(null);
   const [viewingTx, setViewingTx] = useState<EnrichedTransaction | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [showCategoryGuide, setShowCategoryGuide] = useState(false);
+  const [showLogsModal, setShowLogsModal] = useState(false);
   
+  // Deletion Modal State
+  const [deleteTxParams, setDeleteTxParams] = useState<{id: string, description: string} | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [guideSearchQuery, setGuideSearchQuery] = useState('');
-  const [guideTab, setGuideTab] = useState<'INCOME' | 'EXPENSE'>('INCOME');
-  
+  const [detailedMode, setDetailedMode] = useState(false);
   const [activeTab, setActiveTab] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
   const [selectedPeriodFilter, setSelectedPeriodFilter] = useState<string>('ALL');
   const [churchId, setChurchId] = useState<string>('');
@@ -44,34 +45,21 @@ export default function Transactions() {
 
   const exemptKeywords = ['love gift', 'compassion', 'honorarium', 'allowance', 'benevolence', 'remittance', 'tithe'];
 
-  const categoryGuideData = [
-    { code: '5011', type: 'INCOME', name: 'Tithes - Local', desc: 'Standard 10% tithes collected from local congregation members.', example: 'Sunday service tithe envelopes.' },
-    { code: '5015', type: 'INCOME', name: 'Tithes - Foreign', desc: 'Tithes received from members or groups abroad.', example: 'Overseas remittances.' },
-    { code: '5021', type: 'INCOME', name: 'Offerings - Local', desc: 'General freewill offerings collected during standard local services.', example: 'Loose cash in offering bags.' },
-    { code: '5022', type: 'INCOME', name: 'Offerings - Compassion Fund', desc: 'Specific offerings designated for benevolence and helping those in need.', example: 'Special collection for a sick member.' },
-    { code: '5031', type: 'INCOME', name: 'Pledges - Local', desc: 'Fulfilled financial pledges and commitments from local members.', example: 'Building fund pledge payments.' },
-    { code: '7300', type: 'INCOME', name: 'Miscellaneous Receipts', desc: 'Any other income that does not fall under standard tithes or offerings.', example: 'Sale of old church chairs or equipment.' },
-    { code: '1115', type: 'INCOME', name: 'Accounts Receivable - Others', desc: 'Payments received for loans or advances previously given out.', example: 'Staff returning a cash advance.' },
-    { code: '6010', type: 'EXPENSE', name: 'Salaries & Wages', desc: 'Gross compensation paid to official church employees.', example: 'Monthly salary for the administrative assistant.' },
-    { code: '6030', type: 'EXPENSE', name: 'Love Gift - Personnel', desc: 'Financial blessings or allowances given to official church personnel.', example: 'Holiday bonus for church staff.' },
-    { code: '6401', type: 'EXPENSE', name: 'Love Gift - Missionaries/Workers', desc: 'Financial blessings given to guest speakers, workers, or missionaries.', example: 'Love gift for a guest pastor.' },
-    { code: '6910', type: 'EXPENSE', name: 'Electricity', desc: 'Monthly electrical utility bills for the church facility.', example: 'Meralco bill payment.' },
-    { code: '6920', type: 'EXPENSE', name: 'Water', desc: 'Monthly water utility bills for the church facility.', example: 'Maynilad or local water district bill.' },
-    { code: '6945', type: 'EXPENSE', name: 'Internet Expense', desc: 'Internet connection bills.', example: 'PLDT or Converge monthly fiber bill.' },
-    { code: '6710', type: 'EXPENSE', name: 'Stationeries & Office Equipment Supplies', desc: 'Consumable supplies used for church administration.', example: 'Bond paper, ink, pens, envelopes.' },
-    { code: '6210', type: 'EXPENSE', name: 'Food & Refreshments', desc: 'Consumable food and drinks for church meetings or volunteer work.', example: 'Lunch for the worship team practice.' },
-    { code: '6691', type: 'EXPENSE', name: 'Repair & Maint. - Building', desc: 'Expenses for maintaining or fixing the physical church property.', example: 'Roof leak repair, painting materials.' },
-    { code: '6351', type: 'EXPENSE', name: 'Outdoor Fellowship', desc: 'Expenses related to outdoor church gatherings or outings.', example: 'Venue rental for church picnic or retreat.' },
-    { code: '6422', type: 'EXPENSE', name: 'Compassion Expense', desc: 'Funds released directly to individuals for charity or medical assistance.', example: 'Financial aid for a member in the hospital.' },
-    { code: '6990', type: 'EXPENSE', name: 'Miscellaneous Expense', desc: 'Small, unclassifiable expenses that do not fit into other specific categories.', example: 'Emergency hardware store purchases.' }
-  ];
-
   useEffect(() => {
     if (user) fetchInitialData();
-  }, [user]);
+  }, [user, refreshTrigger]); 
+
+  useEffect(() => {
+    if (!churchId) return;
+    const channel = supabase.channel('schema-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+         setRefreshTrigger(prev => prev + 1); 
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [churchId]);
 
   const fetchInitialData = async () => {
-    setLoading(true);
     const { data: profile } = await supabase.from('profiles').select('church_id').eq('id', user?.id).single();
 
     if (profile) {
@@ -86,13 +74,16 @@ export default function Transactions() {
 
       if (periodRes.data) {
         setPeriods(periodRes.data);
-        if (periodRes.data.length > 0) {
+        const cachedPeriod = localStorage.getItem('selectedPeriodFilter');
+        
+        if (cachedPeriod && periodRes.data.some(p => p.id === cachedPeriod)) {
+          setSelectedPeriodFilter(cachedPeriod);
+        } else if (periodRes.data.length > 0) {
           const now = new Date();
           const currentMonth = now.getMonth() + 1;
-          const currentPeriod = periodRes.data.find(p => p.month === currentMonth && p.status === 'OPEN') ||
-                                periodRes.data.find(p => p.status === 'OPEN') ||
-                                periodRes.data[0];
-          if (currentPeriod) setSelectedPeriodFilter(currentPeriod.id);
+          const currentPeriod = periodRes.data.find(p => p.month === currentMonth && p.status === 'OPEN') || periodRes.data.find(p => p.status === 'OPEN') || periodRes.data[0];
+          setSelectedPeriodFilter(currentPeriod.id);
+          localStorage.setItem('selectedPeriodFilter', currentPeriod.id);
         }
       }
 
@@ -110,9 +101,10 @@ export default function Transactions() {
     setLoading(false);
   };
 
-  const unassignedCount = useMemo(() => {
-    return transactions.filter(tx => !tx.categories || tx.categories.export_code === '???').length;
-  }, [transactions]);
+  const handlePeriodChange = (val: string) => {
+    setSelectedPeriodFilter(val);
+    localStorage.setItem('selectedPeriodFilter', val);
+  };
 
   const handleEdit = (tx: EnrichedTransaction) => {
     setEditingTx(tx);
@@ -129,14 +121,27 @@ export default function Transactions() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteTransaction = async (txId: string, description: string) => {
-    if (!confirm(`Are you sure you want to permanently delete the record for "${description || 'this transaction'}"?`)) return;
+  const handleDeletePrompt = (txId: string, description: string) => {
+    setDeleteTxParams({ id: txId, description });
+  };
+
+  const confirmDeleteTransaction = async () => {
+    if (!deleteTxParams) return;
+    setIsDeleting(true);
     try {
-      const { error } = await supabase.from('transactions').delete().eq('id', txId);
+      const { error } = await supabase.from('transactions').delete().eq('id', deleteTxParams.id);
       if (error) throw error;
-      fetchInitialData(); 
+      
+      // OPTIMISTIC UI UPDATE: Instantly remove the row from the local state
+      setTransactions(prev => prev.filter(tx => tx.id !== deleteTxParams.id));
+      setDeleteTxParams(null);
+      
+      // Force a background sync to ensure data consistency
+      fetchInitialData();
     } catch (err: any) {
       alert("Failed to delete transaction: " + err.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -151,6 +156,7 @@ export default function Transactions() {
         (tx.payee_name || '').toLowerCase().includes(lowerQuery) ||
         (tx.receipt_no || '').toLowerCase().includes(lowerQuery) ||
         (tx.categories?.name || '').toLowerCase().includes(lowerQuery) ||
+        (tx.categories?.export_code || '').includes(lowerQuery) ||
         (tx.profiles?.full_name || '').toLowerCase().includes(lowerQuery)
       );
     });
@@ -174,6 +180,19 @@ export default function Transactions() {
     });
   }, [filteredTransactions, sortField, sortDirection]);
 
+  const metrics = useMemo(() => {
+    let inc = 0; let exp = 0;
+    filteredTransactions.forEach(t => {
+      if (t.type === 'INCOME') inc += Number(t.amount);
+      if (t.type === 'EXPENSE') exp += Number(t.amount);
+    });
+    return { income: inc, expense: exp };
+  }, [filteredTransactions]);
+
+  const unassignedTxs = useMemo(() => {
+    return filteredTransactions.filter(tx => !tx.categories || tx.categories.export_code === '???');
+  }, [filteredTransactions]);
+
   const handleSort = (field: SortField) => {
     if (sortField === field) setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortDirection(field === 'amount' || field === 'date' ? 'desc' : 'asc'); }
@@ -193,15 +212,6 @@ export default function Transactions() {
     );
   };
 
-  const filteredGuideData = useMemo(() => {
-    return categoryGuideData.filter(item => 
-      item.type === guideTab && 
-      (item.name.toLowerCase().includes(guideSearchQuery.toLowerCase()) || 
-       item.desc.toLowerCase().includes(guideSearchQuery.toLowerCase()) || 
-       item.code.includes(guideSearchQuery))
-    );
-  }, [guideSearchQuery, guideTab]);
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -210,6 +220,9 @@ export default function Transactions() {
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Record, search, and dynamically audit financial records.</p>
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={() => setShowLogsModal(true)} className="p-2.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors" title="View Database Logs">
+            <Activity className="h-4 w-4" />
+          </button>
           <button onClick={() => setShowCategoryGuide(true)} className="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-all shadow-sm">
             <BookOpen className="h-4 w-4" /> Category Guide
           </button>
@@ -219,11 +232,37 @@ export default function Transactions() {
         </div>
       </div>
 
-      {unassignedCount > 0 && (
-        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-4 rounded-2xl flex items-center justify-between text-xs text-amber-800 dark:text-amber-200 shadow-sm">
-          <div className="flex items-center gap-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="bento-card p-5 bg-white dark:bg-[#121212] flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Filtered Income</p>
+            <h3 className="text-xl font-black text-emerald-600 mt-1">₱{metrics.income.toLocaleString('en-PH', {minimumFractionDigits: 2})}</h3>
+          </div>
+          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 rounded-xl"><TrendingUp className="h-5 w-5 text-emerald-600" /></div>
+        </div>
+        <div className="bento-card p-5 bg-white dark:bg-[#121212] flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Filtered Expense</p>
+            <h3 className="text-xl font-black text-amber-600 mt-1">₱{metrics.expense.toLocaleString('en-PH', {minimumFractionDigits: 2})}</h3>
+          </div>
+          <div className="p-3 bg-amber-50 dark:bg-amber-950/60 rounded-xl"><TrendingDown className="h-5 w-5 text-amber-600" /></div>
+        </div>
+      </div>
+
+      {unassignedTxs.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-4 rounded-2xl flex flex-col space-y-3 text-xs text-amber-800 dark:text-amber-200 shadow-sm">
+          <div className="flex items-center gap-2.5 font-bold">
             <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-            <span><strong>Review Required:</strong> You have {unassignedCount} unassigned transaction(s) pending category review.</span>
+            <span>Review Required: You have {unassignedTxs.length} unassigned transaction(s) pending category review.</span>
+          </div>
+          <div className="bg-white/50 dark:bg-black/20 rounded-xl p-3 max-h-32 overflow-y-auto custom-scrollbar space-y-2 border border-amber-200/50 dark:border-amber-800/50">
+             {unassignedTxs.map(tx => (
+               <div key={tx.id} className="flex justify-between items-center bg-white dark:bg-[#121212] p-2 rounded-lg shadow-sm border border-amber-100 dark:border-amber-900/30">
+                 <span className="font-medium truncate max-w-[60%]">{tx.date} - {tx.payee_name || tx.remarks}</span>
+                 <span className="font-mono font-bold">₱{Number(tx.amount).toLocaleString('en-PH')}</span>
+                 <button onClick={() => handleEdit(tx)} className="text-[10px] font-bold text-amber-600 hover:underline">Edit</button>
+               </div>
+             ))}
           </div>
         </div>
       )}
@@ -236,28 +275,40 @@ export default function Transactions() {
             <button onClick={() => setActiveTab('EXPENSE')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'EXPENSE' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>Expenses</button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-slate-400" />
-            <select 
-              className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm focus:border-brand"
-              value={selectedPeriodFilter}
-              onChange={(e) => setSelectedPeriodFilter(e.target.value)}
-            >
-              <option value="ALL">All Financial Periods (Months)</option>
-              {periods.map(p => (
-                <option key={p.id} value={p.id}>{p.period_name} ({p.status})</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setDetailedMode(!detailedMode)} className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+              Detailed View {detailedMode ? <ToggleRight className="h-4 w-4 text-brand dark:text-emerald-500" /> : <ToggleLeft className="h-4 w-4" />}
+            </button>
+            <div className="h-4 w-px bg-slate-300 dark:bg-slate-700" />
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-slate-400" />
+              <select 
+                className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm focus:border-brand"
+                value={selectedPeriodFilter}
+                onChange={(e) => handlePeriodChange(e.target.value)}
+              >
+                <option value="ALL">All Financial Periods</option>
+                {periods.map(p => <option key={p.id} value={p.id}>{p.period_name} ({p.status})</option>)}
+              </select>
+            </div>
           </div>
         </div>
 
         <div className="relative">
           <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-          <input type="text" placeholder="Search remarks, payee, receipt #, category, or encoder..." className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 text-xs font-medium bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <input type="text" placeholder="Search remarks, payee, receipt #, category, or encoder..." className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-800 text-xs font-medium bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          {searchQuery && (
+             <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 dark:hover:text-white">
+                <X className="h-4 w-4" />
+             </button>
+          )}
         </div>
       </div>
 
       <div className="bento-card overflow-hidden p-0 border border-slate-200 dark:border-[#27272A] shadow-sm rounded-2xl bg-white dark:bg-[#121212]">
+        <div className="bg-slate-50 dark:bg-[#0A0A0A] border-b border-slate-200 dark:border-[#27272A] p-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">
+          Showing {sortedTransactions.length} records
+        </div>
         {loading ? (
           <div className="p-8 text-center text-slate-500 animate-pulse text-xs font-medium">Loading secure ledger...</div>
         ) : sortedTransactions.length === 0 ? (
@@ -272,10 +323,10 @@ export default function Transactions() {
                 <tr className="bg-transparent border-b border-slate-200 dark:border-[#27272A] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
                   <SortableHeader field="date" label="Date" />
                   <SortableHeader field="type" label="Type" />
-                  <SortableHeader field="category" label="ComBud Category" />
+                  <SortableHeader field="category" label="Account No. / Name" />
                   <SortableHeader field="payee_remarks" label="Payee / Remarks" />
-                  <SortableHeader field="encoded_by" label="Encoded By" />
-                  <th className="p-4 uppercase tracking-wider text-[10px] font-semibold">Receipt</th>
+                  {detailedMode && <SortableHeader field="encoded_by" label="Audit Trail" />}
+                  {!detailedMode && <th className="p-4 uppercase tracking-wider text-[10px] font-semibold">Receipt</th>}
                   <SortableHeader field="amount" label="Amount (PHP)" align="right" />
                   <th className="p-4 text-right uppercase tracking-wider text-[10px] font-semibold">Actions</th>
                 </tr>
@@ -285,10 +336,14 @@ export default function Transactions() {
                   const categoryName = tx.categories?.name?.toLowerCase() || '';
                   const isAutoExempt = exemptKeywords.some(keyword => categoryName.includes(keyword));
                   const isUnassigned = !tx.categories || tx.categories.export_code === '???';
+                  const pName = selectedPeriodFilter === 'ALL' ? periods.find(p => p.id === tx.financial_period_id)?.period_name || 'Unknown' : '';
 
                   return (
                     <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/25 transition-colors group">
-                      <td className="p-4 text-slate-600 dark:text-slate-300 font-medium">{tx.date}</td>
+                      <td className="p-4 text-slate-600 dark:text-slate-300 font-medium">
+                        {tx.date}
+                        {selectedPeriodFilter === 'ALL' && <div className="text-[9px] text-brand dark:text-emerald-500 font-bold mt-0.5 uppercase tracking-wider">{pName}</div>}
+                      </td>
                       <td className="p-4">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300">
                           <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${tx.type === 'INCOME' ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
@@ -301,7 +356,7 @@ export default function Transactions() {
                             {tx.categories?.export_code || '???'}
                           </span>
                           <span className={`font-medium ${isUnassigned ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-700 dark:text-slate-200'}`}>
-                            {tx.categories?.name || 'Unassigned / For Review'}
+                            {tx.categories?.name || 'Unassigned / For Review Only'}
                           </span>
                         </div>
                       </td>
@@ -309,29 +364,36 @@ export default function Transactions() {
                         <div className="text-slate-900 dark:text-white font-medium">{tx.payee_name || '—'}</div>
                         <div className="text-slate-500 text-[11px] mt-0.5 truncate max-w-[200px]" title={tx.remarks || ''}>{tx.remarks || '—'}</div>
                       </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
-                          <UserCircle className="h-3.5 w-3.5 text-slate-400" />
-                          <span className="text-[11px] font-medium">{tx.profiles?.full_name}</span>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        {tx.type === 'INCOME' ? (
-                          <span className="text-slate-400 text-[10px] font-medium">—</span>
-                        ) : tx.receipt_url ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200">
-                            <Paperclip className="h-3 w-3 text-emerald-500" /> Attached
-                          </span>
-                        ) : (tx.receipt_exempt || isAutoExempt) ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200">
-                            <CheckCircle2 className="h-3 w-3 text-slate-500" /> Exempt
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200">
-                            <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Missing
-                          </span>
-                        )}
-                      </td>
+                      
+                      {detailedMode && (
+                        <td className="p-4">
+                          <div className="flex flex-col text-[10px] font-medium text-slate-500">
+                            <span className="text-slate-700 dark:text-slate-300 flex items-center gap-1"><UserCircle className="h-3 w-3" /> {tx.profiles?.full_name}</span>
+                            <span className="mt-0.5">Created: {new Date(tx.created_at).toLocaleString()}</span>
+                          </div>
+                        </td>
+                      )}
+
+                      {!detailedMode && (
+                        <td className="p-4">
+                          {tx.type === 'INCOME' ? (
+                            <span className="text-slate-400 text-[10px] font-medium">—</span>
+                          ) : tx.receipt_url ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200">
+                              <Paperclip className="h-3 w-3 text-emerald-500" /> Attached
+                            </span>
+                          ) : (tx.receipt_exempt || isAutoExempt) ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200">
+                              <CheckCircle2 className="h-3 w-3 text-slate-500" /> Exempt
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200">
+                              <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Missing
+                            </span>
+                          )}
+                        </td>
+                      )}
+                      
                       <td className="p-4 text-right font-mono text-xs font-medium">
                          <span className={tx.type === 'INCOME' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'}>
                            {tx.type === 'INCOME' ? '+' : '-'}₱{Number(tx.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
@@ -340,7 +402,7 @@ export default function Transactions() {
                       <td className="p-4 text-right space-x-0.5">
                         <button onClick={() => handleViewDetails(tx)} className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors" title="View Details"><Eye className="h-3.5 w-3.5" /></button>
                         <button onClick={() => handleEdit(tx)} className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors" title="Edit Transaction"><Edit2 className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => handleDeleteTransaction(tx.id, tx.remarks || tx.payee_name || 'Transaction')} className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg transition-colors" title="Delete Transaction"><Trash2 className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => handleDeletePrompt(tx.id, tx.remarks || tx.payee_name || 'Transaction')} className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg transition-colors" title="Delete Transaction"><Trash2 className="h-3.5 w-3.5" /></button>
                       </td>
                     </tr>
                   )
@@ -351,67 +413,51 @@ export default function Transactions() {
         )}
       </div>
 
-      {/* COMPREHENSIVE COMBUD CATEGORY GUIDE MODAL */}
-      {showCategoryGuide && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="w-full max-w-3xl bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-3xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden animate-modal">
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-[#0A0A0A]">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-100 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400">
-                  <BookOpen className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">ComBud Category Guide</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Reference directory for standard accounting classification.</p>
-                </div>
-              </div>
-              <button onClick={() => setShowCategoryGuide(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl"><X className="h-5 w-5" /></button>
-            </div>
-
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#121212] space-y-4">
-              <div className="flex gap-2 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-xl w-fit">
-                <button onClick={() => setGuideTab('INCOME')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${guideTab === 'INCOME' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}>Income Categories</button>
-                <button onClick={() => setGuideTab('EXPENSE')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${guideTab === 'EXPENSE' ? 'bg-amber-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}>Expense Categories</button>
-              </div>
-              <div className="relative">
-                <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-                <input type="text" placeholder="Search by code or description..." className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-[#1A1A1A] text-xs font-medium text-slate-900 dark:text-white focus:border-brand" value={guideSearchQuery} onChange={(e) => setGuideSearchQuery(e.target.value)} />
-              </div>
-            </div>
-
-            <div className="p-4 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-[#121212]">
-              <div className="space-y-3">
-                {filteredGuideData.length > 0 ? (
-                  filteredGuideData.map(item => (
-                    <div key={item.code} className="p-4 bg-white dark:bg-[#1A1A1A] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row gap-4">
-                      <div className="sm:w-32 shrink-0">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold font-mono tracking-wide ${guideTab === 'INCOME' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50' : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50'}`}>
-                          <Tag className="h-3 w-3 mr-1.5" /> {item.code}
-                        </span>
-                      </div>
-                      <div className="space-y-1.5 flex-1">
-                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">{item.name}</h4>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{item.desc}</p>
-                        <div className="mt-2 text-[11px] font-medium text-slate-500 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
-                          <strong className="text-slate-700 dark:text-slate-300 uppercase tracking-wider">Example:</strong> {item.example}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-10 text-slate-500 text-xs">No matching categories found in the guide.</div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <CategoryGuideModal isOpen={showCategoryGuide} onClose={() => setShowCategoryGuide(false)} />
+      <TransactionLogsModal isOpen={showLogsModal} onClose={() => setShowLogsModal(false)} churchId={churchId} />
 
       {churchId && user && (
         <>
-          <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSuccess={fetchInitialData} churchId={churchId} userId={user.id} initialData={editingTx} defaultPeriodId={selectedPeriodFilter !== 'ALL' ? selectedPeriodFilter : (periods.find(p => p.status === 'OPEN')?.id || undefined)} />
+          <TransactionModal 
+            isOpen={isModalOpen} 
+            onClose={() => setIsModalOpen(false)} 
+            onSuccess={() => setRefreshTrigger(prev => prev + 1)} 
+            churchId={churchId} 
+            userId={user.id} 
+            initialData={editingTx} 
+            defaultPeriodId={selectedPeriodFilter !== 'ALL' ? selectedPeriodFilter : (periods.find(p => p.status === 'OPEN')?.id || undefined)} 
+            existingTransactions={transactions}
+          />
           <TransactionDetailModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} transaction={viewingTx} />
         </>
+      )}
+
+      {/* World-Class Deletion Confirmation Modal */}
+      {deleteTxParams && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#121212] rounded-3xl shadow-2xl border border-slate-200 dark:border-[#27272A] w-full max-w-md p-6 animate-modal">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-2xl shrink-0">
+                <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Delete Transaction</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+                  This action cannot be undone. Are you sure you want to permanently delete the record for <strong className="text-slate-700 dark:text-slate-300">"{deleteTxParams.description}"</strong>?
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800/60 pt-5">
+              <button onClick={() => setDeleteTxParams(null)} disabled={isDeleting} className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                Cancel
+              </button>
+              <button onClick={confirmDeleteTransaction} disabled={isDeleting} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-md transition-colors flex items-center gap-2">
+                {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isDeleting ? 'Deleting...' : 'Yes, Delete Record'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

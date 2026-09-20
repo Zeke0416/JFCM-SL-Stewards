@@ -3,10 +3,10 @@
 // Purpose: Generates ComBud-compatible Excel reports using ExcelJS for precise grid styling.
 // ==========================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Download, FileSpreadsheet, Settings, AlertTriangle } from 'lucide-react';
+import { Download, FileSpreadsheet, Settings, AlertTriangle, PieChart } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import type { FinancialPeriod, MPRReport } from '../types/database.types';
@@ -16,6 +16,7 @@ export default function ExportCenter() {
   const [periods, setPeriods] = useState<FinancialPeriod[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState('');
   const [loading, setLoading] = useState(false);
+  const [previewTxs, setPreviewTxs] = useState<any[]>([]);
   
   const [hideEmpty, setHideEmpty] = useState(true);
   const [exportFullYear, setExportFullYear] = useState(false);
@@ -31,27 +32,56 @@ export default function ExportCenter() {
     const { data: profile } = await supabase.from('profiles').select('church_id').eq('id', user?.id).single();
     if (profile) {
       const { data: periodData } = await supabase.from('financial_periods').select('*').eq('church_id', profile.church_id).order('month', { ascending: false });
-      if (periodData) {
+      if (periodData && periodData.length > 0) {
         setPeriods(periodData);
-        if (periodData.length > 0) setSelectedPeriod(periodData[0].id);
+        
+        // Cache management so it doesn't reset when switching tabs
+        const cached = localStorage.getItem('exportSelectedPeriod');
+        if (cached && periodData.some(p => p.id === cached)) {
+          setSelectedPeriod(cached);
+        } else {
+          setSelectedPeriod(periodData[0].id);
+          localStorage.setItem('exportSelectedPeriod', periodData[0].id);
+        }
       }
     }
   };
+
+  useEffect(() => {
+    if (selectedPeriod) {
+      localStorage.setItem('exportSelectedPeriod', selectedPeriod);
+      fetchPreviewData();
+    }
+  }, [selectedPeriod]);
+
+  const fetchPreviewData = async () => {
+    const { data: txs } = await supabase.from('transactions').select('amount, type, categories(name, export_code)').eq('financial_period_id', selectedPeriod);
+    if (txs) setPreviewTxs(txs);
+  };
+
+  const previewMetrics = useMemo(() => {
+    let inc = 0; let exp = 0;
+    const groups: Record<string, number> = {};
+    
+    previewTxs.forEach(t => {
+      const amt = Number(t.amount);
+      if (t.type === 'INCOME') inc += amt;
+      if (t.type === 'EXPENSE') exp += amt;
+      
+      const codeName = `[${t.categories?.export_code || '???'}] ${t.categories?.name || 'Unassigned'}`;
+      groups[codeName] = (groups[codeName] || 0) + amt;
+    });
+
+    // FIX: Removed .slice(0,3) to display ALL populated accounts
+    const topAccounts = Object.entries(groups).sort((a,b) => b[1] - a[1]);
+    return { inc, exp, topAccounts };
+  }, [previewTxs]);
+
   const getMonthShort = (periodName: string) => periodName.split(' ')[0].substring(0,3);
 
-  /**
-   * Generates the perfectly styled MPR Sheet using ExcelJS
-   */
   const generateMPRSheet = (workbook: ExcelJS.Workbook, mpr: MPRReport | null, periodName: string, sheetName: string) => {
     const sheet = workbook.addWorksheet(sheetName);
-
-    sheet.columns = [
-      { width: 15 }, // A: Date
-      { width: 45 }, // B: Title & Preacher
-      { width: 45 }, // C: Objective
-      { width: 20 }, // D: Text (Scripture)
-      { width: 15 }  // E: Attendance
-    ];
+    sheet.columns = [{ width: 15 }, { width: 45 }, { width: 45 }, { width: 20 }, { width: 15 }];
 
     sheet.addRow([null, null, null, 'JESUS FIRST CHRISTIAN MINISTRIES']);
     sheet.addRow([null, null, null, 'MONTHLY PROGRESS REPORT']);
@@ -73,24 +103,18 @@ export default function ExportCenter() {
     });
 
     let r = 9;
-    let totalAdults = 0;
-    let totalChildren = 0;
-    let serviceCount = 0;
+    let totalAdults = 0; let totalChildren = 0; let serviceCount = 0;
 
     const services = mpr?.worship_services || Array.from({ length: 5 }, (_, i) => ({ week: i+1, dateStr: '', title: '', preacher: '', objective: '', text: '', adults: 0, children: 0 }));
 
     services.forEach(ws => {
       if (ws.adults > 0 || ws.children > 0 || ws.title || ws.preacher) serviceCount++;
-      totalAdults += ws.adults;
-      totalChildren += ws.children;
+      totalAdults += ws.adults; totalChildren += ws.children;
 
       const titleStr = ws.title?.trim() || '';
       const preacherStr = ws.preacher?.trim() || '';
       let combinedTitlePreacher = titleStr;
-      
-      if (preacherStr) {
-        combinedTitlePreacher += combinedTitlePreacher ? `\n(${preacherStr})` : `(${preacherStr})`;
-      }
+      if (preacherStr) combinedTitlePreacher += combinedTitlePreacher ? `\n(${preacherStr})` : `(${preacherStr})`;
 
       sheet.addRow([ws.dateStr, combinedTitlePreacher, ws.objective, ws.text, ws.adults]);
       sheet.addRow(['', '', '', '', ws.children]);
@@ -99,19 +123,13 @@ export default function ExportCenter() {
       sheet.getCell(`C${r}`).alignment = { wrapText: true, vertical: 'middle', horizontal: 'center' };
       sheet.getCell(`A${r}`).alignment = { vertical: 'middle', horizontal: 'center' };
       sheet.getCell(`D${r}`).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-      
       sheet.getCell(`E${r}`).alignment = { vertical: 'middle', horizontal: 'center' };
       sheet.getCell(`E${r+1}`).alignment = { vertical: 'middle', horizontal: 'center' };
 
-      sheet.mergeCells(`A${r}:A${r+1}`);
-      sheet.mergeCells(`B${r}:B${r+1}`);
-      sheet.mergeCells(`C${r}:C${r+1}`);
-      sheet.mergeCells(`D${r}:D${r+1}`);
+      sheet.mergeCells(`A${r}:A${r+1}`); sheet.mergeCells(`B${r}:B${r+1}`); sheet.mergeCells(`C${r}:C${r+1}`); sheet.mergeCells(`D${r}:D${r+1}`);
 
       for (let i = 0; i < 2; i++) {
-        ['A','B','C','D','E'].forEach(col => {
-          sheet.getCell(`${col}${r+i}`).border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
-        });
+        ['A','B','C','D','E'].forEach(col => { sheet.getCell(`${col}${r+i}`).border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} }; });
       }
       r += 2;
     });
@@ -127,70 +145,42 @@ export default function ExportCenter() {
     sheet.getCell(`E${r+1}`).alignment = { vertical: 'middle', horizontal: 'center' };
 
     for (let i = 0; i < 2; i++) {
-      ['D','E'].forEach(col => {
-        sheet.getCell(`${col}${r+i}`).border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
-      });
+      ['D','E'].forEach(col => { sheet.getCell(`${col}${r+i}`).border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} }; });
     }
     r += 2;
 
     sheet.addRow([]); r++;
     sheet.addRow(['2.0 PROJECTS']);
-    sheet.getCell(`A${r}`).font = { bold: true };
-    r++;
+    sheet.getCell(`A${r}`).font = { bold: true }; r++;
 
     const projs = mpr?.projects || [];
-    projs.forEach(p => {
-      sheet.addRow(['', p.type, p.name]);
-      r++;
-    });
+    projs.forEach(p => { sheet.addRow(['', p.type, p.name]); r++; });
 
     sheet.addRow([]); r++;
     const projHeader = sheet.addRow(['Project Name', null, 'Schedule', 'Actual', null]);
-    sheet.mergeCells(`A${r}:B${r}`);
-    sheet.mergeCells(`D${r}:E${r}`);
+    sheet.mergeCells(`A${r}:B${r}`); sheet.mergeCells(`D${r}:E${r}`);
     projHeader.font = { bold: true };
-    sheet.getCell(`A${r}`).alignment = { horizontal: 'center' };
-    sheet.getCell(`C${r}`).alignment = { horizontal: 'center' };
-    sheet.getCell(`D${r}`).alignment = { horizontal: 'center' };
+    sheet.getCell(`A${r}`).alignment = { horizontal: 'center' }; sheet.getCell(`C${r}`).alignment = { horizontal: 'center' }; sheet.getCell(`D${r}`).alignment = { horizontal: 'center' };
 
-    ['A','B','C','D','E'].forEach(col => {
-      sheet.getCell(`${col}${r}`).border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
-    });
+    ['A','B','C','D','E'].forEach(col => { sheet.getCell(`${col}${r}`).border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} }; });
     r++;
 
     projs.forEach(p => {
       sheet.addRow([p.name, '', p.schedule, p.actual, '']);
-      sheet.mergeCells(`A${r}:B${r}`);
-      sheet.mergeCells(`D${r}:E${r}`);
-      sheet.getCell(`C${r}`).alignment = { wrapText: true, vertical: 'top' };
-      sheet.getCell(`D${r}`).alignment = { wrapText: true, vertical: 'top' };
+      sheet.mergeCells(`A${r}:B${r}`); sheet.mergeCells(`D${r}:E${r}`);
+      sheet.getCell(`C${r}`).alignment = { wrapText: true, vertical: 'top' }; sheet.getCell(`D${r}`).alignment = { wrapText: true, vertical: 'top' };
 
-      ['A','B','C','D','E'].forEach(col => {
-        sheet.getCell(`${col}${r}`).border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
-      });
+      ['A','B','C','D','E'].forEach(col => { sheet.getCell(`${col}${r}`).border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} }; });
       r++;
     });
   };
 
-  /**
-   * Generates the clean SCRD Sheet without cluttered gridlines
-   */
   const generateSCRDSheet = (workbook: ExcelJS.Workbook, txs: any[], recon: any, periodName: string, sheetName: string) => {
-    const sheet = workbook.addWorksheet(sheetName, {
-      views: [{ state: 'frozen', xSplit: 3, ySplit: 3, topLeftCell: 'D4' }]
-    });
-
-    sheet.columns = [
-      { width: 8 },  // A
-      { width: 14 }, // B
-      { width: 50 }, // C
-      { width: 15 }, // D
-      { width: 25 }  // E
-    ];
+    const sheet = workbook.addWorksheet(sheetName, { views: [{ state: 'frozen', xSplit: 3, ySplit: 3, topLeftCell: 'D4' }] });
+    sheet.columns = [{ width: 8 }, { width: 14 }, { width: 50 }, { width: 15 }, { width: 25 }];
 
     const sums: Record<string, number> = {};
-    let totalIncome = 0;
-    let totalExpense = 0;
+    let totalIncome = 0; let totalExpense = 0;
 
     txs.forEach(tx => {
       const code = tx.categories?.export_code || 'UNCATEGORIZED';
@@ -208,55 +198,31 @@ export default function ExportCenter() {
       const activeItems = items.filter(i => !hideEmpty || getSum(i.c, type) !== 0);
       if (activeItems.length > 0 || !hideEmpty) {
         rows.push([null, null, `${prefix} - ${title}`]);
-        activeItems.forEach(i => {
-          rows.push([null, i.c, i.n, null, getSum(i.c, type)]);
-          processedKeys.add(`${i.c}_${type}`);
-        });
+        activeItems.forEach(i => { rows.push([null, i.c, i.n, null, getSum(i.c, type)]); processedKeys.add(`${i.c}_${type}`); });
         rows.push([]); 
       }
       return rows;
     };
 
     const buildProjectSection = (prefix: string, title: string, items: any[]) => {
-      const rows: any[] = [];
-      let hasContent = false;
-      const secRows: any[] = [];
-
+      const rows: any[] = []; let hasContent = false; const secRows: any[] = [];
       items.forEach(i => {
         const matches = txs.filter(t => t.categories?.export_code === i.c && t.type === 'EXPENSE');
         if (matches.length > 0) {
-          hasContent = true;
-          secRows.push([null, i.c, i.n, null, null]); 
-          processedKeys.add(`${i.c}_EXPENSE`);
+          hasContent = true; secRows.push([null, i.c, i.n, null, null]); processedKeys.add(`${i.c}_EXPENSE`);
           matches.forEach(tx => {
             const breakdownMatch = tx.remarks?.match(/\[Breakdown: (.*?)\]/);
             if (breakdownMatch) {
-              const pairs = breakdownMatch[1].split(', ');
-              pairs.forEach((pair: string) => {
+              breakdownMatch[1].split(', ').forEach((pair: string) => {
                 const lastColon = pair.lastIndexOf(': ₱');
-                if (lastColon !== -1) {
-                  const itemName = pair.substring(0, lastColon).trim();
-                  const itemAmount = parseFloat(pair.substring(lastColon + 3)) || 0;
-                  secRows.push([null, null, `  - ${itemName}`, null, itemAmount]);
-                } else {
-                  secRows.push([null, null, `  - ${pair}`, null, Number(tx.amount)]);
-                }
+                if (lastColon !== -1) { secRows.push([null, null, `  - ${pair.substring(0, lastColon).trim()}`, null, parseFloat(pair.substring(lastColon + 3)) || 0]); } 
+                else { secRows.push([null, null, `  - ${pair}`, null, Number(tx.amount)]); }
               });
-            } else {
-              secRows.push([null, null, `  - ${tx.payee_name || tx.remarks || 'Expense Item'}`, null, Number(tx.amount)]);
-            }
+            } else { secRows.push([null, null, `  - ${tx.payee_name || tx.remarks || 'Expense Item'}`, null, Number(tx.amount)]); }
           });
-        } else if (!hideEmpty) {
-          hasContent = true;
-          secRows.push([null, i.c, i.n, null, 0]);
-        }
+        } else if (!hideEmpty) { hasContent = true; secRows.push([null, i.c, i.n, null, 0]); }
       });
-      
-      if (hasContent || !hideEmpty) {
-        rows.push([null, null, `${prefix} - ${title}`]);
-        rows.push(...secRows);
-        rows.push([]); 
-      }
+      if (hasContent || !hideEmpty) { rows.push([null, null, `${prefix} - ${title}`]); rows.push(...secRows); rows.push([]); }
       return rows;
     };
 
@@ -290,6 +256,7 @@ export default function ExportCenter() {
 
     scrdData.push(
       [null, null, 'TOTAL = (A + B)', null, begBal + totalIncome],
+      [],
       [null, null, 'C. CASH DISBURSEMENTS'],
       ...buildSection('C.1', 'Operating Expenses', 'EXPENSE', c1),
       ...buildSection('C.2', 'Other Disbursements', 'EXPENSE', c2),
@@ -325,40 +292,23 @@ export default function ExportCenter() {
       [null, null, 'DIFFERENCE', null, ((begBal + totalIncome) - totalExpense) - totalCash]
     );
 
-    const boldLabels = [
-      'A. BEGINNING BALANCE', 'B. CASH RECEIPTS', 'TOTAL = (A + B)',
-      'C. CASH DISBURSEMENTS', 'D. PROJECT EXPENSES', 'TOTAL ENDING BALANCE = (A + B) - (C + D)',
-      'CASH BREAKDOWN', 'CASH IN-BANK', 'CASH ON-HAND',
-      'TOTAL = (Cash In-Bank + Cash On-Hand)', 'DIFFERENCE'
-    ];
+    const boldLabels = ['A. BEGINNING BALANCE', 'B. CASH RECEIPTS', 'TOTAL = (A + B)', 'C. CASH DISBURSEMENTS', 'D. PROJECT EXPENSES', 'TOTAL ENDING BALANCE = (A + B) - (C + D)', 'CASH BREAKDOWN', 'CASH IN-BANK', 'CASH ON-HAND', 'TOTAL = (Cash In-Bank + Cash On-Hand)', 'DIFFERENCE'];
 
     scrdData.forEach((rowData: any[]) => {
       const row = sheet.addRow(rowData);
       const hasContent = rowData.some((cell: any) => cell !== null && cell !== '');
-      
       if (hasContent) {
-        // NO GRIDLINES ADDED TO SCRD DATA ROWS - CLEAN SHEET STYLE
-        ['C'].forEach(col => {
-          const cell = sheet.getCell(`${col}${row.number}`);
-          cell.alignment = { wrapText: true, vertical: 'middle' };
-        });
-        
+        ['C'].forEach(col => { sheet.getCell(`${col}${row.number}`).alignment = { wrapText: true, vertical: 'middle' }; });
         const cellE = sheet.getCell(`E${row.number}`);
-        if (typeof rowData[4] === 'number') {
-            cellE.numFmt = '#,##0.00';
-        }
+        if (typeof rowData[4] === 'number') { cellE.numFmt = '#,##0.00'; }
 
         const labelText = String(rowData[2] || '');
-        if (boldLabels.includes(labelText)) {
-          row.font = { bold: true };
-        } else if (labelText.startsWith('B.1') || labelText.startsWith('B.2') || labelText.startsWith('C.1') || labelText.startsWith('C.2') || labelText.startsWith('D.1') || labelText.startsWith('D.2') || labelText.startsWith('D.3')) {
+        if (boldLabels.includes(labelText) || labelText.startsWith('B.1') || labelText.startsWith('B.2') || labelText.startsWith('C.1') || labelText.startsWith('C.2') || labelText.startsWith('D.1') || labelText.startsWith('D.2') || labelText.startsWith('D.3')) {
           row.font = { bold: true };
         }
       }
     });
-
-    sheet.getCell('D1').font = { bold: true };
-    sheet.getCell('D2').font = { bold: true };
+    sheet.getCell('D1').font = { bold: true }; sheet.getCell('D2').font = { bold: true };
   };
 
   const handleExport = async () => {
@@ -386,9 +336,7 @@ export default function ExportCenter() {
           mprGenerators.push(() => generateMPRSheet(workbook, mprData, p.period_name, `MPR_${monthShort}`));
         }
 
-        scrdGenerators.forEach(fn => fn());
-        mprGenerators.forEach(fn => fn());
-        
+        scrdGenerators.forEach(fn => fn()); mprGenerators.forEach(fn => fn());
         const buffer = await workbook.xlsx.writeBuffer();
         saveAs(new Blob([buffer]), `ComBud_FullYear_Export.xlsx`);
 
@@ -410,12 +358,8 @@ export default function ExportCenter() {
         }
       }
     } catch (err: any) {
-      if (err.count) {
-        setUnassignedCount(err.count);
-        setShowUnassignedModal(true);
-      } else {
-        alert("Export failed: " + err.message);
-      }
+      if (err.count) { setUnassignedCount(err.count); setShowUnassignedModal(true); } 
+      else alert("Export failed: " + err.message);
     }
     setLoading(false);
   };
@@ -427,67 +371,96 @@ export default function ExportCenter() {
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Generate perfectly styled ComBud and MPR Excel reports.</p>
       </div>
 
-      <div className="bento-card max-w-2xl mx-auto mt-10 space-y-8">
-        <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-emerald-50 dark:bg-emerald-950/50 rounded-2xl flex items-center justify-center mb-4 border border-emerald-100 dark:border-emerald-900/50">
-            <FileSpreadsheet className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">
+        <div className="bento-card space-y-8 flex flex-col justify-center">
+          <div className="text-center">
+            <div className="mx-auto h-16 w-16 bg-emerald-50 dark:bg-emerald-950/50 rounded-2xl flex items-center justify-center mb-4 border border-emerald-100 dark:border-emerald-900/50">
+              <FileSpreadsheet className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Generate Official Reports</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">Downloads strictly formatted SCRD and MPR spreadsheets exactly matched to ComBud templates.</p>
           </div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Generate Official Reports</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Downloads styled SCRD and MPR spreadsheets with gridlines and wrapped text.</p>
+
+          <div className="space-y-6 border-t border-brand-border dark:border-brand-darkBorder pt-6">
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Financial Period / Year Reference</label>
+              <select className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-xs font-semibold text-slate-900 dark:text-white shadow-sm focus:border-brand" value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)}>
+                {periods.map(p => <option key={p.id} value={p.id}>{p.period_name}</option>)}
+              </select>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+              <div className="flex items-start gap-3">
+                <Settings className="h-5 w-5 text-slate-400 mt-0.5 shrink-0" />
+                <div>
+                  <label className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+                    <input type="checkbox" checked={hideEmpty} onChange={(e) => setHideEmpty(e.target.checked)} className="rounded text-brand h-4 w-4" />
+                    Smart Export (Hide Empty Rows)
+                  </label>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <FileSpreadsheet className="h-5 w-5 text-brand mt-0.5 shrink-0" />
+                <div>
+                  <label className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+                    <input type="checkbox" checked={exportFullYear} onChange={(e) => setExportFullYear(e.target.checked)} className="rounded text-brand h-4 w-4" />
+                    Export Entire Year (All Months Segregated)
+                  </label>
+                  <p className="text-[11px] text-slate-500 mt-1 ml-6">Generates a massive workbook containing SCRD and MPR sheets for every month in the selected year.</p>
+                </div>
+              </div>
+            </div>
+
+            <button onClick={handleExport} disabled={loading || !selectedPeriod} className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-sm text-xs font-bold text-white bg-brand dark:bg-emerald-700 hover:bg-brand-dark transition-colors">
+              <Download className="h-4 w-4" />
+              {loading ? 'Generating Excel Workbook...' : 'Download ComBud & MPR Export'}
+            </button>
+          </div>
         </div>
 
-        <div className="space-y-6 border-t border-brand-border dark:border-brand-darkBorder pt-6">
-          <div className="space-y-1.5">
-            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Financial Period / Year Reference</label>
-            <select className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-xs font-semibold text-slate-900 dark:text-white shadow-sm focus:border-brand" value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)}>
-              {periods.map(p => <option key={p.id} value={p.id}>{p.period_name}</option>)}
-            </select>
+        {/* Data Preview Widget */}
+        <div className="bento-card bg-slate-50 dark:bg-[#121212] flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-6">
+            <PieChart className="h-5 w-5 text-brand dark:text-emerald-500" />
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Export Data Preview</h3>
           </div>
-
-          <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-            <div className="flex items-start gap-3">
-              <Settings className="h-5 w-5 text-slate-400 mt-0.5 shrink-0" />
-              <div>
-                <label className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
-                  <input type="checkbox" checked={hideEmpty} onChange={(e) => setHideEmpty(e.target.checked)} className="rounded text-brand h-4 w-4" />
-                  Smart Export (Hide Empty Rows)
-                </label>
+          
+          <div className="space-y-4 flex-1">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Income</p>
+                <p className="text-lg font-black text-emerald-600 mt-1">₱{previewMetrics.inc.toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+              </div>
+              <div className="p-4 bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Expense</p>
+                <p className="text-lg font-black text-amber-600 mt-1">₱{previewMetrics.exp.toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
               </div>
             </div>
-            <div className="flex items-start gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-              <FileSpreadsheet className="h-5 w-5 text-brand mt-0.5 shrink-0" />
-              <div>
-                <label className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
-                  <input type="checkbox" checked={exportFullYear} onChange={(e) => setExportFullYear(e.target.checked)} className="rounded text-brand h-4 w-4" />
-                  Export Entire Year (All Months Segregated)
-                </label>
-                <p className="text-[11px] text-slate-500 mt-1 ml-6">Generates a massive workbook containing SCRD and MPR sheets for every month in the selected year.</p>
+
+            <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">All Populated Accounts (Preview)</p>
+              <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                {previewMetrics.topAccounts.length > 0 ? previewMetrics.topAccounts.map(([name, amount], i) => (
+                  <div key={i} className="flex justify-between items-center text-xs pb-2 border-b border-slate-100 dark:border-slate-800/60 last:border-0 last:pb-0">
+                    <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[280px]">{name}</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white">₱{amount.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
+                  </div>
+                )) : <p className="text-xs text-slate-400 italic">No transactions recorded for this period yet.</p>}
               </div>
             </div>
           </div>
-
-          <button onClick={handleExport} disabled={loading || !selectedPeriod} className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-sm text-xs font-bold text-white bg-brand dark:bg-emerald-700 hover:bg-brand-dark transition-colors">
-            <Download className="h-4 w-4" />
-            {loading ? 'Generating Excel Workbook...' : 'Download ComBud & MPR Export'}
-          </button>
         </div>
       </div>
 
       {showUnassignedModal && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
           <div className="w-full max-w-md bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-3xl p-8 shadow-2xl space-y-6 text-center animate-modal">
-            <div className="mx-auto h-16 w-16 bg-amber-100 dark:bg-amber-950/60 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 animate-bounce">
-              <AlertTriangle className="h-8 w-8" />
-            </div>
+            <div className="mx-auto h-16 w-16 bg-amber-100 dark:bg-amber-950/60 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 animate-bounce"><AlertTriangle className="h-8 w-8" /></div>
             <div className="space-y-1.5">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Export Blocked</h3>
-              <p className="text-xs text-slate-500">
-                Found <strong className="text-amber-600 dark:text-amber-400">{unassignedCount} unassigned transaction(s)</strong>. They must be categorized before export.
-              </p>
+              <p className="text-xs text-slate-500">Found <strong className="text-amber-600 dark:text-amber-400">{unassignedCount} unassigned transaction(s)</strong>. They must be categorized before export.</p>
             </div>
-            <button onClick={() => setShowUnassignedModal(false)} className="w-full py-3 bg-brand dark:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md hover:bg-brand-dark transition-all">
-              Acknowledge
-            </button>
+            <button onClick={() => setShowUnassignedModal(false)} className="w-full py-3 bg-brand dark:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md hover:bg-brand-dark transition-all">Acknowledge</button>
           </div>
         </div>
       )}

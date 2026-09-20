@@ -178,3 +178,41 @@ export interface MPRReport {
   projects: ProjectLog[];
   created_at: string;
 }
+
+export interface ProjectLog {
+  id: string;
+  type: string;
+  name: string;
+  schedule: string;
+  actual: string;
+}
+
+export interface MPRReport {
+  id: string;
+  church_id: string;
+  financial_period_id: string;
+  pm_name: string;
+  overseer_name: string;
+  worship_services: WorshipServiceLog[];
+  projects: ProjectLog[];
+  created_at: string;
+}
+
+export interface TransactionLog {
+  id: string;
+  transaction_id: string;
+  church_id: string;
+  action: 'INSERT' | 'UPDATE' | 'DELETE';
+  old_data: any;
+  new_data: any;
+  changed_by: string;
+  created_at: string;
+}
+
+export interface Tither {
+  id: string;
+  church_id: string;
+  full_name: string;
+  is_active: boolean;
+  created_at: string;
+}

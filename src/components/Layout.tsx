@@ -6,6 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import ForcePasswordChangeModal from './ForcePasswordChangeModal';
 import logo from '../assets/favicon.png';
+import { Users } from 'lucide-react';
 
 export default function Layout() {
   const location = useLocation();
@@ -52,13 +53,14 @@ export default function Layout() {
       items: [
         { name: 'Dashboard', href: '/', icon: LayoutDashboard },
         { name: 'Transactions', href: '/transactions', icon: Receipt },
+        { name: 'Tithers Monitor', href: '/tithers', icon: Users },
         { name: 'Export Center', href: '/export-center', icon: FileSpreadsheet },
       ]
     },
     {
       key: 'audit',
       title: 'Audit & Ledger',
-      roles: ['admin', 'auditor'],
+      roles: ['admin', 'auditor', 'missionary'],
       items: [
         { name: 'Mission Readiness', href: '/mission-readiness', icon: CheckCircle },
         { name: 'SJ Koop Ledger', href: '/coop-ledger', icon: Landmark },

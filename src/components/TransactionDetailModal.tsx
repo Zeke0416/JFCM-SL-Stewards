@@ -16,7 +16,6 @@ interface TransactionDetailModalProps {
 export default function TransactionDetailModal({ isOpen, onClose, transaction }: TransactionDetailModalProps) {
   if (!isOpen || !transaction) return null;
 
-  // Parse breakdown details from remarks if they exist
   const fullRemarks = transaction.remarks || '';
   const breakdownMatch = fullRemarks.match(/\[Breakdown: (.*?)\]/);
   
@@ -36,9 +35,8 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
     });
   }
 
-  const isUnassigned = !transaction.categories;
+  const isUnassigned = !transaction.categories || transaction.categories.export_code === '???';
 
-  // Render the modal directly into the document.body using React Portals
   return createPortal(
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-200">
       <div className="w-full max-w-xl bg-white dark:bg-[#121212] rounded-3xl shadow-2xl relative overflow-hidden border border-slate-200 dark:border-[#27272A] animate-modal">
@@ -49,7 +47,7 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
               <Receipt className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">Transaction Audit Details</h2>
+              <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">Transaction Details</h2>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">ID: {transaction.id}</p>
             </div>
           </div>
@@ -80,7 +78,7 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Tag className="h-3.5 w-3.5" /> ComBud Category
+                <Tag className="h-3.5 w-3.5" /> ComBud Account
               </span>
               <p className={`text-xs font-bold pt-1 ${isUnassigned ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
                 [{transaction.categories?.export_code || '???'}] {transaction.categories?.name || 'Unassigned / For Review'}
@@ -106,20 +104,17 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
             </p>
           </div>
 
-          {/* Remarks & Structured Itemized Breakdown Section */}
           <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
               <FileText className="h-3.5 w-3.5" /> Remarks & Itemized Breakdown
             </span>
             
-            {/* General Remarks Display */}
             {generalRemarks && (
               <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap bg-white dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 font-medium">
                 {generalRemarks}
               </p>
             )}
 
-            {/* Itemized List Display */}
             {breakdownList.length > 0 ? (
               <div className="space-y-2 bg-white dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">
