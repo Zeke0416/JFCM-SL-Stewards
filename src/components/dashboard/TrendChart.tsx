@@ -45,7 +45,7 @@ export default function TrendChart({ chartData }: { chartData: any[] }) {
     };
 
     return {
-      // Reduced amplitude from 16 to 6 for a much steadier, gentler curve
+      // Gentle curve offsets for butter-smooth morphing
       pathA: buildPath(6), 
       pathB: buildPath(-6) 
     };
@@ -106,41 +106,41 @@ export default function TrendChart({ chartData }: { chartData: any[] }) {
                 <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
               </linearGradient>
 
-              {/* Horizontal Animated Glowing Stroke Gradients - Slowed to 12s */}
+              {/* Horizontal Animated Glowing Stroke Gradients - Sped up to 8s for snappier glow */}
               <linearGradient id="flowIncome" x1="-100%" y1="0%" x2="0%" y2="0%">
                 <stop offset="0%" stopColor="#059669" />
                 <stop offset="50%" stopColor="#6ee7b7" />
                 <stop offset="100%" stopColor="#059669" />
-                <animate attributeName="x1" from="-100%" to="100%" dur="12s" repeatCount="indefinite" />
-                <animate attributeName="x2" from="0%" to="200%" dur="12s" repeatCount="indefinite" />
+                <animate attributeName="x1" from="-100%" to="100%" dur="8s" repeatCount="indefinite" />
+                <animate attributeName="x2" from="0%" to="200%" dur="8s" repeatCount="indefinite" />
               </linearGradient>
 
               <linearGradient id="flowExpense" x1="-100%" y1="0%" x2="0%" y2="0%">
                 <stop offset="0%" stopColor="#d97706" />
                 <stop offset="50%" stopColor="#fde68a" />
                 <stop offset="100%" stopColor="#d97706" />
-                <animate attributeName="x1" from="-100%" to="100%" dur="12s" repeatCount="indefinite" />
-                <animate attributeName="x2" from="0%" to="200%" dur="12s" repeatCount="indefinite" />
+                <animate attributeName="x1" from="-100%" to="100%" dur="8s" repeatCount="indefinite" />
+                <animate attributeName="x2" from="0%" to="200%" dur="8s" repeatCount="indefinite" />
               </linearGradient>
             </defs>
 
-            {/* Income Paths with gentle, slow breathing animation (15s) */}
-            <g className="transition-opacity duration-100 ease-in-out" style={{ opacity: activeLine === 'EXPENSE' ? 0 : 1 }}>
+            {/* Income Paths with fast, butter-smooth breathing animation (4s) using spline interpolation */}
+            <g className="transition-opacity duration-500 ease-in-out" style={{ opacity: activeLine === 'EXPENSE' ? 0 : 1 }}>
               <path d={incPathsFill.pathA} fill="url(#gradIncomeFill)">
-                <animate attributeName="d" values={`${incPathsFill.pathA}; ${incPathsFill.pathB}; ${incPathsFill.pathA}`} dur="8s" repeatCount="indefinite" />
+                <animate attributeName="d" values={`${incPathsFill.pathA}; ${incPathsFill.pathB}; ${incPathsFill.pathA}`} dur="4s" repeatCount="indefinite" calcMode="spline" keyTimes="0; 0.5; 1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
               </path>
               <path d={incPathsLine.pathA} fill="none" stroke="url(#flowIncome)" strokeWidth="3.5">
-                <animate attributeName="d" values={`${incPathsLine.pathA}; ${incPathsLine.pathB}; ${incPathsLine.pathA}`} dur="8s" repeatCount="indefinite" />
+                <animate attributeName="d" values={`${incPathsLine.pathA}; ${incPathsLine.pathB}; ${incPathsLine.pathA}`} dur="4s" repeatCount="indefinite" calcMode="spline" keyTimes="0; 0.5; 1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
               </path>
             </g>
 
-            {/* Expense Paths with gentle, slow breathing animation (16s) */}
-            <g className="transition-opacity duration-100 ease-in-out" style={{ opacity: activeLine === 'INCOME' ? 0 : 1 }}>
+            {/* Expense Paths with fast, butter-smooth breathing animation (4s) using spline interpolation */}
+            <g className="transition-opacity duration-500 ease-in-out" style={{ opacity: activeLine === 'INCOME' ? 0 : 1 }}>
               <path d={expPathsFill.pathA} fill="url(#gradExpenseFill)">
-                <animate attributeName="d" values={`${expPathsFill.pathA}; ${expPathsFill.pathB}; ${expPathsFill.pathA}`} dur="8s" repeatCount="indefinite" />
+                <animate attributeName="d" values={`${expPathsFill.pathA}; ${expPathsFill.pathB}; ${expPathsFill.pathA}`} dur="4s" repeatCount="indefinite" calcMode="spline" keyTimes="0; 0.5; 1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
               </path>
               <path d={expPathsLine.pathA} fill="none" stroke="url(#flowExpense)" strokeWidth="3.5">
-                <animate attributeName="d" values={`${expPathsLine.pathA}; ${expPathsLine.pathB}; ${expPathsLine.pathA}`} dur="8s" repeatCount="indefinite" />
+                <animate attributeName="d" values={`${expPathsLine.pathA}; ${expPathsLine.pathB}; ${expPathsLine.pathA}`} dur="4s" repeatCount="indefinite" calcMode="spline" keyTimes="0; 0.5; 1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
               </path>
             </g>
 
