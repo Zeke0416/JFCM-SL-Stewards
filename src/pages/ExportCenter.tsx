@@ -40,8 +40,18 @@ export default function ExportCenter() {
         if (cached && periodData.some(p => p.id === cached)) {
           setSelectedPeriod(cached);
         } else {
-          setSelectedPeriod(periodData[0].id);
-          localStorage.setItem('exportSelectedPeriod', periodData[0].id);
+          // INTELLIGENT MONTH SELECTION
+          const now = new Date();
+          const currentMonthNum = now.getMonth() + 1; // 1-12
+          
+          const currentOpenPeriod = periodData.find(p => p.month === currentMonthNum && p.status === 'OPEN');
+          const fallbackOpenPeriod = periodData.find(p => p.status === 'OPEN');
+          
+          // Priority: Current Month -> Any Open Month -> First Period in list
+          const defaultPeriod = currentOpenPeriod?.id || fallbackOpenPeriod?.id || periodData[0].id;
+          
+          setSelectedPeriod(defaultPeriod);
+          localStorage.setItem('exportSelectedPeriod', defaultPeriod);
         }
       }
     }
@@ -72,7 +82,6 @@ export default function ExportCenter() {
       groups[codeName] = (groups[codeName] || 0) + amt;
     });
 
-    // FIX: Removed .slice(0,3) to display ALL populated accounts
     const topAccounts = Object.entries(groups).sort((a,b) => b[1] - a[1]);
     return { inc, exp, topAccounts };
   }, [previewTxs]);
