@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { X, Activity, Loader2, ArrowRight, ServerCrash } from 'lucide-react';
-import type { TransactionLog } from '../types/database.types';
 
 interface TransactionLogsModalProps {
   isOpen: boolean;
