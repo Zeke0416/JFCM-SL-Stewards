@@ -5,20 +5,19 @@ type VisibleLine = 'BOTH' | 'INCOME' | 'EXPENSE';
 
 export default function TrendChart({ chartData }: { chartData: any[] }) {
   const [activeLine, setActiveLine] = useState<VisibleLine>('BOTH');
-  // Safe fallback to prevent NaN crashes
+  const [tooltip, setTooltip] = useState<{ month: string; income: number; expense: number; x: number; y: number; type: 'income' | 'expense' } | null>(null);
+
   const maxChartVal = Math.max(...chartData.flatMap(d => [d.income, d.expense]), 10);
   
   // Advanced cubic bezier generator returning dual paths for fluid SMIL animation
   const createWavyPaths = (key: 'income'|'expense', closePath = false) => {
     if (chartData.length === 0) return { pathA: '', pathB: '' };
     
-    // Calculate exact data plot coordinates
     const points = chartData.map((d, i) => [
       (i / Math.max(chartData.length - 1, 1)) * 1000, 
       280 - ((d[key] / maxChartVal) * 240)            
     ]);
     
-    // Builds the path with a specific vertical offset applied only to the tension points
     const buildPath = (waveAmplitude: number) => {
       let path = `M ${points[0][0]},${points[0][1]}`;
       
@@ -26,14 +25,9 @@ export default function TrendChart({ chartData }: { chartData: any[] }) {
         const x0 = points[i][0], y0 = points[i][1];
         const x1 = points[i+1][0], y1 = points[i+1][1];
         
-        // Standard tension centers
         const cx1 = x0 + (x1 - x0) * 0.4;
         const cx2 = x1 - (x1 - x0) * 0.4;
-        
-        // Alternate the wave direction per segment for a fluid, continuous sine-wave motion
         const offset = (i % 2 === 0) ? waveAmplitude : -waveAmplitude;
-        
-        // Apply offset to the tension points ONLY, keeping true data points (x1, y1) anchored
         const cy1 = y0 + offset;
         const cy2 = y1 - offset;
         
@@ -45,7 +39,6 @@ export default function TrendChart({ chartData }: { chartData: any[] }) {
     };
 
     return {
-      // Gentle curve offsets for butter-smooth morphing
       pathA: buildPath(6), 
       pathB: buildPath(-6) 
     };
@@ -60,6 +53,8 @@ export default function TrendChart({ chartData }: { chartData: any[] }) {
   const incPathsLine = createWavyPaths('income', false);
   const expPathsFill = createWavyPaths('expense', true);
   const expPathsLine = createWavyPaths('expense', false);
+
+  const formatPHP = (val: number) => new Intl.NumberFormat('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
 
   return (
     <div className="bento-card bg-[#0F1115] dark:bg-[#0A0A0C] space-y-6 flex flex-col border border-slate-200/50 dark:border-[#1F2229] shadow-2xl relative overflow-hidden">
@@ -93,6 +88,20 @@ export default function TrendChart({ chartData }: { chartData: any[] }) {
       </div>
       
       <div className="relative w-full h-64 sm:h-80 flex-1 mt-4">
+        
+        {/* Floating Tooltip Box */}
+        {tooltip && (
+          <div 
+            className="absolute z-30 pointer-events-none bg-slate-900/95 dark:bg-black/95 border border-slate-700 text-white px-3 py-2 rounded-xl shadow-2xl text-[11px] font-medium backdrop-blur-md transform -translate-x-1/2 -translate-y-[120%] transition-all"
+            style={{ left: `${tooltip.x}%`, top: `${tooltip.y}%` }}
+          >
+            <p className="font-bold text-slate-300 mb-0.5 border-b border-slate-700 pb-0.5">{tooltip.month}</p>
+            <p className={tooltip.type === 'income' ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+              {tooltip.type === 'income' ? 'Income' : 'Expense'}: ₱{formatPHP(tooltip.type === 'income' ? tooltip.income : tooltip.expense)}
+            </p>
+          </div>
+        )}
+
         {chartData.length > 0 && (
           <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 1000 300">
             <defs>
@@ -106,7 +115,7 @@ export default function TrendChart({ chartData }: { chartData: any[] }) {
                 <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
               </linearGradient>
 
-              {/* Horizontal Animated Glowing Stroke Gradients - Sped up to 8s for snappier glow */}
+              {/* Horizontal Animated Glowing Stroke Gradients */}
               <linearGradient id="flowIncome" x1="-100%" y1="0%" x2="0%" y2="0%">
                 <stop offset="0%" stopColor="#059669" />
                 <stop offset="50%" stopColor="#6ee7b7" />
@@ -124,7 +133,7 @@ export default function TrendChart({ chartData }: { chartData: any[] }) {
               </linearGradient>
             </defs>
 
-            {/* Income Paths with fast, butter-smooth breathing animation (4s) using spline interpolation */}
+            {/* Income Paths */}
             <g className="transition-opacity duration-500 ease-in-out" style={{ opacity: activeLine === 'EXPENSE' ? 0 : 1 }}>
               <path d={incPathsFill.pathA} fill="url(#gradIncomeFill)">
                 <animate attributeName="d" values={`${incPathsFill.pathA}; ${incPathsFill.pathB}; ${incPathsFill.pathA}`} dur="4s" repeatCount="indefinite" calcMode="spline" keyTimes="0; 0.5; 1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
@@ -134,7 +143,7 @@ export default function TrendChart({ chartData }: { chartData: any[] }) {
               </path>
             </g>
 
-            {/* Expense Paths with fast, butter-smooth breathing animation (4s) using spline interpolation */}
+            {/* Expense Paths */}
             <g className="transition-opacity duration-500 ease-in-out" style={{ opacity: activeLine === 'INCOME' ? 0 : 1 }}>
               <path d={expPathsFill.pathA} fill="url(#gradExpenseFill)">
                 <animate attributeName="d" values={`${expPathsFill.pathA}; ${expPathsFill.pathB}; ${expPathsFill.pathA}`} dur="4s" repeatCount="indefinite" calcMode="spline" keyTimes="0; 0.5; 1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
@@ -144,29 +153,41 @@ export default function TrendChart({ chartData }: { chartData: any[] }) {
               </path>
             </g>
 
-            {/* Steady, anchored data dots (No pulsing animation) */}
+            {/* Interactive Data Plots with Fixed Percentage Tooltip Anchors */}
             {chartData.map((d, i) => {
               const x = (i / Math.max(chartData.length - 1, 1)) * 1000;
               const yInc = 280 - ((d.income / maxChartVal) * 240);
               const yExp = 280 - ((d.expense / maxChartVal) * 240);
               
+              const leftPercent = (x / 1000) * 100;
+              const topIncPercent = (yInc / 300) * 100;
+              const topExpPercent = (yExp / 300) * 100;
+
               return (
                 <g key={`dots-${i}`}>
-                  {/* Income Dot - Steady */}
-                  <circle 
-                    cx={x} cy={yInc} r="5" 
-                    fill="#0A0A0C" stroke="#10b981" strokeWidth="2.5" 
-                    className="transition-opacity duration-500 ease-in-out"
-                    style={{ opacity: activeLine === 'EXPENSE' ? 0 : 1 }}
-                  />
+                  {/* Income Dot & Hover Area */}
+                  {activeLine !== 'EXPENSE' && (
+                    <g 
+                      className="cursor-pointer group"
+                      onMouseEnter={() => setTooltip({ month: d.month, income: d.income, expense: d.expense, x: leftPercent, y: topIncPercent, type: 'income' })}
+                      onMouseLeave={() => setTooltip(null)}
+                    >
+                      <circle cx={x} cy={yInc} r="18" fill="transparent" />
+                      <circle cx={x} cy={yInc} r="5" fill="#0A0A0C" stroke="#10b981" strokeWidth="2.5" className="transition-transform group-hover:scale-125" />
+                    </g>
+                  )}
                   
-                  {/* Expense Dot - Steady */}
-                  <circle 
-                    cx={x} cy={yExp} r="5" 
-                    fill="#0A0A0C" stroke="#f59e0b" strokeWidth="2.5" 
-                    className="transition-opacity duration-500 ease-in-out"
-                    style={{ opacity: activeLine === 'INCOME' ? 0 : 1 }}
-                  />
+                  {/* Expense Dot & Hover Area */}
+                  {activeLine !== 'INCOME' && (
+                    <g 
+                      className="cursor-pointer group"
+                      onMouseEnter={() => setTooltip({ month: d.month, income: d.income, expense: d.expense, x: leftPercent, y: topExpPercent, type: 'expense' })}
+                      onMouseLeave={() => setTooltip(null)}
+                    >
+                      <circle cx={x} cy={yExp} r="18" fill="transparent" />
+                      <circle cx={x} cy={yExp} r="5" fill="#0A0A0C" stroke="#f59e0b" strokeWidth="2.5" className="transition-transform group-hover:scale-125" />
+                    </g>
+                  )}
                 </g>
               );
             })}
