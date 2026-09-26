@@ -387,9 +387,9 @@ export default function Transactions() {
                         </span>
                       </td>
                       <td className="p-4">
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                           {isUnassigned ? (
-                            <span className="font-medium text-amber-600 dark:text-amber-400 font-bold">Unassigned / For Review</span>
+                            <span className="font-medium text-amber-600 dark:text-amber-400 font-bold">Unassigned</span>
                           ) : (
                             <>
                               <span className="font-mono text-[10px] text-slate-400">[{tx.categories?.export_code}]</span>
