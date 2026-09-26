@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Transaction, Category, FinancialPeriod } from '../types/database.types';
-import { Plus, Search, Receipt, UserCircle, ArrowUpDown, ArrowDown, ArrowUp, Edit2, Eye, Calendar, Trash2, Paperclip, CheckCircle2, AlertTriangle, BookOpen, X, Activity, ToggleLeft, ToggleRight, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import { Plus, Search, Receipt, UserCircle, ArrowUpDown, ArrowDown, ArrowUp, Edit2, Eye, Calendar, Trash2, Paperclip, CheckCircle2, AlertTriangle, BookOpen, X, Activity, ToggleLeft, ToggleRight, TrendingUp, TrendingDown, Loader2, Clock } from 'lucide-react';
 import TransactionModal from '../components/TransactionModal';
 import TransactionDetailModal from '../components/TransactionDetailModal';
 import CategoryGuideModal from '../components/CategoryGuideModal';
@@ -11,6 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 type EnrichedTransaction = Transaction & { 
   categories?: Category;
   profiles?: { full_name: string }; 
+  updated_by_profile?: { full_name: string };
 };
 
 type SortField = 'date' | 'type' | 'category' | 'payee_remarks' | 'encoded_by' | 'amount';
@@ -21,6 +22,7 @@ export default function Transactions() {
   const [transactions, setTransactions] = useState<EnrichedTransaction[]>([]);
   const [periods, setPeriods] = useState<FinancialPeriod[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0); 
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -30,12 +32,11 @@ export default function Transactions() {
   const [showCategoryGuide, setShowCategoryGuide] = useState(false);
   const [showLogsModal, setShowLogsModal] = useState(false);
   
-  // Deletion Modal State
   const [deleteTxParams, setDeleteTxParams] = useState<{id: string, description: string} | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [detailedMode, setDetailedMode] = useState(false);
+  const [detailedMode, setDetailedMode] = useState(true); // Default enabled
   const [activeTab, setActiveTab] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
   const [selectedPeriodFilter, setSelectedPeriodFilter] = useState<string>('ALL');
   const [churchId, setChurchId] = useState<string>('');
@@ -74,16 +75,19 @@ export default function Transactions() {
 
       if (periodRes.data) {
         setPeriods(periodRes.data);
-        const cachedPeriod = localStorage.getItem('selectedPeriodFilter');
         
-        if (cachedPeriod && periodRes.data.some(p => p.id === cachedPeriod)) {
-          setSelectedPeriodFilter(cachedPeriod);
-        } else if (periodRes.data.length > 0) {
-          const now = new Date();
-          const currentMonth = now.getMonth() + 1;
-          const currentPeriod = periodRes.data.find(p => p.month === currentMonth && p.status === 'OPEN') || periodRes.data.find(p => p.status === 'OPEN') || periodRes.data[0];
-          setSelectedPeriodFilter(currentPeriod.id);
-          localStorage.setItem('selectedPeriodFilter', currentPeriod.id);
+        if (!initialLoadDone) {
+          const cachedPeriod = localStorage.getItem('selectedPeriodFilter');
+          if (cachedPeriod && periodRes.data.some(p => p.id === cachedPeriod)) {
+            setSelectedPeriodFilter(cachedPeriod);
+          } else if (periodRes.data.length > 0) {
+            const now = new Date();
+            const currentMonth = now.getMonth() + 1;
+            const currentPeriod = periodRes.data.find(p => p.month === currentMonth && p.status === 'OPEN') || periodRes.data.find(p => p.status === 'OPEN') || periodRes.data[0];
+            setSelectedPeriodFilter(currentPeriod.id);
+            localStorage.setItem('selectedPeriodFilter', currentPeriod.id);
+          }
+          setInitialLoadDone(true);
         }
       }
 
@@ -92,8 +96,9 @@ export default function Transactions() {
 
       const enriched = (txRes.data || []).map(tx => ({
         ...tx,
-        categories: catMap.get(tx.category_id),
-        profiles: { full_name: profMap.get(tx.entered_by)?.full_name || 'System Administrator' }
+        categories: catMap.get(tx.category_id || ''),
+        profiles: { full_name: profMap.get(tx.entered_by)?.full_name || 'System Administrator' },
+        updated_by_profile: tx.updated_by ? { full_name: profMap.get(tx.updated_by)?.full_name || 'System Administrator' } : undefined
       }));
 
       setTransactions(enriched);
@@ -132,11 +137,8 @@ export default function Transactions() {
       const { error } = await supabase.from('transactions').delete().eq('id', deleteTxParams.id);
       if (error) throw error;
       
-      // OPTIMISTIC UI UPDATE: Instantly remove the row from the local state
       setTransactions(prev => prev.filter(tx => tx.id !== deleteTxParams.id));
       setDeleteTxParams(null);
-      
-      // Force a background sync to ensure data consistency
       fetchInitialData();
     } catch (err: any) {
       alert("Failed to delete transaction: " + err.message);
@@ -213,15 +215,16 @@ export default function Transactions() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Transactions Ledger</h1>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Record, search, and dynamically audit financial records.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => setShowLogsModal(true)} className="p-2.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors" title="View Database Logs">
+        <div className="flex flex-wrap items-center gap-3">
+          <button onClick={() => setShowLogsModal(true)} className="flex items-center gap-2 px-3 py-2.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors shadow-sm" title="View Database Logs">
             <Activity className="h-4 w-4" />
+            <span className="text-xs font-bold">Audit Logs</span>
           </button>
           <button onClick={() => setShowCategoryGuide(true)} className="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-all shadow-sm">
             <BookOpen className="h-4 w-4" /> Category Guide
@@ -256,47 +259,63 @@ export default function Transactions() {
             <span>Review Required: You have {unassignedTxs.length} unassigned transaction(s) pending category review.</span>
           </div>
           <div className="bg-white/50 dark:bg-black/20 rounded-xl p-3 max-h-32 overflow-y-auto custom-scrollbar space-y-2 border border-amber-200/50 dark:border-amber-800/50">
-             {unassignedTxs.map(tx => (
-               <div key={tx.id} className="flex justify-between items-center bg-white dark:bg-[#121212] p-2 rounded-lg shadow-sm border border-amber-100 dark:border-amber-900/30">
-                 <span className="font-medium truncate max-w-[60%]">{tx.date} - {tx.payee_name || tx.remarks}</span>
-                 <span className="font-mono font-bold">₱{Number(tx.amount).toLocaleString('en-PH')}</span>
-                 <button onClick={() => handleEdit(tx)} className="text-[10px] font-bold text-amber-600 hover:underline">Edit</button>
-               </div>
-             ))}
+             {unassignedTxs.map(tx => {
+               const pName = periods.find(p => p.id === tx.financial_period_id)?.period_name || 'Unknown';
+               return (
+                 <div key={tx.id} className="flex justify-between items-center bg-white dark:bg-[#121212] p-2 rounded-lg shadow-sm border border-amber-100 dark:border-amber-900/30">
+                   <span className="font-medium truncate max-w-[60%]">
+                     <span className="text-amber-600 mr-2">[{pName}]</span>
+                     {tx.date} - {tx.payee_name || tx.remarks}
+                   </span>
+                   <span className="font-mono font-bold">₱{Number(tx.amount).toLocaleString('en-PH')}</span>
+                   <button onClick={() => handleEdit(tx)} className="text-[10px] font-bold text-amber-600 hover:underline">Edit</button>
+                 </div>
+               );
+             })}
           </div>
         </div>
       )}
 
+      {/* FILTER & TAB CONTROLS */}
       <div className="bento-card p-4 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex gap-1.5 p-1.5 bg-slate-200/70 dark:bg-slate-900/80 rounded-xl w-fit border border-slate-300 dark:border-slate-800 shadow-inner">
-            <button onClick={() => setActiveTab('ALL')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'ALL' ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>All Records</button>
-            <button onClick={() => setActiveTab('INCOME')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'INCOME' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>Income</button>
-            <button onClick={() => setActiveTab('EXPENSE')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'EXPENSE' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>Expenses</button>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          
+          <div className="flex gap-1.5 p-1.5 bg-slate-200/70 dark:bg-slate-900/80 rounded-xl w-full lg:w-fit border border-slate-300 dark:border-slate-800 shadow-inner overflow-x-auto custom-scrollbar">
+            <button onClick={() => setActiveTab('ALL')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'ALL' ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>All Records</button>
+            <button onClick={() => setActiveTab('INCOME')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'INCOME' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>Income</button>
+            <button onClick={() => setActiveTab('EXPENSE')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'EXPENSE' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>Expenses</button>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button onClick={() => setDetailedMode(!detailedMode)} className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
-              Detailed View {detailedMode ? <ToggleRight className="h-4 w-4 text-brand dark:text-emerald-500" /> : <ToggleLeft className="h-4 w-4" />}
+          {/* FIX: Removed borders and wrap issues. Added whitespace-nowrap to Detailed View */}
+          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full lg:w-auto overflow-x-auto pb-1 sm:pb-0 custom-scrollbar">
+            <button 
+              onClick={() => setDetailedMode(!detailedMode)} 
+              className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0"
+            >
+              <span>Detailed View</span>
+              {detailedMode ? <ToggleRight className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
             </button>
-            <div className="h-4 w-px bg-slate-300 dark:bg-slate-700" />
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-slate-400" />
+            
+            <div className="h-4 w-px bg-slate-300 dark:bg-slate-700 shrink-0" />
+            
+            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+              <Calendar className="h-4 w-4 text-slate-400 shrink-0 hidden sm:block" />
               <select 
-                className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm focus:border-brand"
+                className="w-full sm:w-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 sm:px-4 py-2 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:border-emerald-500 cursor-pointer"
                 value={selectedPeriodFilter}
                 onChange={(e) => handlePeriodChange(e.target.value)}
               >
                 <option value="ALL">All Financial Periods</option>
-                {periods.map(p => <option key={p.id} value={p.id}>{p.period_name} ({p.status})</option>)}
+                {periods.map(p => <option key={p.id} value={p.id}>{p.period_name} {p.status === 'OPEN' ? '(OPEN)' : ''}</option>)}
               </select>
             </div>
           </div>
+
         </div>
 
         <div className="relative">
           <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-          <input type="text" placeholder="Search remarks, payee, receipt #, category, or encoder..." className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-800 text-xs font-medium bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <input type="text" placeholder="Search remarks, payee, receipt #, category, or encoder..." className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-800 text-xs font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           {searchQuery && (
              <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 dark:hover:text-white">
                 <X className="h-4 w-4" />
@@ -306,9 +325,11 @@ export default function Transactions() {
       </div>
 
       <div className="bento-card overflow-hidden p-0 border border-slate-200 dark:border-[#27272A] shadow-sm rounded-2xl bg-white dark:bg-[#121212]">
-        <div className="bg-slate-50 dark:bg-[#0A0A0A] border-b border-slate-200 dark:border-[#27272A] p-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">
-          Showing {sortedTransactions.length} records
+        <div className="bg-slate-50 dark:bg-[#0A0A0A] border-b border-slate-200 dark:border-[#27272A] p-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider flex justify-between">
+          <span>{selectedPeriodFilter === 'ALL' ? 'Showing records across All Periods' : `Viewing ${periods.find(p => p.id === selectedPeriodFilter)?.period_name}`}</span>
+          <span>{sortedTransactions.length} records</span>
         </div>
+        
         {loading ? (
           <div className="p-8 text-center text-slate-500 animate-pulse text-xs font-medium">Loading secure ledger...</div>
         ) : sortedTransactions.length === 0 ? (
@@ -321,12 +342,13 @@ export default function Transactions() {
             <table className="w-full text-left border-collapse text-xs whitespace-nowrap min-w-[1050px]">
               <thead>
                 <tr className="bg-transparent border-b border-slate-200 dark:border-[#27272A] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-                  <SortableHeader field="date" label="Date" />
+                  {detailedMode && <SortableHeader field="date" label="Date Logged" />}
+                  {!detailedMode && <SortableHeader field="date" label="Tx Date" />}
                   <SortableHeader field="type" label="Type" />
                   <SortableHeader field="category" label="Account No. / Name" />
                   <SortableHeader field="payee_remarks" label="Payee / Remarks" />
-                  {detailedMode && <SortableHeader field="encoded_by" label="Audit Trail" />}
                   {!detailedMode && <th className="p-4 uppercase tracking-wider text-[10px] font-semibold">Receipt</th>}
+                  {detailedMode && <SortableHeader field="encoded_by" label="Audit Trail" />}
                   <SortableHeader field="amount" label="Amount (PHP)" align="right" />
                   <th className="p-4 text-right uppercase tracking-wider text-[10px] font-semibold">Actions</th>
                 </tr>
@@ -341,8 +363,17 @@ export default function Transactions() {
                   return (
                     <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/25 transition-colors group">
                       <td className="p-4 text-slate-600 dark:text-slate-300 font-medium">
-                        {tx.date}
-                        {selectedPeriodFilter === 'ALL' && <div className="text-[9px] text-brand dark:text-emerald-500 font-bold mt-0.5 uppercase tracking-wider">{pName}</div>}
+                        {detailedMode ? (
+                          <div className="flex flex-col gap-1">
+                            <span className="font-bold text-slate-800 dark:text-slate-200">Tx: {tx.date}</span>
+                            <span className="text-[10px] text-slate-400">Log: {new Date(tx.created_at).toLocaleDateString()}</span>
+                          </div>
+                        ) : (
+                          <>
+                            {tx.date}
+                            {selectedPeriodFilter === 'ALL' && <div className="text-[9px] text-brand dark:text-emerald-500 font-bold mt-0.5 uppercase tracking-wider">{pName}</div>}
+                          </>
+                        )}
                       </td>
                       <td className="p-4">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300">
@@ -352,12 +383,14 @@ export default function Transactions() {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <span className={`font-mono text-[10px] ${isUnassigned ? 'text-amber-500 font-bold' : 'text-slate-400'}`}>
-                            {tx.categories?.export_code || '???'}
-                          </span>
-                          <span className={`font-medium ${isUnassigned ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-700 dark:text-slate-200'}`}>
-                            {tx.categories?.name || 'Unassigned / For Review Only'}
-                          </span>
+                          {isUnassigned ? (
+                            <span className="font-medium text-amber-600 dark:text-amber-400 font-bold">Unassigned / For Review</span>
+                          ) : (
+                            <>
+                              <span className="font-mono text-[10px] text-slate-400">[{tx.categories?.export_code}]</span>
+                              <span className="font-medium text-slate-700 dark:text-slate-200">{tx.categories?.name}</span>
+                            </>
+                          )}
                         </div>
                       </td>
                       <td className="p-4">
@@ -367,9 +400,15 @@ export default function Transactions() {
                       
                       {detailedMode && (
                         <td className="p-4">
-                          <div className="flex flex-col text-[10px] font-medium text-slate-500">
-                            <span className="text-slate-700 dark:text-slate-300 flex items-center gap-1"><UserCircle className="h-3 w-3" /> {tx.profiles?.full_name}</span>
-                            <span className="mt-0.5">Created: {new Date(tx.created_at).toLocaleString()}</span>
+                          <div className="flex flex-col text-[10px] font-medium text-slate-500 gap-1.5">
+                            <span className="text-slate-700 dark:text-slate-300 flex items-center gap-1.5" title="Original Encoder">
+                              <UserCircle className="h-3.5 w-3.5" /> Encoded by {tx.profiles?.full_name}
+                            </span>
+                            {tx.updated_by_profile && (
+                              <span className="text-blue-600 dark:text-blue-400 flex items-center gap-1.5" title="Last Updated By">
+                                <Clock className="h-3.5 w-3.5" /> Edited by {tx.updated_by_profile.full_name}
+                              </span>
+                            )}
                           </div>
                         </td>
                       )}
@@ -378,7 +417,7 @@ export default function Transactions() {
                         <td className="p-4">
                           {tx.type === 'INCOME' ? (
                             <span className="text-slate-400 text-[10px] font-medium">—</span>
-                          ) : tx.receipt_url ? (
+                          ) : tx.receipt_no ? (
                             <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200">
                               <Paperclip className="h-3 w-3 text-emerald-500" /> Attached
                             </span>
