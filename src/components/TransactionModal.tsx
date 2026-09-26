@@ -119,8 +119,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
       setCategoryId('unassigned'); setCategorySearch('Unassigned');
     } else {
       const found = combinedCategories.find(c => c.id === (initialData.category_id || 'unassigned'));
-      if (found) { setCategorySearch(found.id === 'unassigned' ? 'Unassigned' : `[${found.export_code}] ${found.name}`); setCategoryId(found.id); checkForSpecialCategory(found.name); }
-      else { setCategorySearch('Unassigned'); setCategoryId('unassigned'); setSpecialCategory(null); }
+      if (found) { setCategorySearch(found.id === 'unassigned' ? 'Unassigned' : `[${found.export_code}] ${found.name}`); setCategoryId(found.id); }
+      else { setCategorySearch('Unassigned'); setCategoryId('unassigned'); }
     }
 
     const { data: periodData } = await supabase.from('financial_periods').select('*').eq('church_id', churchId).order('month', { ascending: true });
@@ -140,7 +140,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
     setType(newType);
     setCategoryId('unassigned');
     setCategorySearch('Unassigned');
-    setSpecialCategory(null);
     setBreakdownItems([]);
     setRemarks('');
   };
@@ -244,32 +243,14 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
     }
   };
 
-  const [specialCategory, setSpecialCategory] = useState<string[] | null>(null);
-  const checkForSpecialCategory = (catName: string) => {
-    const match = Object.keys(SPECIAL_EVENT_TAGS).find(key => catName.includes(key));
-    if (match) {
-      setSpecialCategory(SPECIAL_EVENT_TAGS[match]);
-      if (breakdownItems.length === 0) setBreakdownItems([{ name: SPECIAL_EVENT_TAGS[match][0], amount: '' }]);
-    } else {
-      setSpecialCategory(null);
-    }
-  };
-
   if (!isOpen) return null;
 
-  // RESTORED: createPortal is back! Ejecting the modal safely outside of all layout wrappers.
   return createPortal(
     <>
-      {/* 
-        PERFECT STATIC BACKDROP 
-        -inset-10 guarantees it stretches 10px beyond the screen on all sides to hide the soft blurred edge artifact. 
-      */}
       <div className="fixed -inset-10 z-[99998] bg-black/80 backdrop-blur-md transition-opacity duration-300" aria-hidden="true" />
 
-      {/* MAIN MODAL WRAPPER */}
       <div className="fixed inset-0 z-[99998] flex items-center justify-center p-0 sm:p-4 pointer-events-none">
         
-        {/* 2-Way Animated Inner Modal */}
         <div className={`pointer-events-auto w-full h-[100dvh] sm:h-auto sm:max-h-[95vh] max-w-2xl bg-white dark:bg-[#121212] rounded-none sm:rounded-3xl shadow-none sm:shadow-2xl relative flex flex-col p-0 overflow-hidden border-0 sm:border border-slate-200 dark:border-[#27272A] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${showReview ? 'scale-[0.95] -translate-x-12 opacity-0 blur-[2px] pointer-events-none' : 'scale-100 translate-x-0 opacity-100 blur-0'}`}>
           
           {successAnim ? (
@@ -298,7 +279,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
             </div>
           ) : (
             <>
-              {/* Header */}
               <div className="flex items-center justify-between p-4 sm:p-6 landscape:py-2.5 landscape:px-4 lg:landscape:p-6 bg-slate-50 dark:bg-[#0A0A0A] border-b border-slate-200 dark:border-[#27272A] shrink-0">
                 <div>
                   <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
@@ -310,7 +290,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
                 <button onClick={onClose} className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/5 p-2 rounded-xl transition-colors hidden sm:flex"><X className="h-4 w-4" /></button>
               </div>
 
-              {/* Scrollable Form Body */}
               <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 landscape:py-3 landscape:px-4 lg:landscape:p-6 space-y-4 sm:space-y-5 landscape:space-y-3 lg:landscape:space-y-5">
                 {error && (
                   <div className="bg-red-50 dark:bg-red-950/40 text-red-700 p-4 rounded-2xl text-xs font-medium flex items-center gap-2.5 border border-red-200"><AlertCircle className="h-4 w-4 shrink-0 text-red-500" /><span>{error}</span></div>
