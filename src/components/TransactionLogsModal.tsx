@@ -187,29 +187,46 @@ export default function TransactionLogsModal({ isOpen, onClose, churchId }: Tran
     <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
       <div className="w-full max-w-6xl bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-modal">
         
-        {/* Modal Header */}
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-[#0A0A0A]">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-blue-100 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400">
-              <Activity className="h-5 w-5" />
+        {/* FIX: Rebuilt Modal Header for dynamic wrapping on mobile */}
+        <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0A0A0A] relative">
+          <div className="flex justify-between items-start sm:items-center">
+            
+            <div className="flex items-start gap-3 pr-8 sm:pr-0">
+              <div className="p-2.5 bg-blue-100 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400 shrink-0">
+                <Activity className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Database Event Logs</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Immutable tracking of Insertions, Updates, and Deletions.</p>
+                
+                {/* Mobile Export Button - Drops below description */}
+                <button 
+                  onClick={handleExport} 
+                  disabled={loading || exporting || logs.length === 0}
+                  className="mt-3 flex sm:hidden items-center gap-2 text-white bg-brand dark:bg-emerald-700 hover:bg-brand-dark dark:hover:bg-emerald-800 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50 w-fit"
+                >
+                  {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />} 
+                  {exporting ? 'Exporting...' : 'Export to Excel'}
+                </button>
+              </div>
             </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Database Event Logs</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Immutable tracking of Insertions, Updates, and Deletions.</p>
+            
+            <div className="flex items-center gap-3">
+              {/* Desktop Export Button - Snaps to the right in line with the Close button */}
+              <button 
+                onClick={handleExport} 
+                disabled={loading || exporting || logs.length === 0}
+                className="hidden sm:flex items-center gap-2 text-white bg-brand dark:bg-emerald-700 hover:bg-brand-dark dark:hover:bg-emerald-800 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50"
+              >
+                {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />} 
+                {exporting ? 'Exporting...' : 'Export to Excel'}
+              </button>
+              
+              <button onClick={onClose} className="absolute top-4 right-4 sm:static text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl bg-slate-100 dark:bg-[#1A1A1A] transition-colors shrink-0">
+                <X className="h-5 w-5" />
+              </button>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={handleExport} 
-              disabled={loading || exporting || logs.length === 0}
-              className="flex items-center gap-2 text-white bg-brand dark:bg-emerald-700 hover:bg-brand-dark dark:hover:bg-emerald-800 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50"
-            >
-              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />} 
-              {exporting ? 'Exporting...' : 'Export to Excel'}
-            </button>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl bg-slate-100 dark:bg-[#1A1A1A] transition-colors">
-              <X className="h-5 w-5" />
-            </button>
+
           </div>
         </div>
 

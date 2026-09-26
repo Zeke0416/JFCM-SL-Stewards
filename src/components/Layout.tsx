@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Receipt, LogOut, FileSpreadsheet, CheckCircle, Settings, Moon, Sun, Menu, X, AlertTriangle, Landmark, Target, FileText, ChevronDown, ChevronRight, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Receipt, LogOut, FileSpreadsheet, CheckCircle, Settings, Moon, Sun, Menu, X, AlertTriangle, Landmark, Target, FileText, ChevronDown, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import ForcePasswordChangeModal from './ForcePasswordChangeModal';
 import { Users } from 'lucide-react';
+
+// FIX: Explicitly importing the JFCM-SL Logo
+import logo from '../assets/jfcm-sl_logo.png';
 
 export default function Layout() {
   const location = useLocation();
@@ -94,9 +97,8 @@ export default function Layout() {
       {/* Top Navbar for Mobile/Tablet (Visible up to lg 1024px so landscape phones stay clean) */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/90 dark:bg-brand-darkSurface/90 backdrop-blur-md border-b border-brand-border dark:border-brand-darkBorder z-20 flex items-center justify-between px-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-brand dark:bg-emerald-600 flex items-center justify-center text-white shadow-md">
-            <ShieldCheck className="h-4 w-4" />
-          </div>
+          {/* FIX: Restored the physical image logo */}
+          <img src={logo} alt="Logo" className="h-8 w-8 object-contain drop-shadow-sm" />
           <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">JFCM-SL Stewards</span>
         </div>
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="flex items-center gap-2 p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
@@ -108,9 +110,8 @@ export default function Layout() {
       {/* Sidebar (Hidden on mobile/landscape phone, visible on Desktop LG+) */}
       <div className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-brand-darkSurface border-r border-brand-border dark:border-brand-darkBorder flex flex-col shadow-2xl transition-transform duration-300 ease-in-out z-40 lg:z-0 lg:translate-x-0 lg:static lg:shadow-none ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-20 hidden lg:flex items-center px-6 border-b border-brand-border dark:border-brand-darkBorder gap-3 shrink-0">
-          <div className="h-10 w-10 rounded-xl bg-brand dark:bg-emerald-600 flex items-center justify-center text-white shadow-md">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
+          {/* FIX: Restored the physical image logo */}
+          <img src={logo} alt="Logo" className="h-10 w-10 object-contain drop-shadow-sm" />
           <div>
             <h1 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-tight">JFCM-SL Stewards</h1>
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Financial Operations</p>
