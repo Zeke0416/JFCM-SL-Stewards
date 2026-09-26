@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Receipt, LogOut, FileSpreadsheet, CheckCircle, Settings, Moon, Sun, Menu, X, AlertTriangle, Landmark, Target, FileText, ChevronDown, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Receipt, LogOut, FileSpreadsheet, CheckCircle, Settings, Moon, Sun, Menu, X, AlertTriangle, Landmark, Target, FileText, ChevronDown, ChevronRight, ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import ForcePasswordChangeModal from './ForcePasswordChangeModal';
-import logo from '../assets/favicon.png';
 import { Users } from 'lucide-react';
 
 export default function Layout() {
@@ -86,32 +85,39 @@ export default function Layout() {
   ];
 
   return (
-    <div className="flex h-screen bg-[#F4F6F4] dark:bg-[#0A0A0A] text-slate-800 dark:text-slate-100 transition-colors duration-200 overflow-hidden">
+    <div className="flex h-screen bg-brand-bg dark:bg-brand-darkBg text-slate-800 dark:text-slate-100 transition-colors duration-200 overflow-hidden">
       {mustChangePassword && user && <ForcePasswordChangeModal onSuccess={() => setMustChangePassword(false)} />}
 
-      <div className={`md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30 transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setMobileMenuOpen(false)} aria-hidden="true" />
-      <div className="md:hidden fixed left-0 top-1/2 -translate-y-1/2 w-1.5 h-16 bg-brand dark:bg-emerald-600 rounded-r-xl z-20 opacity-30 shadow-sm pointer-events-none" />
+      {/* Backdrop for mobile menu */}
+      <div className={`lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30 transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setMobileMenuOpen(false)} aria-hidden="true" />
 
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/90 dark:bg-[#121212]/90 backdrop-blur-md border-b border-slate-200 dark:border-[#27272A] z-20 flex items-center justify-between px-4 shadow-sm">
+      {/* Top Navbar for Mobile/Tablet (Visible up to lg 1024px so landscape phones stay clean) */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/90 dark:bg-brand-darkSurface/90 backdrop-blur-md border-b border-brand-border dark:border-brand-darkBorder z-20 flex items-center justify-between px-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <img src={logo} alt="Logo" className="h-9 w-9 object-contain drop-shadow-sm" />
+          <div className="h-8 w-8 rounded-lg bg-brand dark:bg-emerald-600 flex items-center justify-center text-white shadow-md">
+            <ShieldCheck className="h-4 w-4" />
+          </div>
           <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">JFCM-SL Stewards</span>
         </div>
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="flex items-center gap-2 p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:block">Menu</span>
           {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>
 
-      <div className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-[#121212] border-r border-slate-200 dark:border-[#27272A] flex flex-col shadow-2xl transition-transform duration-300 ease-in-out z-40 md:z-0 md:translate-x-0 md:static md:shadow-none ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="h-20 hidden md:flex items-center px-6 border-b border-slate-200 dark:border-[#27272A] gap-3 shrink-0">
-          <img src={logo} alt="Logo" className="h-10 w-10 object-contain drop-shadow-sm" />
+      {/* Sidebar (Hidden on mobile/landscape phone, visible on Desktop LG+) */}
+      <div className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-brand-darkSurface border-r border-brand-border dark:border-brand-darkBorder flex flex-col shadow-2xl transition-transform duration-300 ease-in-out z-40 lg:z-0 lg:translate-x-0 lg:static lg:shadow-none ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="h-20 hidden lg:flex items-center px-6 border-b border-brand-border dark:border-brand-darkBorder gap-3 shrink-0">
+          <div className="h-10 w-10 rounded-xl bg-brand dark:bg-emerald-600 flex items-center justify-center text-white shadow-md">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
           <div>
             <h1 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-tight">JFCM-SL Stewards</h1>
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Financial Operations</p>
           </div>
         </div>
         
-        <nav className="flex-1 px-4 py-4 space-y-4 mt-16 md:mt-0 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 px-4 py-4 space-y-4 mt-16 lg:mt-0 overflow-y-auto custom-scrollbar">
           {menuGroups.map((group) => {
             if (!group.roles.includes(userRole)) return null;
             const isOpen = openMenus[group.key];
@@ -127,7 +133,7 @@ export default function Layout() {
                       const isActive = location.pathname === item.href;
                       const Icon = item.icon;
                       return (
-                        <Link key={item.name} to={item.href} onClick={() => setMobileMenuOpen(false)} className={`flex items-center px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${isActive ? 'bg-brand dark:bg-emerald-700 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'}`}>
+                        <Link key={item.name} to={item.href} onClick={() => setMobileMenuOpen(false)} className={`flex items-center px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${isActive ? 'bg-brand dark:bg-emerald-800 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'}`}>
                           <Icon className={`mr-3 h-4 w-4 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />
                           {item.name}
                         </Link>
@@ -140,7 +146,7 @@ export default function Layout() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-200 dark:border-[#27272A] space-y-2 shrink-0">
+        <div className="p-4 border-t border-brand-border dark:border-brand-darkBorder space-y-2 shrink-0">
           <button onClick={toggleDarkMode} className="flex items-center justify-between w-full px-3.5 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors">
             <span className="flex items-center">
               {darkMode ? <Sun className="mr-3 h-4 w-4 text-amber-400" /> : <Moon className="mr-3 h-4 w-4 text-slate-400" />}
@@ -156,7 +162,8 @@ export default function Layout() {
         </div>
       </div>
 
-      <main className="flex-1 overflow-y-auto p-6 md:p-10 mt-16 md:mt-0 custom-scrollbar">
+      {/* Main Content with optimized responsive padding */}
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10 mt-16 lg:mt-0 custom-scrollbar">
         <div className="max-w-workspace mx-auto pb-12">
           <Outlet />
         </div>

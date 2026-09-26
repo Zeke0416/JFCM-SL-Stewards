@@ -36,7 +36,7 @@ export default function Transactions() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [detailedMode, setDetailedMode] = useState(true); // Default enabled
+  const [detailedMode, setDetailedMode] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
   const [selectedPeriodFilter, setSelectedPeriodFilter] = useState<string>('ALL');
   const [churchId, setChurchId] = useState<string>('');
@@ -216,21 +216,28 @@ export default function Transactions() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      
+      {/* HEADER & MOBILE MAXIMIZED BUTTONS */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Transactions Ledger</h1>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Record, search, and dynamically audit financial records.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button onClick={() => setShowLogsModal(true)} className="flex items-center gap-2 px-3 py-2.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors shadow-sm" title="View Database Logs">
-            <Activity className="h-4 w-4" />
-            <span className="text-xs font-bold">Audit Logs</span>
-          </button>
-          <button onClick={() => setShowCategoryGuide(true)} className="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-all shadow-sm">
-            <BookOpen className="h-4 w-4" /> Category Guide
-          </button>
-          <button onClick={handleOpenNew} className="flex items-center gap-2 bg-brand dark:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md hover:bg-brand-dark dark:hover:bg-emerald-800 transition-all">
-            <Plus className="h-4 w-4" /> Add Transaction
+        
+        {/* Buttons: Clean Grid on Mobile, Row on Desktop */}
+        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto mt-2 lg:mt-0">
+          <div className="grid grid-cols-2 gap-3 w-full sm:w-auto sm:flex sm:flex-row">
+            <button onClick={() => setShowLogsModal(true)} className="flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors shadow-sm" title="View Database Logs">
+              <Activity className="h-4 w-4 shrink-0" />
+              <span className="text-xs font-bold whitespace-nowrap">Audit Logs</span>
+            </button>
+            <button onClick={() => setShowCategoryGuide(true)} className="flex items-center justify-center gap-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-all shadow-sm">
+              <BookOpen className="h-4 w-4 shrink-0" />
+              <span className="whitespace-nowrap">Guide</span>
+            </button>
+          </div>
+          <button onClick={handleOpenNew} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand dark:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md hover:bg-brand-dark dark:hover:bg-emerald-800 transition-all">
+            <Plus className="h-4 w-4 shrink-0" /> Add Transaction
           </button>
         </div>
       </div>
@@ -286,22 +293,12 @@ export default function Transactions() {
             <button onClick={() => setActiveTab('EXPENSE')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'EXPENSE' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>Expenses</button>
           </div>
 
-          {/* FIX: Removed borders and wrap issues. Added whitespace-nowrap to Detailed View */}
-          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full lg:w-auto overflow-x-auto pb-1 sm:pb-0 custom-scrollbar">
-            <button 
-              onClick={() => setDetailedMode(!detailedMode)} 
-              className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0"
-            >
-              <span>Detailed View</span>
-              {detailedMode ? <ToggleRight className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
-            </button>
-            
-            <div className="h-4 w-px bg-slate-300 dark:bg-slate-700 shrink-0" />
-            
-            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-              <Calendar className="h-4 w-4 text-slate-400 shrink-0 hidden sm:block" />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+            {/* Period Selection */}
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 w-full sm:w-auto shadow-sm focus-within:border-emerald-500 transition-colors">
+              <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
               <select 
-                className="w-full sm:w-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 sm:px-4 py-2 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:border-emerald-500 cursor-pointer"
+                className="w-full bg-transparent border-none text-xs font-bold text-slate-700 dark:text-slate-200 focus:ring-0 outline-none cursor-pointer truncate pr-4"
                 value={selectedPeriodFilter}
                 onChange={(e) => handlePeriodChange(e.target.value)}
               >
@@ -309,8 +306,16 @@ export default function Transactions() {
                 {periods.map(p => <option key={p.id} value={p.id}>{p.period_name} {p.status === 'OPEN' ? '(OPEN)' : ''}</option>)}
               </select>
             </div>
+            
+            {/* Detailed View Toggle - Clean, Borderless, One Line */}
+            <button 
+              onClick={() => setDetailedMode(!detailedMode)} 
+              className="flex items-center justify-between sm:justify-center gap-2 px-4 py-3 sm:px-3 sm:py-2.5 bg-slate-100 dark:bg-slate-800/50 sm:bg-transparent sm:dark:bg-transparent rounded-xl sm:rounded-none w-full sm:w-auto text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors border-none"
+            >
+              <span className="whitespace-nowrap">Detailed View</span>
+              {detailedMode ? <ToggleRight className="h-5 w-5 text-brand dark:text-emerald-500 shrink-0" /> : <ToggleLeft className="h-5 w-5 text-slate-400 shrink-0" />}
+            </button>
           </div>
-
         </div>
 
         <div className="relative">
