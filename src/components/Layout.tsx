@@ -316,18 +316,20 @@ export default function Layout() {
         </div>
       )}
 
-      {/* Mobile Drawer Overlay */}
-      <div 
-        className={`lg:hidden fixed inset-0 bg-light-bg/60 dark:bg-dark-bg/80 backdrop-blur-sm z-30 transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
-        onClick={() => setMobileMenuOpen(false)} 
-        aria-hidden="true" 
-      />
-
       {/* 3. Application Layout Structure */}
       <div className="relative z-10 flex w-full h-full">
+
+        {/* Mobile Drawer Overlay */}
+        <div 
+          className={`lg:hidden fixed inset-0 bg-light-bg/60 dark:bg-dark-bg/80 backdrop-blur-sm z-40 transition-opacity duration-300 ${
+            mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`} 
+          onClick={() => setMobileMenuOpen(false)} 
+          aria-hidden="true" 
+        />
         
         {/* Command Rail Sidebar */}
-        <div className={`fixed inset-y-0 left-0 w-[280px] bg-light-surface/95 dark:bg-dark-surface/95 backdrop-blur-2xl border-r border-light-border dark:border-dark-border flex flex-col shadow-tech transition-transform duration-300 ease-out z-40 lg:z-0 lg:translate-x-0 lg:static lg:bg-light-surface lg:dark:bg-dark-surface lg:backdrop-blur-none lg:shadow-none ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className={`fixed inset-y-0 left-0 w-[280px] bg-light-surface/95 dark:bg-dark-surface/95 backdrop-blur-2xl border-r border-light-border dark:border-dark-border flex flex-col shadow-tech transition-transform duration-300 ease-out z-50 lg:z-0 lg:translate-x-0 lg:static lg:bg-light-surface lg:dark:bg-dark-surface lg:backdrop-blur-none lg:shadow-none ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           
           {/* Sidebar Header */}
           <div className="h-16 flex items-center gap-3 px-6 border-b border-light-border dark:border-dark-border shrink-0 bg-transparent">
