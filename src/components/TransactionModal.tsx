@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
-import { X, AlertCircle, Search, Check, ChevronDown, ToggleLeft, ToggleRight, ListPlus, Trash2, Calculator, CheckCircle2, AlertTriangle, Tag, RotateCw } from 'lucide-react';
+import { X, AlertCircle, Search, Check, ChevronDown, ToggleLeft, ToggleRight, ListPlus, Trash2, Calculator, CheckCircle2, AlertTriangle, Tag } from 'lucide-react';
 import type { Category, TransactionType, FinancialPeriod, Transaction } from '../types/database.types';
 import TransactionReviewModal, { type ReviewData } from './TransactionReviewModal';
 

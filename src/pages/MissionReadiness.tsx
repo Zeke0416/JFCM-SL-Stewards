@@ -83,17 +83,14 @@ export default function MissionReadiness() {
           // Smart deadline rule
           const now = new Date();
           const currentMonthNum = now.getMonth() + 1;
-          const currentYear = now.getFullYear();
           const todayDate = now.getDate();
           const deadlineDay = parseInt(localStorage.getItem('mpr_deadline_day') || '14', 10);
           
           let targetMonth = currentMonthNum;
-          let targetYear = currentYear;
           if (todayDate < deadlineDay) {
             targetMonth = currentMonthNum - 1;
             if (targetMonth === 0) {
               targetMonth = 12;
-              targetYear = currentYear - 1;
             }
           }
 

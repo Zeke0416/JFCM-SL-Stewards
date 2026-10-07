@@ -117,7 +117,6 @@ export default function Transactions() {
           } else if (periodRes.data.length > 0) {
             // Smart deadline rule: default to last month if today < deadline
             const currentMonth = now.getMonth() + 1;
-            const currentYear = now.getFullYear();
             const todayDate = now.getDate();
             const deadlineDay = parseInt(localStorage.getItem('mpr_deadline_day') || '14', 10);
             
@@ -466,7 +465,7 @@ export default function Transactions() {
             <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-xl px-4 py-2.5 w-full sm:w-auto shadow-sm min-w-[220px] relative">
               <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
               <select 
-                className="w-full bg-transparent border-none text-xs font-bold text-slate-700 dark:text-slate-200 focus:ring-0 outline-none cursor-pointer pr-8 appearance-none"
+                className="w-full bg-transparent border-none text-xs font-bold text-slate-700 dark:text-slate-200 focus:ring-0 outline-none cursor-pointer pr-4 appearance-none"
                 value={selectedPeriodFilter}
                 onChange={(e) => handlePeriodChange(e.target.value)}
               >
@@ -677,6 +676,7 @@ export default function Transactions() {
         </div>
       )}
 
+      {/* World-Class Auto-Closing Delete Success Modal (1.5s, no button) */}
       {deletedSuccessInfo && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300 pointer-events-none">
           <div className="bg-white dark:bg-[#0A0A0A] rounded-2xl shadow-2xl border border-slate-200 dark:border-[#27272A] w-full max-w-sm p-6 text-center space-y-4 animate-in zoom-in-95 duration-300 pointer-events-auto">
