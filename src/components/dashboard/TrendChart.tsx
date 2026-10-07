@@ -1,199 +1,190 @@
-import { useState } from 'react';
-import { Activity } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { TrendingUp } from 'lucide-react';
 
 type VisibleLine = 'BOTH' | 'INCOME' | 'EXPENSE';
 
 export default function TrendChart({ chartData }: { chartData: any[] }) {
   const [activeLine, setActiveLine] = useState<VisibleLine>('BOTH');
-  const [tooltip, setTooltip] = useState<{ month: string; income: number; expense: number; x: number; y: number; type: 'income' | 'expense' } | null>(null);
+  const [tooltip, setTooltip] = useState<{ month: string; income: number; expense: number; cssX: number; svgX: number; yInc: number; yExp: number } | null>(null);
+  const [animationKey, setAnimationKey] = useState(0);
+
+  useEffect(() => { setAnimationKey(prev => prev + 1); }, [chartData]);
 
   const maxChartVal = Math.max(...chartData.flatMap(d => [d.income, d.expense]), 10);
   
-  // Advanced cubic bezier generator returning dual paths for fluid SMIL animation
-  const createWavyPaths = (key: 'income'|'expense', closePath = false) => {
-    if (chartData.length === 0) return { pathA: '', pathB: '' };
-    
-    const points = chartData.map((d, i) => [
-      (i / Math.max(chartData.length - 1, 1)) * 1000, 
-      280 - ((d[key] / maxChartVal) * 240)            
-    ]);
-    
-    const buildPath = (waveAmplitude: number) => {
-      let path = `M ${points[0][0]},${points[0][1]}`;
-      
-      for (let i = 0; i < points.length - 1; i++) {
-        const x0 = points[i][0], y0 = points[i][1];
-        const x1 = points[i+1][0], y1 = points[i+1][1];
-        
-        const cx1 = x0 + (x1 - x0) * 0.4;
-        const cx2 = x1 - (x1 - x0) * 0.4;
-        const offset = (i % 2 === 0) ? waveAmplitude : -waveAmplitude;
-        const cy1 = y0 + offset;
-        const cy2 = y1 - offset;
-        
-        path += ` C ${cx1},${cy1} ${cx2},${cy2} ${x1},${y1}`;
-      }
-      
-      if (closePath) path += ` L 1000,300 L 0,300 Z`;
-      return path;
-    };
-
-    return {
-      pathA: buildPath(6), 
-      pathB: buildPath(-6) 
-    };
+  const createWavyPaths = (key: 'income'|'expense') => {
+    if (chartData.length === 0) return { path: '' };
+    const points = chartData.map((d, i) => [(i / Math.max(chartData.length - 1, 1)) * 1000, 260 - ((d[key] / maxChartVal) * 220)]);
+    let path = `M ${points[0][0]},${points[0][1]}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const x0 = points[i][0], y0 = points[i][1];
+      const x1 = points[i+1][0], y1 = points[i+1][1];
+      const cx1 = x0 + (x1 - x0) * 0.42;
+      const cx2 = x1 - (x1 - x0) * 0.42;
+      path += ` C ${cx1},${y0} ${cx2},${y1} ${x1},${y1}`;
+    }
+    return { path };
   };
 
-  const toggleLine = (line: 'INCOME' | 'EXPENSE') => {
-    if (activeLine === line) setActiveLine('BOTH');
-    else setActiveLine(line);
-  };
-
-  const incPathsFill = createWavyPaths('income', true);
-  const incPathsLine = createWavyPaths('income', false);
-  const expPathsFill = createWavyPaths('expense', true);
-  const expPathsLine = createWavyPaths('expense', false);
-
-  const formatPHP = (val: number) => new Intl.NumberFormat('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+  const incPath = createWavyPaths('income').path;
+  const expPath = createWavyPaths('expense').path;
+  const formatPHP = (val: number) => new Intl.NumberFormat('en-PH', { minimumFractionDigits: 2 }).format(val);
 
   return (
-    <div className="bento-card bg-[#0F1115] dark:bg-[#0A0A0C] space-y-6 flex flex-col border border-slate-200/50 dark:border-[#1F2229] shadow-2xl relative overflow-hidden">
-      
-      {/* Background Subtle Grid Lines */}
-      <div className="absolute inset-0 flex flex-col justify-between opacity-[0.03] dark:opacity-10 pointer-events-none px-6 py-12">
-          {[1,2,3,4,5].map(i => <div key={i} className="w-full h-px bg-slate-400 dark:bg-white"></div>)}
-      </div>
+    <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl relative overflow-hidden flex flex-col min-h-[380px] shadow-sm">
+      <style>{`
+        @keyframes drawLine {
+          from { stroke-dashoffset: 4000; }
+          to { stroke-dashoffset: 0; }
+        }
+        .animate-draw {
+          stroke-dasharray: 4000;
+          animation: drawLine 3s cubic-bezier(0.2, 0, 0.2, 1) forwards;
+        }
+        .grid-line {
+          stroke: rgba(148, 163, 184, 0.15);
+          stroke-width: 1;
+        }
+      `}</style>
 
-      <div className="flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-2">
-          <Activity className="h-5 w-5 text-emerald-400" />
-          <h3 className="text-sm font-bold text-slate-800 dark:text-white tracking-wide">Financial Posture Trend</h3>
-        </div>
-        
-        {/* Interactive UI toggles */}
-        <div className="flex gap-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 select-none">
-          <div 
-            onClick={() => toggleLine('INCOME')}
-            className={`flex items-center gap-1.5 cursor-pointer hover:text-slate-300 transition-all ${activeLine === 'EXPENSE' ? 'opacity-40 grayscale' : 'opacity-100'}`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] shadow-[0_0_8px_#10b981]"></span> Income
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#111111] rounded-t-2xl z-10 shrink-0">
+        <h3 className="text-xs font-bold text-slate-900 dark:text-white tracking-wide flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Performance Analytics
+        </h3>
+        <div className="flex gap-4 text-xs font-semibold tracking-wider text-slate-500 dark:text-slate-400 select-none">
+          <div onClick={() => setActiveLine(activeLine === 'INCOME' ? 'BOTH' : 'INCOME')} className={`flex items-center gap-2 cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors ${activeLine === 'EXPENSE' ? 'opacity-30' : 'opacity-100'}`}>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span> Income
           </div>
-          <div 
-            onClick={() => toggleLine('EXPENSE')}
-            className={`flex items-center gap-1.5 cursor-pointer hover:text-slate-300 transition-all ${activeLine === 'INCOME' ? 'opacity-40 grayscale' : 'opacity-100'}`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b] shadow-[0_0_8px_#f59e0b]"></span> Expense
+          <div onClick={() => setActiveLine(activeLine === 'EXPENSE' ? 'BOTH' : 'EXPENSE')} className={`flex items-center gap-2 cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors ${activeLine === 'INCOME' ? 'opacity-30' : 'opacity-100'}`}>
+            <span className="w-2 h-2 rounded-full bg-amber-500 shadow-sm"></span> Expense
           </div>
         </div>
       </div>
       
-      <div className="relative w-full h-64 sm:h-80 flex-1 mt-4">
+      {/* Chart Canvas */}
+      <div className="relative w-full flex-1 pt-6 pb-8 px-6 group z-10">
         
-        {/* Floating Tooltip Box */}
-        {tooltip && (
-          <div 
-            className="absolute z-30 pointer-events-none bg-slate-900/95 dark:bg-black/95 border border-slate-700 text-white px-3 py-2 rounded-xl shadow-2xl text-[11px] font-medium backdrop-blur-md transform -translate-x-1/2 -translate-y-[120%] transition-all"
-            style={{ left: `${tooltip.x}%`, top: `${tooltip.y}%` }}
-          >
-            <p className="font-bold text-slate-300 mb-0.5 border-b border-slate-700 pb-0.5">{tooltip.month}</p>
-            <p className={tooltip.type === 'income' ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
-              {tooltip.type === 'income' ? 'Income' : 'Expense'}: ₱{formatPHP(tooltip.type === 'income' ? tooltip.income : tooltip.expense)}
-            </p>
+        {/* Tooltip Overlay */}
+        <div className="absolute inset-0 pointer-events-none px-6 pt-6 pb-8 z-30">
+          <div className="relative w-full h-full">
+            {tooltip && (
+              <>
+                <div 
+                  className="absolute top-0 bottom-0 w-[1px] bg-emerald-500/50 transition-all duration-75"
+                  style={{ left: `${tooltip.cssX}%` }}
+                />
+                
+                <div 
+                  className="absolute z-40 pointer-events-none bg-white/90 dark:bg-[#141414]/90 backdrop-blur-md border border-slate-200 dark:border-[#27272A] rounded-xl p-4 min-w-[160px] transition-all duration-75 shadow-lg"
+                  style={{ left: `${tooltip.cssX}%`, top: '-1rem', transform: tooltip.cssX > 80 ? 'translateX(-110%)' : 'translateX(10%)' }}
+                >
+                  <p className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 border-b border-slate-200 dark:border-[#27272A] pb-1.5">{tooltip.month}</p>
+                  <div className="space-y-1.5 text-xs font-mono font-semibold">
+                    <div className="flex justify-between gap-6 text-emerald-600 dark:text-emerald-400">
+                      <span>INC</span><span>₱{formatPHP(tooltip.income)}</span>
+                    </div>
+                    <div className="flex justify-between gap-6 text-amber-600 dark:text-amber-400">
+                      <span>EXP</span><span>₱{formatPHP(tooltip.expense)}</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-        )}
+        </div>
 
         {chartData.length > 0 && (
-          <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 1000 300">
+          <svg key={animationKey} className="absolute inset-0 w-full h-full overflow-visible px-6 z-10" preserveAspectRatio="none" viewBox="0 0 1000 300">
             <defs>
-              {/* Vertical Fills */}
+              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+
               <linearGradient id="gradIncomeFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+                <stop offset="0%" stopColor="#10B981" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
               </linearGradient>
               <linearGradient id="gradExpenseFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+                <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
               </linearGradient>
 
-              {/* Horizontal Animated Glowing Stroke Gradients */}
-              <linearGradient id="flowIncome" x1="-100%" y1="0%" x2="0%" y2="0%">
-                <stop offset="0%" stopColor="#059669" />
-                <stop offset="50%" stopColor="#6ee7b7" />
-                <stop offset="100%" stopColor="#059669" />
-                <animate attributeName="x1" from="-100%" to="100%" dur="8s" repeatCount="indefinite" />
-                <animate attributeName="x2" from="0%" to="200%" dur="8s" repeatCount="indefinite" />
-              </linearGradient>
-
-              <linearGradient id="flowExpense" x1="-100%" y1="0%" x2="0%" y2="0%">
-                <stop offset="0%" stopColor="#d97706" />
-                <stop offset="50%" stopColor="#fde68a" />
-                <stop offset="100%" stopColor="#d97706" />
-                <animate attributeName="x1" from="-100%" to="100%" dur="8s" repeatCount="indefinite" />
-                <animate attributeName="x2" from="0%" to="200%" dur="8s" repeatCount="indefinite" />
-              </linearGradient>
+              <clipPath id="reveal">
+                <rect x="0" y="0" width="1000" height="300">
+                  <animate attributeName="width" values="0;1000" dur="1.5s" fill="freeze" calcMode="spline" keySplines="0.1 0 0.1 1" />
+                </rect>
+              </clipPath>
             </defs>
 
-            {/* Income Paths */}
-            <g className="transition-opacity duration-500 ease-in-out" style={{ opacity: activeLine === 'EXPENSE' ? 0 : 1 }}>
-              <path d={incPathsFill.pathA} fill="url(#gradIncomeFill)">
-                <animate attributeName="d" values={`${incPathsFill.pathA}; ${incPathsFill.pathB}; ${incPathsFill.pathA}`} dur="4s" repeatCount="indefinite" calcMode="spline" keyTimes="0; 0.5; 1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
-              </path>
-              <path d={incPathsLine.pathA} fill="none" stroke="url(#flowIncome)" strokeWidth="3.5">
-                <animate attributeName="d" values={`${incPathsLine.pathA}; ${incPathsLine.pathB}; ${incPathsLine.pathA}`} dur="4s" repeatCount="indefinite" calcMode="spline" keyTimes="0; 0.5; 1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
-              </path>
-            </g>
+            {/* Horizontal Grid Lines */}
+            {[0, 0.25, 0.5, 0.75, 1].map(pct => (
+              <line key={pct} x1="0" y1={pct * 280} x2="1000" y2={pct * 280} className="grid-line" />
+            ))}
 
-            {/* Expense Paths */}
-            <g className="transition-opacity duration-500 ease-in-out" style={{ opacity: activeLine === 'INCOME' ? 0 : 1 }}>
-              <path d={expPathsFill.pathA} fill="url(#gradExpenseFill)">
-                <animate attributeName="d" values={`${expPathsFill.pathA}; ${expPathsFill.pathB}; ${expPathsFill.pathA}`} dur="4s" repeatCount="indefinite" calcMode="spline" keyTimes="0; 0.5; 1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
-              </path>
-              <path d={expPathsLine.pathA} fill="none" stroke="url(#flowExpense)" strokeWidth="3.5">
-                <animate attributeName="d" values={`${expPathsLine.pathA}; ${expPathsLine.pathB}; ${expPathsLine.pathA}`} dur="4s" repeatCount="indefinite" calcMode="spline" keyTimes="0; 0.5; 1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
-              </path>
-            </g>
-
-            {/* Interactive Data Plots with Fixed Percentage Tooltip Anchors */}
-            {chartData.map((d, i) => {
-              const x = (i / Math.max(chartData.length - 1, 1)) * 1000;
-              const yInc = 280 - ((d.income / maxChartVal) * 240);
-              const yExp = 280 - ((d.expense / maxChartVal) * 240);
+            <g clipPath="url(#reveal)">
               
-              const leftPercent = (x / 1000) * 100;
-              const topIncPercent = (yInc / 300) * 100;
-              const topExpPercent = (yExp / 300) * 100;
+              {/* Expense Render & Traveling Dot */}
+              <g className="transition-opacity duration-300" style={{ opacity: activeLine === 'INCOME' ? 0.05 : 1 }}>
+                <path d={`${expPath} L 1000,300 L 0,300 Z`} fill="url(#gradExpenseFill)" />
+                <path id="expensePath" d={expPath} fill="none" stroke="#F59E0B" strokeWidth="2.5" className="animate-draw" strokeLinecap="round" strokeLinejoin="round" filter="url(#glow)" />
+                
+                {/* Traveling Glowing Dot on Expense Line */}
+                <circle r="4.5" fill="#F59E0B" filter="url(#glow)">
+                  <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+                    <mpath href="#expensePath" />
+                  </animateMotion>
+                </circle>
+              </g>
 
-              return (
-                <g key={`dots-${i}`}>
-                  {/* Income Dot & Hover Area */}
-                  {activeLine !== 'EXPENSE' && (
-                    <g 
-                      className="cursor-pointer group"
-                      onMouseEnter={() => setTooltip({ month: d.month, income: d.income, expense: d.expense, x: leftPercent, y: topIncPercent, type: 'income' })}
-                      onMouseLeave={() => setTooltip(null)}
-                    >
-                      <circle cx={x} cy={yInc} r="18" fill="transparent" />
-                      <circle cx={x} cy={yInc} r="5" fill="#0A0A0C" stroke="#10b981" strokeWidth="2.5" className="transition-transform group-hover:scale-125" />
-                    </g>
-                  )}
-                  
-                  {/* Expense Dot & Hover Area */}
-                  {activeLine !== 'INCOME' && (
-                    <g 
-                      className="cursor-pointer group"
-                      onMouseEnter={() => setTooltip({ month: d.month, income: d.income, expense: d.expense, x: leftPercent, y: topExpPercent, type: 'expense' })}
-                      onMouseLeave={() => setTooltip(null)}
-                    >
-                      <circle cx={x} cy={yExp} r="18" fill="transparent" />
-                      <circle cx={x} cy={yExp} r="5" fill="#0A0A0C" stroke="#f59e0b" strokeWidth="2.5" className="transition-transform group-hover:scale-125" />
-                    </g>
-                  )}
-                </g>
-              );
-            })}
+              {/* Income Render & Traveling Dot */}
+              <g className="transition-opacity duration-300" style={{ opacity: activeLine === 'EXPENSE' ? 0.05 : 1 }}>
+                <path d={`${incPath} L 1000,300 L 0,300 Z`} fill="url(#gradIncomeFill)" />
+                <path id="incomePath" d={incPath} fill="none" stroke="#10B981" strokeWidth="2.5" className="animate-draw" strokeLinecap="round" strokeLinejoin="round" filter="url(#glow)" />
+                
+                {/* Traveling Glowing Dot on Income Line */}
+                <circle r="4.5" fill="#10B981" filter="url(#glow)">
+                  <animateMotion dur="8s" repeatCount="indefinite" rotate="auto">
+                    <mpath href="#incomePath" />
+                  </animateMotion>
+                </circle>
+              </g>
+
+              {/* Hitboxes & Hover Dots */}
+              {chartData.map((d, i) => {
+                const x = (i / Math.max(chartData.length - 1, 1)) * 1000;
+                const colW = 1000 / Math.max(chartData.length - 1, 1);
+                const yInc = 260 - ((d.income / maxChartVal) * 220);
+                const yExp = 260 - ((d.expense / maxChartVal) * 220);
+                const leftPercent = (x / 1000) * 100;
+                const isHovered = tooltip?.month === d.month;
+
+                return (
+                  <g key={`col-${i}`}>
+                    <rect x={x - (colW / 2)} y="-20" width={colW} height="340" fill="transparent" 
+                      onMouseEnter={() => setTooltip({ month: d.month, income: d.income, expense: d.expense, cssX: leftPercent, svgX: x, yInc, yExp })}
+                      onMouseLeave={() => setTooltip(null)} className="cursor-crosshair outline-none" />
+                    
+                    <circle cx={x} cy={yInc} r={isHovered && activeLine !== 'EXPENSE' ? 6 : 2.5} 
+                      className={`pointer-events-none transition-all duration-150 ${isHovered && activeLine !== 'EXPENSE' ? 'fill-white dark:fill-[#0A0A0A] stroke-emerald-500' : 'fill-emerald-500 stroke-transparent opacity-60'}`} 
+                      strokeWidth={isHovered && activeLine !== 'EXPENSE' ? 2.5 : 0} filter="url(#glow)" />
+                      
+                    <circle cx={x} cy={yExp} r={isHovered && activeLine !== 'INCOME' ? 6 : 2.5} 
+                      className={`pointer-events-none transition-all duration-150 ${isHovered && activeLine !== 'INCOME' ? 'fill-white dark:fill-[#0A0A0A] stroke-amber-500' : 'fill-amber-500 stroke-transparent opacity-60'}`} 
+                      strokeWidth={isHovered && activeLine !== 'INCOME' ? 2.5 : 0} filter="url(#glow)" />
+                  </g>
+                );
+              })}
+            </g>
           </svg>
         )}
-        <div className="absolute -bottom-4 left-0 right-0 flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+        
+        {/* X-Axis Labels */}
+        <div className="absolute bottom-1 left-6 right-6 flex justify-between text-xs font-mono text-slate-400 uppercase tracking-wider pointer-events-none">
           {chartData.map(d => <span key={d.month}>{d.month}</span>)}
         </div>
       </div>

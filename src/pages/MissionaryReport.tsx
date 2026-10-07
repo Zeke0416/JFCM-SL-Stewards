@@ -1,13 +1,8 @@
-// ==========================================
-// MISSIONARY REPORT PAGE COMPONENT
-// Purpose: Handles MPR inputs with dynamic textareas, split fields, and averages.
-// ==========================================
-
 import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { FileText, Save, CheckCircle2, Loader2, Calendar } from 'lucide-react';
+import { FileText, Save, CheckCircle2, Loader2, Calendar, ChevronDown } from 'lucide-react';
 import type { FinancialPeriod, WorshipServiceLog, ProjectLog } from '../types/database.types';
 
 export default function MissionaryReport() {
@@ -37,8 +32,21 @@ export default function MissionaryReport() {
       const { data: periodData } = await supabase.from('financial_periods').select('*').eq('church_id', profile.church_id).order('month', { ascending: true });
       if (periodData && periodData.length > 0) {
         setPeriods(periodData);
-        const active = periodData.find(p => p.status === 'OPEN') || periodData[0];
-        setSelectedPeriod(active.id);
+        
+        // Smart deadline rule
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const todayDate = now.getDate();
+        const deadlineDay = parseInt(localStorage.getItem('mpr_deadline_day') || '14', 10);
+        
+        let targetMonth = currentMonth;
+        if (todayDate < deadlineDay) {
+          targetMonth = currentMonth - 1;
+          if (targetMonth === 0) targetMonth = 12;
+        }
+
+        const smartPeriod = periodData.find(p => p.month === targetMonth) || periodData.find(p => p.status === 'OPEN') || periodData[0];
+        setSelectedPeriod(smartPeriod.id);
       }
     }
     setLoading(false);
@@ -52,7 +60,6 @@ export default function MissionaryReport() {
     const period = periods.find(p => p.id === periodId);
     const monthIndex = period ? period.month : 1;
 
-    // Standardized format: 1_1_po (monthIndex_week_po)
     const blankServices: WorshipServiceLog[] = Array.from({ length: 5 }, (_, i) => ({
       week: i + 1,
       dateStr: `${monthIndex}_${i + 1}_po`,
@@ -73,11 +80,9 @@ export default function MissionaryReport() {
     const { data } = await supabase.from('mpr_reports').select('*').eq('financial_period_id', periodId).single();
     
     if (data) {
-      // Pre-fill default names if they are empty
       setPmName(data.pm_name || 'Sis. Jessica Tolentino');
       setOverseerName(data.overseer_name || 'Ptr. Ronald Gawad');
       
-      // Migration fallback for old data if needed
       const mappedServices = (data.worship_services || blankServices).map((ws: any) => ({
          ...ws,
          title: ws.title !== undefined ? ws.title : (ws.titlePreacher || ''),
@@ -128,7 +133,6 @@ export default function MissionaryReport() {
     setProjects(updated);
   };
 
-  // Helper to dynamically auto-resize textareas to fit their content perfectly on input and load
   const handleAutoResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
     const target = e.currentTarget;
     target.style.height = 'auto';
@@ -142,13 +146,11 @@ export default function MissionaryReport() {
     }
   };
 
-  // Compute Averages
   const averages = useMemo(() => {
     let totalA = 0;
     let totalC = 0;
     let count = 0;
     worshipServices.forEach(ws => {
-      // Only count services that actually have data inputted
       if (ws.adults > 0 || ws.children > 0 || ws.title.trim() !== '' || ws.preacher.trim() !== '') {
         totalA += ws.adults;
         totalC += ws.children;
@@ -161,17 +163,25 @@ export default function MissionaryReport() {
     };
   }, [worshipServices]);
 
-  if (loading) return <div className="p-12 text-center text-slate-500 font-medium text-xs">Loading MPR interface...</div>;
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-10 bg-slate-200 dark:bg-[#1a1a1a] rounded-xl w-1/3 sm:w-1/4"></div>
+        <div className="h-32 bg-slate-200 dark:bg-[#121212] rounded-2xl w-full"></div>
+        <div className="h-96 bg-slate-200 dark:bg-[#121212] rounded-2xl w-full"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300 relative">
       
       {showSuccess && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center space-y-4 animate-modal min-w-[300px]">
-            <div className="h-16 w-16 bg-emerald-100 dark:bg-emerald-950/60 rounded-2xl flex items-center justify-center text-emerald-600 animate-bounce"><CheckCircle2 className="h-8 w-8" /></div>
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl p-8 shadow-2xl flex flex-col items-center text-center space-y-4 animate-in zoom-in-95 duration-300 min-w-[300px]">
+            <div className="h-16 w-16 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 animate-bounce"><CheckCircle2 className="h-8 w-8" /></div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Report Saved</h3>
+              <h3 className="text-base font-bold uppercase tracking-wider text-slate-900 dark:text-white">Report Saved</h3>
               <p className="text-xs text-slate-500 mt-1">MPR successfully updated and ready for export.</p>
             </div>
           </div>
@@ -182,39 +192,40 @@ export default function MissionaryReport() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
-            <FileText className="h-7 w-7 text-brand dark:text-emerald-500 shrink-0" />
+            <FileText className="h-7 w-7 text-emerald-600 dark:text-emerald-400 shrink-0" />
             Monthly Progress Report (MPR)
           </h1>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Missionary reporting for worship services and projects.</p>
         </div>
-        <button onClick={handleSave} disabled={saving} className="flex-none flex items-center justify-center gap-2 bg-brand dark:bg-emerald-700 hover:bg-brand-dark dark:hover:bg-emerald-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md w-full sm:w-auto">
+        <button onClick={handleSave} disabled={saving} className="flex-none flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md w-full sm:w-auto">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Save Report
         </button>
       </div>
 
-      <div className="bento-card p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white dark:bg-[#121212]">
-        <div className="flex items-center gap-3 w-full lg:w-auto shrink-0">
+      <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-sm">
+        <div className="flex items-center gap-3 w-full lg:w-auto shrink-0 relative">
           <Calendar className="h-5 w-5 text-slate-400 shrink-0" />
-          <select value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)} className="w-full lg:w-auto min-w-[220px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-2.5 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:border-brand">
+          <select value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)} className="w-full lg:w-auto min-w-[220px] rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] px-4 py-3 pr-10 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:border-emerald-500 outline-none appearance-none cursor-pointer">
             {periods.map(p => <option key={p.id} value={p.id}>{p.period_name} {p.status === 'OPEN' ? '(OPEN)' : ''}</option>)}
           </select>
+          <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none"><ChevronDown className="h-4 w-4 text-slate-400" /></div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full lg:max-w-[500px]">
           <div className="space-y-1.5">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">P / M Name</label>
-            <input type="text" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:border-brand" value={pmName} onChange={e => setPmName(e.target.value)} placeholder="e.g. Sis. Jessica Tolentino" />
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">P / M Name</label>
+            <input type="text" className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:border-emerald-500 outline-none" value={pmName} onChange={e => setPmName(e.target.value)} placeholder="e.g. Sis. Jessica Tolentino" />
           </div>
           <div className="space-y-1.5">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Overseer</label>
-            <input type="text" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:border-brand" value={overseerName} onChange={e => setOverseerName(e.target.value)} placeholder="e.g. Ptr. Ronald Gawad" />
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Overseer</label>
+            <input type="text" className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:border-emerald-500 outline-none" value={overseerName} onChange={e => setOverseerName(e.target.value)} placeholder="e.g. Ptr. Ronald Gawad" />
           </div>
         </div>
       </div>
 
-      <div className="bento-card overflow-hidden p-0 border border-slate-200 dark:border-[#27272A] shadow-sm rounded-2xl bg-white dark:bg-[#121212]">
-        <div className="p-4 border-b border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#0A0A0A]">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">1.0 WORSHIP SERVICE</h3>
+      <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl overflow-hidden shadow-sm">
+        <div className="p-4 border-b border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#111111] rounded-t-2xl">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">1.0 WORSHIP SERVICE</h3>
         </div>
         <div className="overflow-x-auto custom-scrollbar pb-2">
           <table className="w-full text-left border-collapse text-xs min-w-[1050px]">
@@ -229,7 +240,7 @@ export default function MissionaryReport() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]/50 bg-transparent">
               {worshipServices.map((ws, idx) => (
-                <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
+                <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-[#121212] transition-colors">
                   <td className="p-4 font-mono text-slate-600 dark:text-slate-400 font-bold align-top pt-6">{ws.dateStr}</td>
                   
                   <td className="p-4 align-top">
@@ -237,7 +248,7 @@ export default function MissionaryReport() {
                       <textarea 
                         rows={1} 
                         ref={autoResizeRef}
-                        className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-medium text-slate-900 dark:text-white focus:border-brand resize-none shadow-sm overflow-hidden" 
+                        className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] px-3 py-2 text-xs font-medium text-slate-900 dark:text-white focus:border-emerald-500 outline-none resize-none shadow-sm overflow-hidden" 
                         value={ws.title} 
                         onInput={handleAutoResize}
                         onChange={e => updateService(idx, 'title', e.target.value)} 
@@ -245,7 +256,7 @@ export default function MissionaryReport() {
                       />
                       <input 
                         type="text" 
-                        className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1A1A1A] px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 focus:border-brand shadow-sm" 
+                        className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 focus:border-emerald-500 outline-none shadow-sm" 
                         value={ws.preacher} 
                         onChange={e => updateService(idx, 'preacher', e.target.value)} 
                         placeholder="Preacher Name" 
@@ -257,7 +268,7 @@ export default function MissionaryReport() {
                     <textarea 
                       rows={2} 
                       ref={autoResizeRef}
-                      className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-medium text-slate-900 dark:text-white focus:border-brand resize-none shadow-sm overflow-hidden" 
+                      className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] px-3 py-2 text-xs font-medium text-slate-900 dark:text-white focus:border-emerald-500 outline-none resize-none shadow-sm overflow-hidden" 
                       value={ws.objective} 
                       onInput={handleAutoResize}
                       onChange={e => updateService(idx, 'objective', e.target.value)} 
@@ -268,7 +279,7 @@ export default function MissionaryReport() {
                   <td className="p-4 align-top">
                     <input 
                       type="text" 
-                      className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-medium text-slate-900 dark:text-white focus:border-brand shadow-sm" 
+                      className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] px-3 py-2 text-xs font-medium text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-sm" 
                       value={ws.text} 
                       onChange={e => updateService(idx, 'text', e.target.value)} 
                       placeholder="e.g. John 3:16" 
@@ -278,19 +289,19 @@ export default function MissionaryReport() {
                   <td className="p-4 align-top">
                     <div className="flex flex-col gap-3">
                       <div className="text-center">
-                        <span className="block text-[9px] font-bold text-slate-500 uppercase mb-1">Adults & Youth</span>
+                        <span className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Adults & Youth</span>
                         <input 
                           type="number" 
-                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-1.5 text-xs font-bold text-slate-900 dark:text-white text-center focus:border-brand shadow-sm" 
+                          className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] py-1.5 text-xs font-bold text-slate-900 dark:text-white text-center focus:border-emerald-500 outline-none shadow-sm" 
                           value={ws.adults || ''} 
                           onChange={e => updateService(idx, 'adults', parseInt(e.target.value) || 0)} 
                         />
                       </div>
                       <div className="text-center">
-                        <span className="block text-[9px] font-bold text-slate-500 uppercase mb-1">Children</span>
+                        <span className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Children</span>
                         <input 
                           type="number" 
-                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-1.5 text-xs font-bold text-slate-900 dark:text-white text-center focus:border-brand shadow-sm" 
+                          className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] py-1.5 text-xs font-bold text-slate-900 dark:text-white text-center focus:border-emerald-500 outline-none shadow-sm" 
                           value={ws.children || ''} 
                           onChange={e => updateService(idx, 'children', parseInt(e.target.value) || 0)} 
                         />
@@ -300,16 +311,16 @@ export default function MissionaryReport() {
                 </tr>
               ))}
 
-              <tr className="bg-slate-50 dark:bg-[#0A0A0A] border-t-2 border-slate-200 dark:border-slate-800">
+              <tr className="bg-slate-50 dark:bg-[#111111] border-t-2 border-slate-200 dark:border-[#27272A]">
                 <td colSpan={4} className="p-4 text-right font-black uppercase text-slate-600 dark:text-slate-400 text-[10px] tracking-wider align-middle">
                   Average Attendance
                 </td>
                 <td className="p-4">
                   <div className="flex flex-col gap-2">
-                    <div className="text-center bg-white dark:bg-slate-900 py-1.5 rounded border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-white shadow-sm">
+                    <div className="text-center bg-white dark:bg-[#0A0A0A] py-1.5 rounded-xl border border-slate-200 dark:border-[#27272A] font-bold text-slate-900 dark:text-white shadow-sm">
                       {averages.adults}
                     </div>
-                    <div className="text-center bg-white dark:bg-slate-900 py-1.5 rounded border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-white shadow-sm">
+                    <div className="text-center bg-white dark:bg-[#0A0A0A] py-1.5 rounded-xl border border-slate-200 dark:border-[#27272A] font-bold text-slate-900 dark:text-white shadow-sm">
                       {averages.children}
                     </div>
                   </div>
@@ -320,9 +331,9 @@ export default function MissionaryReport() {
         </div>
       </div>
 
-      <div className="bento-card overflow-hidden p-0 border border-slate-200 dark:border-[#27272A] shadow-sm rounded-2xl bg-white dark:bg-[#121212]">
-        <div className="p-4 border-b border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#0A0A0A]">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">2.0 PROJECTS</h3>
+      <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl overflow-hidden shadow-sm">
+        <div className="p-4 border-b border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#111111] rounded-t-2xl">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">2.0 PROJECTS</h3>
         </div>
         <div className="overflow-x-auto custom-scrollbar pb-2">
           <table className="w-full text-left border-collapse text-xs min-w-[850px]">
@@ -336,14 +347,14 @@ export default function MissionaryReport() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]/50 bg-transparent">
               {projects.map((proj, idx) => (
-                <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
+                <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-[#121212] transition-colors">
                   <td className="p-4 font-bold text-slate-600 dark:text-slate-400">{proj.type}</td>
                   <td className="p-4 font-semibold text-slate-900 dark:text-white">{proj.name}</td>
                   <td className="p-4">
-                    <input type="text" className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-medium text-slate-900 dark:text-white focus:border-brand shadow-sm" value={proj.schedule} onChange={e => updateProject(idx, 'schedule', e.target.value)} placeholder="Target date/details" />
+                    <input type="text" className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-sm" value={proj.schedule} onChange={e => updateProject(idx, 'schedule', e.target.value)} placeholder="Target date/details" />
                   </td>
                   <td className="p-4">
-                    <input type="text" className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-medium text-slate-900 dark:text-white focus:border-brand shadow-sm" value={proj.actual} onChange={e => updateProject(idx, 'actual', e.target.value)} placeholder="Actual outcome" />
+                    <input type="text" className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-sm" value={proj.actual} onChange={e => updateProject(idx, 'actual', e.target.value)} placeholder="Actual outcome" />
                   </td>
                 </tr>
               ))}

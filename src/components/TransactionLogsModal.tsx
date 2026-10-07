@@ -112,18 +112,18 @@ export default function TransactionLogsModal({ isOpen, onClose, churchId }: Tran
     if (log.action === 'UPDATE') {
       return (
         <div className="space-y-2">
-           <div className="text-[10px] text-blue-600 dark:text-blue-400 font-bold mb-2">Record Modified</div>
-           <div className="text-[10px] text-slate-500 flex flex-wrap gap-2 items-center bg-slate-100 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-200 dark:border-slate-800 mb-2">
+           <div className="text-[10px] text-sky-600 dark:text-sky-400 font-bold mb-2">Record Modified</div>
+           <div className="text-[10px] text-slate-500 flex flex-wrap gap-2 items-center bg-slate-50 dark:bg-[#121212] p-2.5 rounded-xl border border-slate-200 dark:border-[#27272A] mb-2">
               <span className="shrink-0">Orig. Encoder: <strong>{originalEncoder}</strong></span>
               <ArrowRight className="h-3 w-3 shrink-0 text-slate-400" />
-              <span className="shrink-0 text-blue-600 dark:text-blue-400">Edited by: <strong>{log.changed_by_name}</strong></span>
+              <span className="shrink-0 text-sky-600 dark:text-sky-400">Edited by: <strong>{log.changed_by_name}</strong></span>
            </div>
            
            {oldData.date !== newData.date && (
              <div className="text-[10px] flex items-start gap-2">
                 <span className="text-slate-400 w-16 shrink-0 mt-0.5">Tx Date:</span>
-                <span className="text-red-400 dark:text-red-400/80 line-through shrink-0 flex-1 whitespace-pre-wrap break-words">{oldData.date}</span>
-                <ArrowRight className="h-3 w-3 text-slate-500 shrink-0 mt-0.5" />
+                <span className="text-rose-500 dark:text-rose-400/80 line-through shrink-0 flex-1 whitespace-pre-wrap break-words">{oldData.date}</span>
+                <ArrowRight className="h-3 w-3 text-slate-400 shrink-0 mt-0.5" />
                 <span className="text-emerald-600 dark:text-emerald-400 font-bold shrink-0 flex-1 whitespace-pre-wrap break-words">{newData.date}</span>
              </div>
            )}
@@ -131,8 +131,8 @@ export default function TransactionLogsModal({ isOpen, onClose, churchId }: Tran
            {oldData.category_id !== newData.category_id && (
              <div className="text-[10px] flex items-start gap-2">
                 <span className="text-slate-400 w-16 shrink-0 mt-0.5">Account:</span>
-                <span className="text-red-400 dark:text-red-400/80 line-through flex-1 whitespace-pre-wrap break-words">{oldCat}</span>
-                <ArrowRight className="h-3 w-3 text-slate-500 shrink-0 mt-0.5" />
+                <span className="text-rose-500 dark:text-rose-400/80 line-through flex-1 whitespace-pre-wrap break-words">{oldCat}</span>
+                <ArrowRight className="h-3 w-3 text-slate-400 shrink-0 mt-0.5" />
                 <span className="text-emerald-600 dark:text-emerald-400 font-bold flex-1 whitespace-pre-wrap break-words">{newCat}</span>
              </div>
            )}
@@ -140,8 +140,8 @@ export default function TransactionLogsModal({ isOpen, onClose, churchId }: Tran
            {Number(oldData.amount) !== Number(newData.amount) && (
              <div className="text-[10px] flex items-start gap-2">
                 <span className="text-slate-400 w-16 shrink-0 mt-0.5">Amount:</span>
-                <span className="text-red-400 dark:text-red-400/80 line-through shrink-0 flex-1 whitespace-pre-wrap break-words">₱{Number(oldData.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
-                <ArrowRight className="h-3 w-3 text-slate-500 shrink-0 mt-0.5" />
+                <span className="text-rose-500 dark:text-rose-400/80 line-through shrink-0 flex-1 whitespace-pre-wrap break-words">₱{Number(oldData.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
+                <ArrowRight className="h-3 w-3 text-slate-400 shrink-0 mt-0.5" />
                 <span className="text-emerald-600 dark:text-emerald-400 font-bold shrink-0 flex-1 whitespace-pre-wrap break-words">₱{Number(newData.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
              </div>
            )}
@@ -149,8 +149,8 @@ export default function TransactionLogsModal({ isOpen, onClose, churchId }: Tran
            {oldData.payee_name !== newData.payee_name && (
              <div className="text-[10px] flex items-start gap-2">
                 <span className="text-slate-400 w-16 shrink-0 mt-0.5">Payee:</span>
-                <span className="text-red-400 dark:text-red-400/80 line-through flex-1 whitespace-pre-wrap break-words">{oldData.payee_name || 'N/A'}</span>
-                <ArrowRight className="h-3 w-3 text-slate-500 shrink-0 mt-0.5" />
+                <span className="text-rose-500 dark:text-rose-400/80 line-through flex-1 whitespace-pre-wrap break-words">{oldData.payee_name || 'N/A'}</span>
+                <ArrowRight className="h-3 w-3 text-slate-400 shrink-0 mt-0.5" />
                 <span className="text-emerald-600 dark:text-emerald-400 font-bold flex-1 whitespace-pre-wrap break-words">{newData.payee_name || 'N/A'}</span>
              </div>
            )}
@@ -158,8 +158,8 @@ export default function TransactionLogsModal({ isOpen, onClose, churchId }: Tran
            {oldData.remarks !== newData.remarks && (
              <div className="text-[10px] flex items-start gap-2">
                 <span className="text-slate-400 w-16 shrink-0 mt-0.5">Remarks:</span>
-                <span className="text-red-400 dark:text-red-400/80 line-through flex-1 whitespace-pre-wrap break-words">{oldData.remarks || 'N/A'}</span>
-                <ArrowRight className="h-3 w-3 text-slate-500 shrink-0 mt-0.5" />
+                <span className="text-rose-500 dark:text-rose-400/80 line-through flex-1 whitespace-pre-wrap break-words">{oldData.remarks || 'N/A'}</span>
+                <ArrowRight className="h-3 w-3 text-slate-400 shrink-0 mt-0.5" />
                 <span className="text-emerald-600 dark:text-emerald-400 font-bold flex-1 whitespace-pre-wrap break-words">{newData.remarks || 'N/A'}</span>
              </div>
            )}
@@ -170,7 +170,7 @@ export default function TransactionLogsModal({ isOpen, onClose, churchId }: Tran
     if (log.action === 'DELETE') {
       return (
         <div className="space-y-1">
-           <div className="text-[10px] text-red-600 dark:text-red-400 font-bold mb-2">Record Permanently Deleted</div>
+           <div className="text-[10px] text-rose-600 dark:text-rose-400 font-bold mb-2">Record Permanently Deleted</div>
            <div className="text-[10px] text-slate-500">Deleted by: <span className="font-bold text-slate-700 dark:text-slate-300">{log.changed_by_name}</span></div>
            <div className="text-[10px] text-slate-500">Original Encoder: <span className="font-bold text-slate-700 dark:text-slate-300">{originalEncoder}</span></div>
            <div className="text-[10px] text-slate-500">Tx Date: <span className="font-bold text-slate-700 dark:text-slate-300">{oldData.date}</span></div>
@@ -184,26 +184,26 @@ export default function TransactionLogsModal({ isOpen, onClose, churchId }: Tran
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-      <div className="w-full max-w-6xl bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-modal">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
+      <div className="w-full max-w-6xl bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-300">
         
-        {/* FIX: Rebuilt Modal Header for dynamic wrapping on mobile */}
-        <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0A0A0A] relative">
+        {/* Modal Header */}
+        <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#111111] rounded-t-2xl relative">
           <div className="flex justify-between items-start sm:items-center">
             
             <div className="flex items-start gap-3 pr-8 sm:pr-0">
-              <div className="p-2.5 bg-blue-100 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400 shrink-0">
+              <div className="p-2.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400 shrink-0">
                 <Activity className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">Database Event Logs</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Immutable tracking of Insertions, Updates, and Deletions.</p>
+                <h3 className="text-sm font-bold tracking-wide uppercase text-slate-900 dark:text-white">Database Event Logs</h3>
+                <p className="text-[10px] text-slate-500 font-mono mt-0.5">Immutable tracking of Insertions, Updates, and Deletions.</p>
                 
-                {/* Mobile Export Button - Drops below description */}
+                {/* Mobile Export Button */}
                 <button 
                   onClick={handleExport} 
                   disabled={loading || exporting || logs.length === 0}
-                  className="mt-3 flex sm:hidden items-center gap-2 text-white bg-brand dark:bg-emerald-700 hover:bg-brand-dark dark:hover:bg-emerald-800 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50 w-fit"
+                  className="mt-3 flex sm:hidden items-center gap-2 text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50 w-fit"
                 >
                   {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />} 
                   {exporting ? 'Exporting...' : 'Export to Excel'}
@@ -212,17 +212,17 @@ export default function TransactionLogsModal({ isOpen, onClose, churchId }: Tran
             </div>
             
             <div className="flex items-center gap-3">
-              {/* Desktop Export Button - Snaps to the right in line with the Close button */}
+              {/* Desktop Export Button */}
               <button 
                 onClick={handleExport} 
                 disabled={loading || exporting || logs.length === 0}
-                className="hidden sm:flex items-center gap-2 text-white bg-brand dark:bg-emerald-700 hover:bg-brand-dark dark:hover:bg-emerald-800 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50"
+                className="hidden sm:flex items-center gap-2 text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50"
               >
                 {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />} 
                 {exporting ? 'Exporting...' : 'Export to Excel'}
               </button>
               
-              <button onClick={onClose} className="absolute top-4 right-4 sm:static text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl bg-slate-100 dark:bg-[#1A1A1A] transition-colors shrink-0">
+              <button onClick={onClose} className="absolute top-4 right-4 sm:static text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl bg-slate-100 dark:bg-[#1A1A1A] transition-colors shrink-0 border border-slate-200 dark:border-[#333]">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -230,15 +230,16 @@ export default function TransactionLogsModal({ isOpen, onClose, churchId }: Tran
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-0 bg-slate-50/50 dark:bg-[#121212]">
+        {/* Modal Body */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-0 bg-slate-50/50 dark:bg-[#0A0A0A]">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-              <Loader2 className="h-8 w-8 animate-spin mb-4 text-brand" />
+              <Loader2 className="h-8 w-8 animate-spin mb-4 text-emerald-500" />
               <span className="text-xs font-bold">Querying database events...</span>
             </div>
           ) : logs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center space-y-4">
-              <div className="p-4 bg-slate-100 dark:bg-slate-900 rounded-full text-slate-300 dark:text-slate-700">
+              <div className="p-4 bg-slate-100 dark:bg-[#121212] rounded-full text-slate-400 border border-slate-200 dark:border-[#27272A]">
                 <ServerCrash className="h-12 w-12" />
               </div>
               <div>
@@ -250,29 +251,29 @@ export default function TransactionLogsModal({ isOpen, onClose, churchId }: Tran
             <table className="w-full text-left border-collapse text-xs min-w-[900px]">
               <thead className="sticky top-0 bg-white dark:bg-[#121212] border-b border-slate-200 dark:border-[#27272A] z-10 shadow-sm">
                 <tr className="text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] font-bold">
-                  <th className="p-4 w-40">Event Timestamp</th>
-                  <th className="p-4 w-28">Action</th>
-                  <th className="p-4 w-40">Active User</th>
+                  <th className="p-4 w-36">Event Timestamp</th>
+                  <th className="p-4 w-24">Action</th>
+                  <th className="p-4 w-52">Active User</th>
                   <th className="p-4">Detailed Audit Changes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]/50">
                 {logs.map((log: any) => (
-                  <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-[#1A1A1C] transition-colors">
-                    <td className="p-4 font-mono text-[10px] text-slate-500 dark:text-slate-400 align-top">
+                  <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-[#121212] transition-colors">
+                    <td className="p-4 font-mono text-[10px] text-slate-500 dark:text-slate-400 align-top whitespace-nowrap">
                       <div className="flex flex-col gap-1.5 items-start">
                         <span className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md font-bold text-slate-600 dark:text-slate-300 tracking-wide uppercase">
                           <Fingerprint className="h-3 w-3" /> SYS_LOG
                         </span>
-                        <span className="whitespace-normal break-words">{new Date(log.created_at).toLocaleString()}</span>
+                        <span>{new Date(log.created_at).toLocaleString()}</span>
                       </div>
                     </td>
-                    <td className="p-4 align-top">
-                      <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${log.action === 'INSERT' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400' : log.action === 'DELETE' ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400'}`}>
+                    <td className="p-4 align-top whitespace-nowrap">
+                      <span className={`inline-flex px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${log.action === 'INSERT' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' : log.action === 'DELETE' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' : 'bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400'}`}>
                         {log.action}
                       </span>
                     </td>
-                    <td className="p-4 font-medium text-slate-700 dark:text-slate-300 align-top break-words whitespace-normal">
+                    <td className="p-4 font-medium text-slate-700 dark:text-slate-300 align-top whitespace-nowrap">
                       {log.changed_by_name}
                     </td>
                     <td className="p-4 align-top w-full max-w-full">

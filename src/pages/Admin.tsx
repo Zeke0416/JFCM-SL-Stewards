@@ -1,12 +1,7 @@
-// ==========================================
-// SYSTEM ADMIN PAGE
-// Purpose: Manage system settings, users, roles, and categories.
-// ==========================================
-
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Users, FolderTree, Settings, Plus, Calendar, Edit2, Check, X, Trash2, AlertTriangle, ShieldCheck, KeyRound, CheckCircle2, Copy, Loader2, AlertCircle } from 'lucide-react';
+import { Users, FolderTree, Settings, Plus, Calendar, Edit2, Check, X, Trash2, AlertTriangle, ShieldCheck, KeyRound, CheckCircle2, Copy, Loader2, AlertCircle, FileText, FileCheck } from 'lucide-react';
 import type { Profile, Category, FinancialYear, FinancialPeriod } from '../types/database.types';
 
 export default function Admin() {
@@ -48,6 +43,13 @@ export default function Admin() {
   const [resetConfirmation, setResetConfirmation] = useState('');
   const [resetting, setResetting] = useState(false);
 
+  // Timeframe Configuration State
+  const [mprStartDay, setMprStartDay] = useState('1');
+  const [mprDeadlineDay, setMprDeadlineDay] = useState('14');
+  const [mrStartDay, setMrStartDay] = useState('1');
+  const [mrDeadlineDay, setMrDeadlineDay] = useState('7');
+  const [timeframeMsg, setTimeframeMsg] = useState('');
+
   useEffect(() => {
     if (user) {
       setLoading(true);
@@ -61,6 +63,11 @@ export default function Admin() {
     if (currentProfile) {
       setChurchId(currentProfile.church_id);
       
+      if (localStorage.getItem('mpr_start_day')) setMprStartDay(localStorage.getItem('mpr_start_day') as string);
+      if (localStorage.getItem('mpr_deadline_day')) setMprDeadlineDay(localStorage.getItem('mpr_deadline_day') as string);
+      if (localStorage.getItem('mr_start_day')) setMrStartDay(localStorage.getItem('mr_start_day') as string);
+      if (localStorage.getItem('mr_deadline_day')) setMrDeadlineDay(localStorage.getItem('mr_deadline_day') as string);
+
       const [profileRes, catRes, yearRes, periodRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('church_id', currentProfile.church_id).order('full_name'),
         supabase.from('categories').select('*').eq('church_id', currentProfile.church_id).order('type').order('sort_order'),
@@ -73,9 +80,7 @@ export default function Admin() {
       
       if (yearRes.data) {
         setYears(yearRes.data);
-        const nextAvailableYear = yearRes.data.length > 0 
-          ? Math.max(...yearRes.data.map(y => y.year)) + 1 
-          : new Date().getFullYear();
+        const nextAvailableYear = yearRes.data.length > 0 ? Math.max(...yearRes.data.map(y => y.year)) + 1 : new Date().getFullYear();
         setNewYear(prev => ({ ...prev, year: nextAvailableYear }));
       }
 
@@ -93,9 +98,7 @@ export default function Admin() {
     setUserLoading(true);
     setUserError('');
     try {
-      const { data, error } = await supabase.functions.invoke('create-user', {
-        body: { email: newUser.email, password: newUser.tempPassword, full_name: newUser.fullName, role: newUser.role, church_id: churchId }
-      });
+      const { data, error } = await supabase.functions.invoke('create-user', { body: { email: newUser.email, password: newUser.tempPassword, full_name: newUser.fullName, role: newUser.role, church_id: churchId }});
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
@@ -103,9 +106,7 @@ export default function Admin() {
       setNewUser({ email: '', fullName: '', tempPassword: '', role: 'auditor' });
       setIsAddingUser(false);
       fetchAdminData(); 
-    } catch (err: any) {
-      setUserError(err.message || 'Failed to connect to Supabase Edge Function.');
-    }
+    } catch (err: any) { setUserError(err.message || 'Failed to connect.'); }
     setUserLoading(false);
   };
 
@@ -115,9 +116,7 @@ export default function Admin() {
     setResetLoading(true);
     setResetError('');
     try {
-      const { data, error } = await supabase.functions.invoke('reset-password', {
-        body: { userId: resetTargetUser.id, newPassword: newTempPassword }
-      });
+      const { data, error } = await supabase.functions.invoke('reset-password', { body: { userId: resetTargetUser.id, newPassword: newTempPassword }});
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
@@ -126,32 +125,24 @@ export default function Admin() {
       setResetTargetUser(null);
       setNewTempPassword('');
       fetchAdminData();
-    } catch (err: any) {
-      setResetError(err.message || 'Failed to trigger reset-password edge function.');
-    }
+    } catch (err: any) { setResetError(err.message || 'Failed reset.'); }
     setResetLoading(false);
   };
 
   const handleDeleteUser = async (targetUserId: string, name: string) => {
-    if (targetUserId === user?.id) {
-      alert("You cannot delete your own active administrator account.");
-      return;
-    }
+    if (targetUserId === user?.id) return alert("You cannot delete your own active administrator account.");
     if (!confirm(`Are you sure you want to permanently delete test account "${name}"?`)) return;
     try {
       const { error } = await supabase.functions.invoke('delete-user', { body: { userId: targetUserId } });
       if (error) throw error;
       alert("User account successfully deleted.");
       fetchAdminData();
-    } catch (err: any) {
-      alert("Failed to delete user: " + (err.message || err));
-    }
+    } catch (err: any) { alert("Failed to delete user: " + (err.message || err)); }
   };
 
   const handleCopyCredentials = () => {
     if (!createdUserResult) return;
-    const text = `JFCM-SL Stewards Portal Access\nUser: ${createdUserResult.fullName}\nTemp Password: ${createdUserResult.tempPass}`;
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(`JFCM-SL Stewards Portal Access\nUser: ${createdUserResult.fullName}\nTemp Password: ${createdUserResult.tempPass}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -185,38 +176,40 @@ export default function Admin() {
 
   const handleSaveUser = async (id: string) => {
     if (!editFullName.trim() || !editRole) return;
-    if (id === user?.id && editRole !== 'admin') {
-      alert("You cannot remove your own administrator access.");
-      return;
-    }
-    
-    await supabase.from('profiles').update({ 
-      full_name: editFullName.trim(),
-      role: editRole 
-    }).eq('id', id);
-    
+    if (id === user?.id && editRole !== 'admin') return alert("You cannot remove your own administrator access.");
+    await supabase.from('profiles').update({ full_name: editFullName.trim(), role: editRole }).eq('id', id);
     setEditingUserId(null);
     fetchAdminData();
   };
 
   const handleResetPeriod = async () => {
-    if (resetConfirmation !== 'RESET') {
-      alert("Please type 'RESET' exactly to confirm deletion.");
-      return;
-    }
+    if (resetConfirmation !== 'RESET') return alert("Please type 'RESET' exactly to confirm deletion.");
     if (!selectedResetPeriod) return;
     setResetting(true);
     const { error } = await supabase.rpc('reset_period_transactions', { p_period_id: selectedResetPeriod, p_church_id: churchId });
     setResetting(false);
-    if (error) {
-      alert("Failed to reset period: " + error.message);
-    } else {
-      alert("Transactions and reconciliation data for this period have been successfully wiped clean!");
-      setResetConfirmation('');
-    }
+    if (error) alert("Failed to reset period: " + error.message);
+    else { alert("Transactions wiped clean!"); setResetConfirmation(''); }
   };
 
-  if (loading) return <div className="p-12 text-center text-slate-500 font-medium text-xs">Loading administrative workspace...</div>;
+  const saveTimeframes = () => {
+    localStorage.setItem('mpr_start_day', mprStartDay);
+    localStorage.setItem('mpr_deadline_day', mprDeadlineDay);
+    localStorage.setItem('mr_start_day', mrStartDay);
+    localStorage.setItem('mr_deadline_day', mrDeadlineDay);
+    setTimeframeMsg('Reminder schedules successfully saved!');
+    setTimeout(() => setTimeframeMsg(''), 2000);
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded w-1/3 sm:w-1/4"></div>
+        <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded w-full max-w-xl"></div>
+        <div className="h-96 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -228,15 +221,15 @@ export default function Admin() {
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Manage institutional users, temporary passwords, reset requests, and financial years.</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-1.5 p-1.5 bg-slate-200/70 dark:bg-slate-900/80 rounded-xl w-full max-w-xl border border-slate-300 dark:border-slate-800 shadow-inner">
-        <button onClick={() => setActiveTab('USERS')} className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all truncate ${activeTab === 'USERS' ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>
-          <Users className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Personnel</span>
+      <div className="flex flex-col sm:flex-row gap-1.5 p-1.5 bg-slate-200/70 dark:bg-slate-900/80 rounded-xl w-full max-w-xl border border-slate-300 dark:border-slate-800 shadow-inner overflow-x-auto custom-scrollbar">
+        <button onClick={() => setActiveTab('USERS')} className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'USERS' ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>
+          <Users className="h-3.5 w-3.5 shrink-0" /> <span>Personnel</span>
         </button>
-        <button onClick={() => setActiveTab('SYSTEM')} className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all truncate ${activeTab === 'SYSTEM' ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>
-          <Settings className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">System</span>
+        <button onClick={() => setActiveTab('SYSTEM')} className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'SYSTEM' ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>
+          <Settings className="h-3.5 w-3.5 shrink-0" /> <span>System</span>
         </button>
-        <button onClick={() => setActiveTab('CATEGORIES')} className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all truncate ${activeTab === 'CATEGORIES' ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>
-          <FolderTree className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Categories</span>
+        <button onClick={() => setActiveTab('CATEGORIES')} className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'CATEGORIES' ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>
+          <FolderTree className="h-3.5 w-3.5 shrink-0" /> <span>Categories</span>
         </button>
       </div>
 
@@ -362,6 +355,7 @@ export default function Admin() {
 
       {isResettingPassword && resetTargetUser && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+          {/* Unchanged password modal */}
           <form onSubmit={handleManualPasswordReset} className="w-full max-w-md bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
             <div className="text-center space-y-2">
               <div className="mx-auto h-14 w-14 bg-amber-100 dark:bg-amber-950/60 rounded-2xl flex items-center justify-center text-amber-600"><KeyRound className="h-7 w-7" /></div>
@@ -386,6 +380,7 @@ export default function Admin() {
 
       {createdUserResult && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+          {/* Unchanged copy modal */}
           <div className="w-full max-w-md bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-3xl p-8 shadow-2xl space-y-6 animate-modal text-center">
             <div className="mx-auto h-16 w-16 bg-emerald-100 dark:bg-emerald-950/60 rounded-2xl flex items-center justify-center text-emerald-600 animate-bounce"><CheckCircle2 className="h-8 w-8" /></div>
             <div className="space-y-1">
@@ -406,6 +401,54 @@ export default function Admin() {
 
       {activeTab === 'SYSTEM' && (
         <div className="space-y-6">
+
+          <div className="bento-card border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-brand/10 dark:bg-emerald-900/40 rounded-xl text-brand dark:text-emerald-500">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Submission Notification Timeframes</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Configure when the system automatically flags missing reports or unreconciled periods.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+              <div className="space-y-4 bg-slate-50 dark:bg-[#1A1A1A] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50">
+                <h4 className="text-[11px] font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-slate-400" /> MPR Deadline Rule</h4>
+                <div className="flex gap-4">
+                  <div className="space-y-1 flex-1">
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Alert Starts (Day)</label>
+                    <input type="number" min="1" max="31" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:border-brand" value={mprStartDay} onChange={(e) => setMprStartDay(e.target.value)} />
+                  </div>
+                  <div className="space-y-1 flex-1">
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Deadline (Day)</label>
+                    <input type="number" min="1" max="31" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:border-brand" value={mprDeadlineDay} onChange={(e) => setMprDeadlineDay(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4 bg-slate-50 dark:bg-[#1A1A1A] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50">
+                <h4 className="text-[11px] font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><FileCheck className="h-3.5 w-3.5 text-slate-400" /> Mission Readiness Rule</h4>
+                <div className="flex gap-4">
+                  <div className="space-y-1 flex-1">
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Alert Starts (Day)</label>
+                    <input type="number" min="1" max="31" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:border-brand" value={mrStartDay} onChange={(e) => setMrStartDay(e.target.value)} />
+                  </div>
+                  <div className="space-y-1 flex-1">
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Deadline (Day)</label>
+                    <input type="number" min="1" max="31" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:border-brand" value={mrDeadlineDay} onChange={(e) => setMrDeadlineDay(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between mt-2 pt-4 border-t border-slate-100 dark:border-[#27272A]">
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">{timeframeMsg}</span>
+              <button onClick={saveTimeframes} className="w-full sm:w-auto bg-slate-900 dark:bg-slate-800 hover:bg-black dark:hover:bg-slate-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all">Save Timeframes</button>
+            </div>
+          </div>
+
           <div className="bento-card space-y-6 bg-white dark:bg-[#121212]">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>

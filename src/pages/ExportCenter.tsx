@@ -1,22 +1,19 @@
-// ==========================================
-// EXPORT CENTER COMPONENT
-// Purpose: Generates ComBud-compatible Excel reports using ExcelJS for precise grid styling.
-// ==========================================
-
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Download, FileSpreadsheet, Settings, AlertTriangle, PieChart } from 'lucide-react';
+import { Download, FileSpreadsheet, Settings, AlertTriangle, PieChart, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import type { FinancialPeriod, MPRReport } from '../types/database.types';
 
+let exportMemoryCache: any = null;
+
 export default function ExportCenter() {
   const { user } = useAuth();
-  const [periods, setPeriods] = useState<FinancialPeriod[]>([]);
-  const [selectedPeriod, setSelectedPeriod] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [previewTxs, setPreviewTxs] = useState<any[]>([]);
+  const [periods, setPeriods] = useState<FinancialPeriod[]>(exportMemoryCache?.periods || []);
+  const [selectedPeriod, setSelectedPeriod] = useState(exportMemoryCache?.selectedPeriod || '');
+  const [loading, setLoading] = useState(!exportMemoryCache);
+  const [previewTxs, setPreviewTxs] = useState<any[]>(exportMemoryCache?.previewTxs || []);
   
   const [hideEmpty, setHideEmpty] = useState(true);
   const [exportFullYear, setExportFullYear] = useState(false);
@@ -24,37 +21,48 @@ export default function ExportCenter() {
   const [showUnassignedModal, setShowUnassignedModal] = useState(false);
   const [unassignedCount, setUnassignedCount] = useState(0);
 
+  // Preview Pagination
+  const [previewPage, setPreviewPage] = useState(1);
+  const itemsPerPage = 8;
+
   useEffect(() => {
     if (user) fetchInitialData();
   }, [user]);
 
   const fetchInitialData = async () => {
+    if (!exportMemoryCache) setLoading(true);
     const { data: profile } = await supabase.from('profiles').select('church_id').eq('id', user?.id).single();
     if (profile) {
       const { data: periodData } = await supabase.from('financial_periods').select('*').eq('church_id', profile.church_id).order('month', { ascending: false });
       if (periodData && periodData.length > 0) {
         setPeriods(periodData);
-        
-        // Cache management so it doesn't reset when switching tabs
         const cached = localStorage.getItem('exportSelectedPeriod');
+        let targetPeriodId = periodData[0].id;
+        
         if (cached && periodData.some(p => p.id === cached)) {
-          setSelectedPeriod(cached);
+          targetPeriodId = cached;
         } else {
-          // INTELLIGENT MONTH SELECTION
+          // Smart Deadline Rule
           const now = new Date();
-          const currentMonthNum = now.getMonth() + 1; // 1-12
+          const currentMonthNum = now.getMonth() + 1;
+          const todayDate = now.getDate();
+          const deadlineDay = parseInt(localStorage.getItem('mpr_deadline_day') || '14', 10);
           
-          const currentOpenPeriod = periodData.find(p => p.month === currentMonthNum && p.status === 'OPEN');
-          const fallbackOpenPeriod = periodData.find(p => p.status === 'OPEN');
-          
-          // Priority: Current Month -> Any Open Month -> First Period in list
-          const defaultPeriod = currentOpenPeriod?.id || fallbackOpenPeriod?.id || periodData[0].id;
-          
-          setSelectedPeriod(defaultPeriod);
-          localStorage.setItem('exportSelectedPeriod', defaultPeriod);
+          let targetMonth = currentMonthNum;
+          if (todayDate < deadlineDay) {
+            targetMonth = currentMonthNum - 1;
+            if (targetMonth === 0) targetMonth = 12;
+          }
+
+          const smartPeriod = periodData.find(p => p.month === targetMonth) || periodData.find(p => p.status === 'OPEN') || periodData[0];
+          targetPeriodId = exportMemoryCache?.selectedPeriod || smartPeriod.id;
         }
+        
+        setSelectedPeriod(targetPeriodId);
+        localStorage.setItem('exportSelectedPeriod', targetPeriodId);
       }
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -66,11 +74,14 @@ export default function ExportCenter() {
 
   const fetchPreviewData = async () => {
     const { data: txs } = await supabase.from('transactions').select('amount, type, categories(name, export_code)').eq('financial_period_id', selectedPeriod);
-    if (txs) setPreviewTxs(txs);
+    if (txs) {
+      setPreviewTxs(txs);
+      exportMemoryCache = { periods, selectedPeriod, previewTxs: txs };
+    }
   };
 
   const previewMetrics = useMemo(() => {
-    let inc = 0; let exp = 0;
+    let inc = 0; let exp = 0; let unassigned = 0;
     const groups: Record<string, number> = {};
     
     previewTxs.forEach(t => {
@@ -79,11 +90,13 @@ export default function ExportCenter() {
       if (t.type === 'EXPENSE') exp += amt;
       
       const codeName = `[${t.categories?.export_code || '???'}] ${t.categories?.name || 'Unassigned'}`;
+      if (t.categories?.name === 'Unassigned' || !t.categories) unassigned++;
       groups[codeName] = (groups[codeName] || 0) + amt;
     });
 
+    setUnassignedCount(unassigned);
     const topAccounts = Object.entries(groups).sort((a,b) => b[1] - a[1]);
-    return { inc, exp, topAccounts };
+    return { count: previewTxs.length, inc, exp, topAccounts };
   }, [previewTxs]);
 
   const getMonthShort = (periodName: string) => periodName.split(' ')[0].substring(0,3);
@@ -224,7 +237,7 @@ export default function ExportCenter() {
             if (breakdownMatch) {
               breakdownMatch[1].split(', ').forEach((pair: string) => {
                 const lastColon = pair.lastIndexOf(': ₱');
-                if (lastColon !== -1) { secRows.push([null, null, `  - ${pair.substring(0, lastColon).trim()}`, null, parseFloat(pair.substring(lastColon + 3)) || 0]); } 
+                if (lastColon !== -1) { secRows.push([null, null, `  - ${pair.substring(0, lastColon).trim()}`, null, parseFloat(pair.substring(lastColon + 3).replace(/,/g, '')) || 0]); } 
                 else { secRows.push([null, null, `  - ${pair}`, null, Number(tx.amount)]); }
               });
             } else { secRows.push([null, null, `  - ${tx.payee_name || tx.remarks || 'Expense Item'}`, null, Number(tx.amount)]); }
@@ -373,46 +386,68 @@ export default function ExportCenter() {
     setLoading(false);
   };
 
+  if (loading && !exportMemoryCache) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-10 bg-slate-200 dark:bg-[#1a1a1a] rounded-xl w-1/3 sm:w-1/4"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
+           <div className="lg:col-span-7 h-96 bg-slate-200 dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-[#27272A]"></div>
+           <div className="lg:col-span-5 h-96 bg-slate-200 dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-[#27272A]"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const totalPages = Math.ceil(previewMetrics.topAccounts.length / itemsPerPage);
+  const displayedAccounts = previewMetrics.topAccounts.slice((previewPage - 1) * itemsPerPage, previewPage * itemsPerPage);
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Export Center</h1>
-        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Generate perfectly styled ComBud and MPR Excel reports.</p>
+    <div className="space-y-8 animate-in fade-in duration-300">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+            <FileSpreadsheet className="h-7 w-7 text-emerald-600 dark:text-emerald-400 shrink-0" /> ComBud Data Export
+          </h1>
+          <p className="text-xs font-medium text-slate-500 mt-1">Generate perfectly styled ComBud and MPR Excel reports.</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">
-        <div className="bento-card space-y-8 flex flex-col justify-center">
-          <div className="text-center">
-            <div className="mx-auto h-16 w-16 bg-emerald-50 dark:bg-emerald-950/50 rounded-2xl flex items-center justify-center mb-4 border border-emerald-100 dark:border-emerald-900/50">
-              <FileSpreadsheet className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-10">
+        <div className="lg:col-span-7 bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl p-6 sm:p-7 space-y-8 flex flex-col justify-center shadow-sm">
+          <div className="text-center mt-2">
+            <div className="mx-auto h-16 w-16 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-4 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+              <Download className="h-8 w-8" />
             </div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">Generate Official Reports</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">Downloads strictly formatted SCRD and MPR spreadsheets exactly matched to ComBud templates.</p>
           </div>
 
-          <div className="space-y-6 border-t border-brand-border dark:border-brand-darkBorder pt-6">
+          <div className="space-y-6 border-t border-slate-200 dark:border-[#27272A] pt-6">
             <div className="space-y-1.5">
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Financial Period / Year Reference</label>
-              <select className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-xs font-semibold text-slate-900 dark:text-white shadow-sm focus:border-brand" value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)}>
-                {periods.map(p => <option key={p.id} value={p.id}>{p.period_name}</option>)}
-              </select>
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Financial Period / Year Reference</label>
+              <div className="relative">
+                <select className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] px-4 py-3 pr-10 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:border-emerald-500 outline-none appearance-none cursor-pointer" value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)}>
+                  {periods.map(p => <option key={p.id} value={p.id}>{p.period_name}</option>)}
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none"><ChevronDown className="h-4 w-4 text-slate-400" /></div>
+              </div>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+            <div className="bg-slate-50 dark:bg-[#121212] p-4 rounded-xl border border-slate-200 dark:border-[#27272A] space-y-4">
               <div className="flex items-start gap-3">
                 <Settings className="h-5 w-5 text-slate-400 mt-0.5 shrink-0" />
                 <div>
                   <label className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
-                    <input type="checkbox" checked={hideEmpty} onChange={(e) => setHideEmpty(e.target.checked)} className="rounded text-brand h-4 w-4" />
+                    <input type="checkbox" checked={hideEmpty} onChange={(e) => setHideEmpty(e.target.checked)} className="rounded text-emerald-600 h-4 w-4 border-slate-300 dark:border-slate-700" />
                     Smart Export (Hide Empty Rows)
                   </label>
                 </div>
               </div>
-              <div className="flex items-start gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <FileSpreadsheet className="h-5 w-5 text-brand mt-0.5 shrink-0" />
+              <div className="flex items-start gap-3 pt-4 border-t border-slate-200 dark:border-[#27272A]">
+                <FileSpreadsheet className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
                 <div>
                   <label className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
-                    <input type="checkbox" checked={exportFullYear} onChange={(e) => setExportFullYear(e.target.checked)} className="rounded text-brand h-4 w-4" />
+                    <input type="checkbox" checked={exportFullYear} onChange={(e) => setExportFullYear(e.target.checked)} className="rounded text-emerald-600 h-4 w-4 border-slate-300 dark:border-slate-700" />
                     Export Entire Year (All Months Segregated)
                   </label>
                   <p className="text-[11px] text-slate-500 mt-1 ml-6">Generates a massive workbook containing SCRD and MPR sheets for every month in the selected year.</p>
@@ -420,38 +455,46 @@ export default function ExportCenter() {
               </div>
             </div>
 
-            <button onClick={handleExport} disabled={loading || !selectedPeriod} className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-sm text-xs font-bold text-white bg-brand dark:bg-emerald-700 hover:bg-brand-dark transition-colors">
+            <button onClick={handleExport} disabled={loading || !selectedPeriod} className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-sm text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
               <Download className="h-4 w-4" />
-              {loading ? 'Generating Excel Workbook...' : 'Download ComBud & MPR Export'}
+              {loading ? 'Generating Excel...' : 'Download ComBud & MPR Export'}
             </button>
           </div>
         </div>
 
-        {/* Data Preview Widget */}
-        <div className="bento-card bg-slate-50 dark:bg-[#121212] flex flex-col justify-between">
+        <div className="lg:col-span-5 bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl flex flex-col justify-between p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-6">
-            <PieChart className="h-5 w-5 text-brand dark:text-emerald-500" />
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Export Data Preview</h3>
+            <PieChart className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Export Data Preview</h3>
           </div>
           
           <div className="space-y-4 flex-1">
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+              <div className="p-4 bg-slate-50 dark:bg-[#121212] rounded-xl shadow-sm border border-slate-200 dark:border-[#27272A]">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Income</p>
-                <p className="text-lg font-black text-emerald-600 mt-1">₱{previewMetrics.inc.toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                <p className="text-lg font-black text-emerald-600 dark:text-emerald-400 mt-1">₱{previewMetrics.inc.toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
               </div>
-              <div className="p-4 bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+              <div className="p-4 bg-slate-50 dark:bg-[#121212] rounded-xl shadow-sm border border-slate-200 dark:border-[#27272A]">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Expense</p>
-                <p className="text-lg font-black text-amber-600 mt-1">₱{previewMetrics.exp.toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                <p className="text-lg font-black text-amber-600 dark:text-amber-400 mt-1">₱{previewMetrics.exp.toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">All Populated Accounts (Preview)</p>
-              <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
-                {previewMetrics.topAccounts.length > 0 ? previewMetrics.topAccounts.map(([name, amount], i) => (
-                  <div key={i} className="flex justify-between items-center text-xs pb-2 border-b border-slate-100 dark:border-slate-800/60 last:border-0 last:pb-0">
-                    <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[280px]">{name}</span>
+            <div className="bg-slate-50 dark:bg-[#121212] rounded-xl shadow-sm border border-slate-200 dark:border-[#27272A] p-4">
+              <div className="flex justify-between items-center mb-3">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Populated Accounts ({previewMetrics.count} txs)</p>
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setPreviewPage(Math.max(1, previewPage - 1))} disabled={previewPage === 1} className="p-1 rounded-md bg-slate-200 dark:bg-[#1A1A1A] disabled:opacity-30 hover:bg-slate-300 transition-colors"><ChevronLeft className="h-3 w-3" /></button>
+                    <span className="text-[10px] text-slate-500 font-bold">{previewPage} / {totalPages}</span>
+                    <button onClick={() => setPreviewPage(Math.min(totalPages, previewPage + 1))} disabled={previewPage === totalPages} className="p-1 rounded-md bg-slate-200 dark:bg-[#1A1A1A] disabled:opacity-30 hover:bg-slate-300 transition-colors"><ChevronRight className="h-3 w-3" /></button>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2 pr-2">
+                {displayedAccounts.length > 0 ? displayedAccounts.map(([name, amount], i) => (
+                  <div key={i} className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 dark:border-[#27272A]/50 last:border-0 last:pb-0">
+                    <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[200px]" title={name}>{name}</span>
                     <span className="font-mono font-bold text-slate-900 dark:text-white">₱{amount.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
                   </div>
                 )) : <p className="text-xs text-slate-400 italic">No transactions recorded for this period yet.</p>}
@@ -462,14 +505,14 @@ export default function ExportCenter() {
       </div>
 
       {showUnassignedModal && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="w-full max-w-md bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-3xl p-8 shadow-2xl space-y-6 text-center animate-modal">
-            <div className="mx-auto h-16 w-16 bg-amber-100 dark:bg-amber-950/60 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 animate-bounce"><AlertTriangle className="h-8 w-8" /></div>
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl p-8 shadow-2xl space-y-6 text-center animate-in zoom-in-95 duration-300">
+            <div className="mx-auto h-16 w-16 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 animate-bounce"><AlertTriangle className="h-8 w-8" /></div>
             <div className="space-y-1.5">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Export Blocked</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-wider">Export Blocked</h3>
               <p className="text-xs text-slate-500">Found <strong className="text-amber-600 dark:text-amber-400">{unassignedCount} unassigned transaction(s)</strong>. They must be categorized before export.</p>
             </div>
-            <button onClick={() => setShowUnassignedModal(false)} className="w-full py-3 bg-brand dark:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md hover:bg-brand-dark transition-all">Acknowledge</button>
+            <button onClick={() => setShowUnassignedModal(false)} className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition-all">Acknowledge</button>
           </div>
         </div>
       )}
