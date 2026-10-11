@@ -9,6 +9,10 @@ import CategoryGuideModal from '../components/CategoryGuideModal';
 import TransactionLogsModal from '../components/TransactionLogsModal';
 import { useAuth } from '../contexts/AuthContext';
 import AnimatedNumber from '../components/AnimatedNumber';
+import TransactionDuplicateScanner, {
+  findDuplicateCandidates,
+  type DuplicateCandidate,
+} from '../components/TransactionDuplicateScanner';
 
 type EnrichedTransaction = Transaction & { 
   categories?: Category;
@@ -192,6 +196,8 @@ export default function Transactions() {
     }
   };
 
+  
+
   const filteredTransactions = useMemo(() => {
     const lowerQuery = searchQuery.toLowerCase();
     return transactions.filter((tx) => {
@@ -208,6 +214,29 @@ export default function Transactions() {
       );
     });
   }, [transactions, searchQuery, activeTab, selectedPeriodFilter]);
+
+  const duplicateCandidates = useMemo(
+    () => findDuplicateCandidates(transactions, selectedPeriodFilter, activeTab),
+    [transactions, selectedPeriodFilter, activeTab],
+  );
+
+  const duplicateByTransactionId = useMemo(() => {
+    const result = new Map<string, DuplicateCandidate>();
+
+    for (const candidate of duplicateCandidates) {
+      for (const transaction of [candidate.first, candidate.second]) {
+        const current = result.get(transaction.id);
+        const candidateIsStronger =
+          !current ||
+          (candidate.confidence === 'HIGH' && current.confidence !== 'HIGH') ||
+          (candidate.confidence === current.confidence && candidate.score > current.score);
+
+        if (candidateIsStronger) result.set(transaction.id, candidate);
+      }
+    }
+
+    return result;
+  }, [duplicateCandidates]);
 
   const sortedTransactions = useMemo(() => {
     return [...filteredTransactions].sort((a, b) => {
@@ -403,7 +432,7 @@ export default function Transactions() {
       </div>
 
       {/* Alert Notices */}
-      {(unassignedTxs.length > 0 || missingMPRPeriod) && (
+      {(unassignedTxs.length > 0 || missingMPRPeriod || duplicateCandidates.length > 0) && (
         <div className="flex flex-col gap-3">
           {missingMPRPeriod && (
              <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 p-4 rounded-2xl flex items-center justify-between text-xs text-rose-800 dark:text-rose-200 shadow-sm">
@@ -447,6 +476,18 @@ export default function Transactions() {
                  })}
               </div>
             </div>
+          )}
+
+          {duplicateCandidates.length > 0 && (
+            <TransactionDuplicateScanner
+              transactions={transactions}
+              periods={periods}
+              selectedPeriodFilter={selectedPeriodFilter}
+              activeTab={activeTab}
+              candidates={duplicateCandidates}
+              onViewDetails={handleViewDetails}
+              onEdit={handleEdit}
+            />
           )}
         </div>
       )}
@@ -537,46 +578,71 @@ export default function Transactions() {
                   const isAutoExempt = exemptKeywords.some(keyword => categoryName.includes(keyword));
                   const isUnassigned = !tx.categories || tx.categories.export_code === '???';
                   const pName = selectedPeriodFilter === 'ALL' ? periods.find(p => p.id === tx.financial_period_id)?.period_name || 'Unknown' : '';
+                  const duplicateCandidate = duplicateByTransactionId.get(tx.id);
 
-                  return (
-                    <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-[#121212] transition-colors group">
-                      <td className="p-4 text-slate-600 dark:text-slate-300 font-medium">
-                        {detailedMode ? (
-                          <div className="flex flex-col gap-1">
-                            <span className="font-bold text-slate-800 dark:text-slate-200">{tx.date}</span>
-                            <span className="text-[10px] text-slate-400">Log: {new Date(tx.created_at).toLocaleDateString()}</span>
-                          </div>
-                        ) : (
-                          <>
-                            {tx.date}
-                            {selectedPeriodFilter === 'ALL' && <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 uppercase tracking-wider">{pName}</div>}
-                          </>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#141414] text-slate-700 dark:text-slate-300">
-                          <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${tx.type === 'INCOME' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                          {tx.type}
+              return (
+                <tr
+                  key={tx.id}
+                  className={`group transition-colors hover:bg-slate-50 dark:hover:bg-[#121212] ${
+                    duplicateCandidate ? 'bg-amber-50/40 dark:bg-amber-950/10' : ''
+                  }`}
+                >
+                  <td className="p-4 text-slate-600 dark:text-slate-300 font-medium">
+                    {detailedMode ? (
+                      <div className="flex flex-col gap-1">
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{tx.date}</span>
+                        <span className="text-[10px] text-slate-400">Log: {new Date(tx.created_at).toLocaleDateString()}</span>
+                      </div>
+                    ) : (
+                      <>
+                        {tx.date}
+                        {selectedPeriodFilter === 'ALL' && <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 uppercase tracking-wider">{pName}</div>}
+                      </>
+                    )}
+                  </td>
+                  <td className="p-4">
+                    <div className="flex flex-col items-start gap-1.5">
+                      <span className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-slate-700 dark:border-[#27272A] dark:bg-[#141414] dark:text-slate-300">
+                        <span className={`mr-1.5 h-1.5 w-1.5 rounded-full ${tx.type === 'INCOME' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                        {tx.type}
+                      </span>
+                      {duplicateCandidate && (
+                        <span
+                          title={duplicateCandidate.reasons.join(' · ')}
+                          className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-bold ${
+                            duplicateCandidate.confidence === 'HIGH'
+                              ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400'
+                              : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400'
+                          }`}
+                        >
+                          <AlertTriangle className="h-3 w-3" />
+                          Possible duplicate
                         </span>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          {isUnassigned ? (
-                            <span className="font-medium text-amber-600 dark:text-amber-400 font-bold">Unassigned</span>
-                          ) : (
-                            <>
-                              <span className="font-mono text-[10px] text-slate-400">[{tx.categories?.export_code}]</span>
-                              <span className="font-medium text-slate-700 dark:text-slate-200">{tx.categories?.name}</span>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="text-slate-900 dark:text-white font-medium">{tx.payee_name || '—'}</div>
-                        <div className="text-slate-500 text-[11px] mt-0.5 truncate max-w-[200px]" title={tx.remarks || ''}>{tx.remarks || '—'}</div>
-                      </td>
+                      )}
+                    </div>
+                  </td>
+                  
+                  {/* Restored Category Column */}
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
+                      {isUnassigned ? (
+                        <span className="font-medium text-amber-600 dark:text-amber-400 font-bold">Unassigned</span>
+                      ) : (
+                        <>
+                          <span className="font-mono text-[10px] text-slate-400">[{tx.categories?.export_code}]</span>
+                          <span className="font-medium text-slate-700 dark:text-slate-200">{tx.categories?.name}</span>
+                        </>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Restored Payee / Remarks Column */}
+                  <td className="p-4">
+                    <div className="text-slate-900 dark:text-white font-medium">{tx.payee_name || '—'}</div>
+                    <div className="text-slate-500 text-[11px] mt-0.5 truncate max-w-[200px]" title={tx.remarks || ''}>{tx.remarks || '—'}</div>
+                  </td>
                       
-                      {detailedMode && (
+                  {detailedMode && (
                         <td className="p-4">
                           <div className="flex flex-col text-[10px] font-medium text-slate-500 gap-1.5">
                             <span className="text-slate-700 dark:text-slate-300 flex items-center gap-1.5" title="Original Encoder">
