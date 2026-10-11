@@ -5,13 +5,14 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
+import Reconciliation from './pages/Reconciliation'; // NEW IMPORT
 import MissionReadiness from './pages/MissionReadiness';
 import CoopLedger from './pages/CoopLedger';
 import ExportCenter from './pages/ExportCenter';
 import Admin from './pages/Admin';
 import Tithers from './pages/Tithers';
 import FinancialSetup from './pages/FinancialSetup';
-import MissionaryReport from './pages/MissionaryReport'; // NEW IMPORT
+import MissionaryReport from './pages/MissionaryReport'; 
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
@@ -27,11 +28,12 @@ function AppRoutes() {
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/transactions" element={<Transactions />} />
+        <Route path="/reconciliation" element={<Reconciliation />} /> {/* NEW ROUTE */}
         <Route path="/mission-readiness" element={<MissionReadiness />} />
         <Route path="/coop-ledger" element={<CoopLedger />} />
         <Route path="/export-center" element={<ExportCenter />} />
         <Route path="/tithers" element={<Tithers />} />
-        <Route path="/missionary-report" element={<MissionaryReport />} /> {/* NEW ROUTE */}
+        <Route path="/missionary-report" element={<MissionaryReport />} /> 
         <Route path="/financial-setup" element={<FinancialSetup />} />
         <Route path="/admin" element={<Admin />} />
       </Route>

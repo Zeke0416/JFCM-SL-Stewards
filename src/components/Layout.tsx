@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Receipt, LogOut, FileSpreadsheet, CheckCircle, 
   Settings, Moon, Sun, Menu, Landmark, Target, FileText, 
-  Search, ChevronRight, AlertTriangle, Users, Check 
+  Search, ChevronRight, AlertTriangle, Users, Check, ArrowRightLeft // Added ArrowRightLeft
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
@@ -22,12 +22,10 @@ export default function Layout() {
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [userRole, setUserRole] = useState<string>('auditor'); 
   
-  // Slow, Smooth Professional Financial Theme Transition State with Entrance Phase
   const [isSwitchingTheme, setIsSwitchingTheme] = useState(false);
   const [transitionStage, setTransitionStage] = useState<'idle' | 'entering' | 'active' | 'exiting'>('idle');
   const [themeStep, setThemeStep] = useState(0);
 
-  // Command Palette State
   const [cmdOpen, setCmdOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -55,12 +53,11 @@ export default function Layout() {
     };
   }, [user]);
 
-  // Handle smooth entrance animation trigger on mount
   useEffect(() => {
     if (transitionStage === 'entering') {
       const timer = setTimeout(() => {
         setTransitionStage('active');
-      }, 40); // Ensures DOM registers opacity-0 before transitioning to opacity-100
+      }, 40); 
       return () => clearTimeout(timer);
     }
   }, [transitionStage]);
@@ -91,35 +88,29 @@ export default function Layout() {
     setCmdOpen(false);
   };
 
-  // Slow, Smooth, Deliberate Financial Theme Transition Handler
   const handleThemeTransition = () => {
     if (isSwitchingTheme) return;
     setIsSwitchingTheme(true);
     setTransitionStage('entering');
-    setThemeStep(1); // Phase 1: Preparing interface presentation
+    setThemeStep(1); 
 
-    // Phase 2: Toggle theme securely while obscured (at 1100ms)
     setTimeout(() => {
       setThemeStep(2);
       toggleDarkMode();
     }, 1100);
 
-    // Phase 3: Finalizing ledger display (at 2000ms)
     setTimeout(() => {
       setThemeStep(3);
     }, 2000);
 
-    // Phase 4: Success message displayed (at 2800ms)
     setTimeout(() => {
       setThemeStep(4);
     }, 2800);
 
-    // Phase 5: Start smooth fade out (at 3600ms)
     setTimeout(() => {
       setTransitionStage('exiting');
     }, 3600);
 
-    // Phase 6: Unmount overlay completely (at 4300ms)
     setTimeout(() => {
       setIsSwitchingTheme(false);
       setTransitionStage('idle');
@@ -127,12 +118,14 @@ export default function Layout() {
     }, 4300);
   };
 
+  // --- UPDATED MENU GROUPS ---
   const menuGroups = [
     {
       key: 'core', title: 'Operations', roles: ['admin', 'auditor', 'missionary'],
       items: [
         { name: 'Dashboard', href: '/', icon: LayoutDashboard },
         { name: 'Transactions', href: '/transactions', icon: Receipt },
+        { name: 'Reconciliation', href: '/reconciliation', icon: ArrowRightLeft }, // NEW ITEM ADDED HERE
         { name: 'Church Tithers', href: '/tithers', icon: Users },
         { name: 'Export Center', href: '/export-center', icon: FileSpreadsheet },
       ]
@@ -186,7 +179,7 @@ export default function Layout() {
   return (
     <div className="relative flex h-screen w-full bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text overflow-hidden font-sans selection:bg-brand-soft selection:text-brand-dark transition-colors duration-300">
       
-      {/* Slow, Smooth Professional Financial Theme Transition Overlay with Gradual Opening & Closing */}
+      {/* Theme Transition Overlay */}
       {isSwitchingTheme && (
         <div className={`fixed inset-0 z-[99999] bg-slate-950/85 dark:bg-[#080B0F]/90 backdrop-blur-md flex flex-col items-center justify-center p-4 overflow-hidden transition-opacity duration-700 ease-in-out ${
           transitionStage === 'entering' || transitionStage === 'exiting' ? 'opacity-0' : 'opacity-100'
@@ -194,8 +187,6 @@ export default function Layout() {
           <div className={`relative z-10 flex flex-col items-center max-w-sm w-full space-y-6 text-center transition-all duration-700 ease-out ${
             transitionStage === 'entering' || transitionStage === 'exiting' ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
           }`}>
-            
-            {/* Financial Ledger Icon or Success Checkmark */}
             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl transition-all duration-700 ${
               themeStep === 4 
                 ? 'bg-emerald-500/20 border border-emerald-500 text-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.5)] scale-105' 
@@ -218,8 +209,6 @@ export default function Layout() {
               <p className="text-xs text-slate-400 font-mono transition-opacity duration-500">
                 {themeStep === 4 ? "Ledger visual environment updated." : "Applying secure user configurations..."}
               </p>
-
-              {/* Clean Financial Progress Bar */}
               <div className="w-full bg-slate-900 border border-slate-800 h-2 rounded-full overflow-hidden mt-5 p-0.5">
                 <div 
                   className={`h-full rounded-full transition-all duration-1000 ease-out ${
@@ -227,12 +216,9 @@ export default function Layout() {
                       ? 'bg-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.8)]' 
                       : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
                   }`}
-                  style={{ 
-                    width: themeStep === 1 ? '25%' : themeStep === 2 ? '60%' : themeStep === 3 ? '85%' : '100%' 
-                  }}
+                  style={{ width: themeStep === 1 ? '25%' : themeStep === 2 ? '60%' : themeStep === 3 ? '85%' : '100%' }}
                 />
               </div>
-
               <div className="flex justify-between items-center text-[10px] font-mono text-slate-500 uppercase tracking-widest pt-1 px-1">
                 <span>SYSTEM_STEWARD</span>
                 <span className={themeStep === 4 ? 'text-emerald-400 font-bold' : 'text-emerald-400 font-semibold'}>
@@ -240,12 +226,11 @@ export default function Layout() {
                 </span>
               </div>
             </div>
-
           </div>
         </div>
       )}
 
-      {/* 1. Ambient Environmental Layers */}
+      {/* Ambient Environmental Layers */}
       <div className="bg-tech-grid absolute inset-0 z-0 pointer-events-none" />
       <div className="bg-noise absolute inset-0 z-0 pointer-events-none" />
       <div className="ambient-light -top-[10%] -left-[10%] bg-brand-bright/15 z-0 pointer-events-none" />
@@ -257,13 +242,10 @@ export default function Layout() {
         </div>
       )}
       
-      {/* 2. Interactive Command Palette (Cmd+K) */}
+      {/* Interactive Command Palette (Cmd+K) */}
       {cmdOpen && (
         <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-[12vh] p-4 transition-all duration-300">
-          <div 
-            className="absolute inset-0 bg-light-bg/60 dark:bg-dark-bg/80 backdrop-blur-md animate-in fade-in duration-200"
-            onClick={() => setCmdOpen(false)}
-          />
+          <div className="absolute inset-0 bg-light-bg/60 dark:bg-dark-bg/80 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setCmdOpen(false)} />
           <div className="tech-glass w-full max-w-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200 ease-out flex flex-col rounded-2xl overflow-hidden">
             <div className="flex items-center px-5 py-4 border-b border-light-border dark:border-dark-borderStrong">
               <Search className="h-5 w-5 text-brand-bright mr-3 shrink-0" />
@@ -294,14 +276,10 @@ export default function Layout() {
                         <div className={`flex items-center text-sm font-medium transition-colors ${
                           isSelected ? 'text-light-text dark:text-dark-text' : 'text-light-textSecondary dark:text-dark-textSecondary'
                         }`}>
-                          <item.icon className={`h-4 w-4 mr-3 transition-colors ${
-                            isSelected ? 'text-brand-bright opacity-100' : 'opacity-70'
-                          }`} /> 
+                          <item.icon className={`h-4 w-4 mr-3 transition-colors ${isSelected ? 'text-brand-bright opacity-100' : 'opacity-70'}`} /> 
                           {item.name}
                         </div>
-                        <ChevronRight className={`h-4 w-4 transition-opacity ${
-                          isSelected ? 'opacity-100 text-brand-bright' : 'opacity-0'
-                        }`} />
+                        <ChevronRight className={`h-4 w-4 transition-opacity ${isSelected ? 'opacity-100 text-brand-bright' : 'opacity-0'}`} />
                       </button>
                     );
                   })}
@@ -316,7 +294,7 @@ export default function Layout() {
         </div>
       )}
 
-      {/* 3. Application Layout Structure */}
+      {/* Application Layout Structure */}
       <div className="relative z-10 flex w-full h-full">
 
         {/* Mobile Drawer Overlay */}
@@ -331,7 +309,6 @@ export default function Layout() {
         {/* Command Rail Sidebar */}
         <div className={`fixed inset-y-0 left-0 w-[280px] bg-light-surface/95 dark:bg-dark-surface/95 backdrop-blur-2xl border-r border-light-border dark:border-dark-border flex flex-col shadow-tech transition-transform duration-300 ease-out z-50 lg:z-0 lg:translate-x-0 lg:static lg:bg-light-surface lg:dark:bg-dark-surface lg:backdrop-blur-none lg:shadow-none ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           
-          {/* Sidebar Header */}
           <div className="h-16 flex items-center gap-3 px-6 border-b border-light-border dark:border-dark-border shrink-0 bg-transparent">
             <img src={logo} alt="JFCM-SL Logo" className="h-7 w-7 object-contain drop-shadow-sm" />
             <div className="flex flex-col">
@@ -340,7 +317,6 @@ export default function Layout() {
             </div>
           </div>
           
-          {/* System Status Indicator */}
           <div className="px-6 py-4 border-b border-light-border dark:border-dark-border bg-light-floating/50 dark:bg-dark-floating/30">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -356,7 +332,6 @@ export default function Layout() {
             </div>
           </div>
 
-          {/* Navigation Menu */}
           <nav className="flex-1 px-2 py-6 space-y-6 overflow-y-auto custom-scrollbar">
             {menuGroups.map((group) => {
               if (!group.roles.includes(userRole)) return null;
@@ -392,7 +367,6 @@ export default function Layout() {
             })}
           </nav>
 
-          {/* Sidebar Footer Controls */}
           <div className="p-4 border-t border-light-border dark:border-dark-border space-y-1.5 shrink-0 bg-light-surface dark:bg-dark-surface/50">
             <button onClick={handleThemeTransition} className="flex items-center justify-between w-full px-4 py-2.5 text-xs font-medium text-light-textSecondary dark:text-dark-textSecondary hover:bg-light-soft dark:hover:bg-dark-soft hover:text-light-text dark:hover:text-dark-text transition-colors rounded-xl group">
               <div className="flex items-center gap-3">
@@ -409,7 +383,6 @@ export default function Layout() {
         {/* Main Workspace Area */}
         <div className="flex-1 flex flex-col relative overflow-hidden bg-transparent">
           
-          {/* Contextual Header */}
           <header className="h-16 bg-light-surface/70 dark:bg-dark-surface/70 backdrop-blur-xl border-b border-light-border dark:border-dark-border flex items-center justify-between px-4 sm:px-8 z-30 shrink-0 shadow-sm">
             <div className="flex items-center gap-3">
               <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 text-light-textSecondary hover:bg-light-soft dark:hover:bg-dark-soft rounded-lg transition-colors">
@@ -435,7 +408,6 @@ export default function Layout() {
             </div>
           </header>
 
-          {/* Dynamic Page Content */}
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar">
             <div className="max-w-workspace mx-auto pb-16">
               <Outlet />
@@ -444,13 +416,10 @@ export default function Layout() {
         </div>
       </div>
 
-      {/* 4. Secure Sign Out Modal */}
+      {/* Secure Sign Out Modal */}
       {signOutModalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 transition-all duration-300">
-          <div 
-            className="absolute inset-0 bg-light-bg/60 dark:bg-dark-bg/80 backdrop-blur-md animate-in fade-in duration-200" 
-            onClick={() => setSignOutModalOpen(false)} 
-          />
+          <div className="absolute inset-0 bg-light-bg/60 dark:bg-dark-bg/80 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setSignOutModalOpen(false)} />
           <div className="tech-glass w-full max-w-md p-6 relative z-10 animate-in fade-in zoom-in-95 duration-200 ease-out rounded-2xl border border-light-border dark:border-dark-borderStrong shadow-tech-lg space-y-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-status-danger-soft dark:bg-status-danger-dark/20 text-status-danger dark:text-status-danger-soft rounded-xl border border-status-danger/10 dark:border-status-danger/20 shrink-0">
@@ -462,16 +431,10 @@ export default function Layout() {
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <button 
-                onClick={() => setSignOutModalOpen(false)} 
-                className="px-5 py-2.5 rounded-xl text-sm font-medium text-light-textSecondary dark:text-dark-textSecondary hover:bg-light-soft dark:hover:bg-dark-soft transition-colors"
-              >
+              <button onClick={() => setSignOutModalOpen(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-light-textSecondary dark:text-dark-textSecondary hover:bg-light-soft dark:hover:bg-dark-soft transition-colors">
                 Cancel
               </button>
-              <button 
-                onClick={handleConfirmSignOut} 
-                className="px-6 py-2.5 bg-status-danger hover:bg-status-danger-dark text-white rounded-xl text-sm font-semibold shadow-md transition-colors"
-              >
+              <button onClick={handleConfirmSignOut} className="px-6 py-2.5 bg-status-danger hover:bg-status-danger-dark text-white rounded-xl text-sm font-semibold shadow-md transition-colors">
                 Sign Out
               </button>
             </div>
