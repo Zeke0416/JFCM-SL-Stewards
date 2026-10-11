@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   UploadCloud, FileSpreadsheet, Database, CheckCircle2, AlertCircle, Plus, 
-  Loader2, Calendar, ChevronDown, Scale, X, Trash2, ChevronRight, ArrowLeft 
+  Loader2, Calendar, ChevronDown, Scale,  Trash2, ChevronRight, ArrowLeft 
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { Transaction, FinancialPeriod, Category } from '../types/database.types';
@@ -317,8 +317,54 @@ export default function Reconciliation() {
   };
 
   const fetchDbTransactions = async () => {
-    const { data } = await supabase.from('transactions').select('*, categories(*)').eq('church_id', churchId).eq('financial_period_id', selectedPeriodFilter);
-    if (data) setDbTransactions(data as unknown as EnrichedTransaction[]);
+    const [transactionResult, profileResult] = await Promise.all([
+      supabase
+        .from('transactions')
+        .select('*, categories(*)')
+        .eq('church_id', churchId)
+        .eq('financial_period_id', selectedPeriodFilter),
+      // entered_by stores the auth/profile UUID; resolve it to the real display name.
+      supabase
+        .from('profiles')
+        .select('id, full_name')
+        .eq('church_id', churchId),
+    ]);
+
+    if (transactionResult.error) {
+      console.error('Failed to load reconciliation transactions:', transactionResult.error);
+      setDbTransactions([]);
+      return;
+    }
+
+    const fullNameByProfileId = new Map<string, string>(
+      (profileResult.data ?? []).map(profile => [profile.id, String(profile.full_name ?? '').trim()]),
+    );
+
+    // Do not invent "System Administrator" when a profile lookup misses. Preserve a
+    // visible diagnostic fallback so the actual entered_by identity can be investigated.
+    const enrichedTransactions = (transactionResult.data ?? []).map(rawTransaction => {
+      const tx = rawTransaction as typeof rawTransaction & { updated_by?: string | null };
+      const enteredById = String(tx.entered_by ?? '').trim();
+      const enteredByName = fullNameByProfileId.get(enteredById);
+      const updatedById = String(tx.updated_by ?? '').trim();
+      const updatedByName = updatedById ? fullNameByProfileId.get(updatedById) : undefined;
+
+      return {
+        ...tx,
+        profiles: {
+          full_name: enteredByName || (enteredById ? `Name unavailable (${enteredById.slice(0, 8)})` : 'Unknown encoder'),
+        },
+        updated_by_profile: updatedById
+          ? { full_name: updatedByName || `Name unavailable (${updatedById.slice(0, 8)})` }
+          : null,
+      };
+    });
+
+    setDbTransactions(enrichedTransactions as unknown as EnrichedTransaction[]);
+
+    if (profileResult.error) {
+      console.error('Could not resolve some encoder names from profiles:', profileResult.error);
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -417,7 +463,6 @@ export default function Reconciliation() {
       }
       // Some print-layout remarks are placed directly underneath the amount.
       const belowRow = rows[rowIndex + 1] ?? [];
-      const belowCodeCell = belowRow[0];
       if (
         belowRow.length > amountColumn &&
         isComBudRemark(belowRow[amountColumn])
@@ -1378,6 +1423,7 @@ export default function Reconciliation() {
                             <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">₱{Number(row.dbTx.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
                         </div>
                         <span className="text-[10px] text-slate-500 truncate max-w-[300px]">{row.dbTx.remarks || row.dbTx.categories?.name}</span>
+                        <span className="text-[9px] font-mono text-slate-400 mt-0.5">Encoded by: {row.dbTx.profiles?.full_name || (row.dbTx.entered_by ? `Name unavailable (${row.dbTx.entered_by.slice(0, 8)})` : 'Unknown encoder')}</span>
                       </div>
                       <div className="w-20 flex flex-col items-center justify-center relative">
                         <div className="absolute left-0 right-0 h-[1px] top-1/2 bg-slate-200 dark:bg-[#27272A] -z-10"></div>
@@ -1416,6 +1462,7 @@ export default function Reconciliation() {
                               <span className="font-mono whitespace-nowrap">₱{Number(tx.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
                             </div>
                             <div className="text-[10px] text-slate-500">{tx.remarks || tx.categories?.name}</div>
+                            <div className="text-[9px] font-mono text-slate-400 mt-0.5">Encoded by: {tx.profiles?.full_name || (tx.entered_by ? `Name unavailable (${tx.entered_by.slice(0, 8)})` : 'Unknown encoder')}</div>
                           </div>
                         ))}
                       </div>
@@ -1460,6 +1507,7 @@ export default function Reconciliation() {
                             <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">₱{Number(tx.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
                           </div>
                           <p className="text-[10px] text-slate-500 pl-2">{tx.remarks || tx.categories?.name}</p>
+                          <p className="text-[9px] font-mono text-slate-400 pl-2 mt-0.5">Encoded by: {tx.profiles?.full_name || (tx.entered_by ? `Name unavailable (${tx.entered_by.slice(0, 8)})` : 'Unknown encoder')}</p>
                         </div>
                       ))}
                     </div>
