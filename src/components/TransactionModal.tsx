@@ -52,6 +52,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
   const [successAnim, setSuccessAnim] = useState(false);
   const [error, setError] = useState('');
   const [duplicateWarning, setDuplicateWarning] = useState<EnrichedTransaction | null>(null);
+  const [showConvertPrompt, setShowConvertPrompt] = useState(false);
 
   const SPECIAL_EVENT_TAGS: Record<string, string[]> = {
     '6251': ['food', 'transport', 'love gift', 'materials'],
@@ -74,7 +75,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
 
   useEffect(() => {
     if (isOpen) {
-      setSuccessAnim(false); setDuplicateWarning(null); setShowReview(false);
+      setSuccessAnim(false); setDuplicateWarning(null); setShowReview(false); setShowConvertPrompt(false);
       if (initialData) {
         setType(initialData.type); setDate(initialData.date);
         setReceiptNo(initialData.receipt_no || ''); setPayeeName(initialData.payee_name || '');
@@ -94,7 +95,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
         } else {
           setUseBreakdown(false); setBreakdownItems([]); setRemarks(fullRemarks);
         }
-      } else {
+      } else if (!showConvertPrompt && type !== 'INCOME') {
         setDate(new Date().toISOString().split('T')[0]);
         setReceiptNo(''); setPayeeName(''); setRemarks('');
         setStandardAmount(''); setWholeAmount(''); setDecimalAmount('00');
@@ -102,7 +103,19 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
       }
       fetchMetadata();
     }
-  }, [isOpen, initialData, type]);
+  }, [isOpen, initialData]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCategoriesForType(type);
+    }
+  }, [type, churchId, isOpen]);
+
+  const fetchCategoriesForType = async (targetType: TransactionType) => {
+    const { data: catData } = await supabase.from('categories').select('*').eq('church_id', churchId).eq('type', targetType).order('sort_order');
+    const unassignedCategory: Category = { id: 'unassigned', church_id: churchId, type: targetType, export_code: '???', name: 'Unassigned', sort_order: 0, created_at: new Date().toISOString() };
+    setCategories([unassignedCategory, ...(catData || [])]);
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -236,14 +249,32 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
         if (error) throw error;
       }
       setShowReview(false);
-      setSuccessAnim(true);
-      setTimeout(() => { onSuccess(); onClose(); }, 1000);
+      if (reviewData.type === 'EXPENSE') {
+        setShowConvertPrompt(true);
+      } else {
+        setSuccessAnim(true);
+        setTimeout(() => { onSuccess(); onClose(); }, 1000);
+      }
     } catch (error: any) {
       alert("Error saving transaction: " + error.message);
       setShowReview(false);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleConvertToIncome = () => {
+    onSuccess();
+    setType('INCOME');
+    setCategoryId('unassigned');
+    setCategorySearch('Unassigned');
+    setShowConvertPrompt(false);
+  };
+
+  const handleSkipConversion = () => {
+    setShowConvertPrompt(false);
+    setSuccessAnim(true);
+    setTimeout(() => { onSuccess(); onClose(); }, 1000);
   };
 
   const getPayeePlaceholder = () => {
@@ -268,7 +299,35 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
         
         <div className={`pointer-events-auto w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] max-w-2xl bg-white dark:bg-[#0A0A0A] rounded-none sm:rounded-2xl shadow-none sm:shadow-2xl relative flex flex-col p-0 overflow-hidden border-0 sm:border border-slate-200 dark:border-[#27272A] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${showReview ? 'scale-[0.95] -translate-x-12 opacity-0 blur-[2px] pointer-events-none' : 'scale-100 translate-x-0 opacity-100 blur-0'}`}>
           
-          {successAnim ? (
+          {showConvertPrompt ? (
+            <div className="p-8 sm:p-12 flex flex-col items-center justify-center space-y-6 text-center my-auto">
+              <div className="h-16 w-16 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm animate-bounce">
+                <CheckCircle2 className="h-8 w-8" />
+              </div>
+              <div className="space-y-2 max-w-md">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Expense Saved Successfully!</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Do you want to convert or record this transaction as <strong className="text-emerald-600 dark:text-emerald-400">Income</strong>? All recently saved details will be preserved so you can quickly select an income account and save it.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row w-full max-w-sm gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleSkipConversion}
+                  className="flex-1 py-3 px-4 bg-slate-100 dark:bg-[#1A1A1A] hover:bg-slate-200 dark:hover:bg-[#262626] text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-[#27272A]"
+                >
+                  No, Close
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConvertToIncome}
+                  className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  <span>Yes, Convert to Income</span>
+                </button>
+              </div>
+            </div>
+          ) : successAnim ? (
             <div className="p-16 flex flex-col items-center justify-center space-y-4 text-center my-auto">
               <div className="h-16 w-16 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 animate-bounce"><CheckCircle2 className="h-8 w-8" /></div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Transaction Saved Successfully!</h3>
