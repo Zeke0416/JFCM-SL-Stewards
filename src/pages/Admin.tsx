@@ -16,6 +16,19 @@ export default function Admin() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'SYSTEM' | 'CATEGORIES' | 'USERS'>('USERS');
   const [churchId, setChurchId] = useState('');
+  const [lastLogins, setLastLogins] = useState<Record<string, string | null>>({});
+  const [loginsLoading, setLoginsLoading] = useState(false);
+  const [loginsError, setLoginsError] = useState(false);
+  async function loadLastLogins() {
+    setLoginsLoading(true);
+    setLoginsError(false);
+    try {
+      const { data, error } = await supabase.rpc('admin_personnel_last_logins');
+      if (error) throw error;
+      setLastLogins(Object.fromEntries((data || []).map((row: {profile_id:string; last_sign_in_at:string|null}) => [row.profile_id, row.last_sign_in_at])));
+    } catch { setLastLogins({}); setLoginsError(true); }
+    finally { setLoginsLoading(false); }
+  }
   const [canManagePhotos, setCanManagePhotos] = useState(false);
   const [photoBusyId, setPhotoBusyId] = useState<string | null>(null);
   const photoInput = useRef<HTMLInputElement>(null);
@@ -75,6 +88,7 @@ export default function Admin() {
     if (currentProfile) {
       setChurchId(currentProfile.church_id);
       setCanManagePhotos(currentProfile.role === 'admin');
+      if (currentProfile.role === 'admin') void loadLastLogins();
       
       if (localStorage.getItem('mpr_start_day')) setMprStartDay(localStorage.getItem('mpr_start_day') as string);
       if (localStorage.getItem('mpr_deadline_day')) setMprDeadlineDay(localStorage.getItem('mpr_deadline_day') as string);
@@ -272,6 +286,7 @@ export default function Admin() {
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">Personnel & access</h3>
               <p className="text-xs text-slate-500 mt-0.5">Manage personnel, roles, credentials and profile photos.</p>
             </div>
+            {canManagePhotos && <button type="button" className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 shrink-0" disabled={loginsLoading} aria-busy={loginsLoading} onClick={() => void loadLastLogins()}>{loginsLoading ? 'Loading logins...' : 'Refresh logins'}</button>}
             {!isAddingUser && (
               <button onClick={() => setIsAddingUser(true)} className="flex items-center gap-2 bg-brand dark:bg-brand text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-brand-dark transition-colors shadow-sm shrink-0 w-full sm:w-auto justify-center">
                 <Plus className="h-4 w-4" /> Add New User
@@ -279,6 +294,7 @@ export default function Admin() {
             )}
           </div>
 
+          {canManagePhotos && loginsError && <p role="status">Last login times are unavailable. Use Refresh logins to retry.</p>}
           {userError && (
             <div className="bg-red-50 text-red-700 p-4 rounded-2xl text-xs font-medium flex items-center gap-2.5 border border-red-200">
               <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
@@ -327,7 +343,7 @@ export default function Admin() {
                 <tr className="bg-slate-50 dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border text-slate-500 font-semibold tracking-normal text-xs">
                   <th className="p-4 whitespace-nowrap">Real Name (Encoder)</th>
                   <th className="p-4 whitespace-nowrap">System Role</th>
-                  <th className="p-4 whitespace-nowrap">Status</th>
+                  {canManagePhotos && <th className="p-4 whitespace-nowrap">Last login (PHT)</th>}
                   <th className="p-4 text-right whitespace-nowrap">Admin Actions</th>
                 </tr>
               </thead>
@@ -358,12 +374,8 @@ export default function Admin() {
                         </span>
                       )}
                     </td>
-                    <td className="p-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 uppercase">
-                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${p.is_active ? 'bg-sky-500' : 'bg-red-500'}`}></span>
-                        {p.is_active ? 'Active' : 'Disabled'}
-                      </span>
-                    </td>
+
+                    {canManagePhotos && <td className="p-4 whitespace-nowrap"><LastLogin value={lastLogins[p.id]} loading={loginsLoading}/></td>}
                     <td className="p-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
                         {editingUserId === p.id ? (
@@ -657,4 +669,11 @@ export default function Admin() {
       )}
     </div>
   );
+}
+
+function LastLogin({value, loading}: {value:string|null|undefined; loading:boolean}) {
+  if (loading) return <span>Loading...</span>;
+  if (value === null) return <span>No login recorded</span>;
+  if (!value || !Number.isFinite(Date.parse(value))) return <span>Unavailable</span>;
+  return <time dateTime={value}>{new Intl.DateTimeFormat('en-PH', {dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Manila'}).format(new Date(value))}</time>;
 }

@@ -157,3 +157,8 @@ Validation: full synthetic browser checks pass across routes/themes, with additi
 The chart's vertical axis now uses compact, single-token numeric labels without repeated currency prefixes, with a consistent axis width. Currency context remains in the subtitle, exact-value table and tooltip. Income now has a travelling light-trace layer over its unchanged smooth line, making continuous movement more visible. The decorative overlay is excluded from tooltip/legend data and is removed when paused or reduced motion is requested. Stroke gradients use chart-space coordinates so flat series remain drawable.
 
 Validation covers moving stroke offsets, single-line currency-free axis text, no duplicate tooltip amounts, and pause/reduced-motion removal of the tracer. Build passes with the existing bundle advisory; lint succeeds with 63 warnings. No financial values, database records or deployment changed.
+
+## Stewardship guide and personnel sign-in visibility (2026-11-09)
+- Dashboard stewardship illustration is a keyboard-accessible button opening the shared focus-managed dialog with Record, Review and Report guidance; existing looping artwork is preserved.
+- Personnel shows admin-only last login in Asia/Manila with refresh, loading, unavailable and no-record states. Additive admin_personnel_last_logins RPC reads auth timestamps, checks active admin and scopes profiles to the caller church; no authentication data is writable through this function. Migration applied to the verified Stewards project.
+- Production build and lint pass (existing warnings remain). Rollback-only database checks verify scope, timestamp source, and non-admin/anonymous denial without returning personal records. Frontend deployment remains separate.

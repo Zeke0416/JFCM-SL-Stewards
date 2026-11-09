@@ -40,7 +40,7 @@ socket.addEventListener('message',async ({data})=>{
    if(failLoad){status=503;body={message:'Synthetic load failure'};}
    else {const row=saved.get((url.searchParams.get('church_id')||'').replace('eq.','')+':'+(url.searchParams.get('financial_year_id')||'').replace('eq.',''));body=row?[row]:[];}
   }
- }else if(table!=='profiles'&&!['GET','OPTIONS'].includes(request.method)) throw new Error('Unexpected financial write: '+table);
+ }else if(table==='admin_personnel_last_logins' && request.method==='POST'){body=[{profile_id:'ui-user',last_sign_in_at:null}];}else if(table!=='profiles'&&!['GET','OPTIONS'].includes(request.method)) throw new Error('Unexpected financial write: '+table);
  if(single&&Array.isArray(body))body=body[0]||null;
  await send('Fetch.fulfillRequest',{requestId,responseCode:status,responseHeaders:[{name:'Content-Type',value:'application/json'},{name:'Access-Control-Allow-Origin',value:'*'},{name:'Access-Control-Allow-Headers',value:'*'},{name:'Access-Control-Allow-Methods',value:'GET,POST,PATCH,OPTIONS'}],body:Buffer.from(JSON.stringify(body)).toString('base64')});
 });
