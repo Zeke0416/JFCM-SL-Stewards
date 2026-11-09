@@ -12,6 +12,7 @@ export interface Church {
 }
 
 export interface Profile {
+  avatar_data_url?: string | null;
   id: string;
   church_id: string;
   full_name: string;

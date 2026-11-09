@@ -1,3 +1,4 @@
+import DialogLayer from './ui/DialogLayer';
 import { useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, SearchCode, AlertOctagon, CheckCircle2 } from 'lucide-react';
@@ -112,18 +113,18 @@ export default function SmartDiagnosisModal({
 
   return createPortal(
     <>
-      <div className="fixed inset-0 z-[99998] bg-black/80 backdrop-blur-md transition-opacity duration-300" aria-hidden="true" />
-      <div className="fixed inset-0 z-[99998] flex items-center justify-center p-0 sm:p-4 pointer-events-none">
-        <div className="pointer-events-auto w-full h-[100dvh] sm:h-auto sm:max-h-[95vh] max-w-2xl bg-white dark:bg-[#121212] rounded-none sm:rounded-3xl shadow-none sm:shadow-2xl relative flex flex-col p-0 overflow-hidden border-0 sm:border border-slate-200 dark:border-[#27272A] animate-modal">
           
-          <div className="flex items-center justify-between p-4 sm:p-6 landscape:py-3 lg:landscape:p-6 bg-slate-50 dark:bg-[#0A0A0A] border-b border-slate-200 dark:border-[#27272A] shrink-0">
+      <DialogLayer onDismiss={onClose} label="Smart Discrepancy Analyzer" className="fixed inset-0 z-[99998] flex items-center justify-center p-0 sm:p-4 pointer-events-none">
+        <div className="dialog-surface pointer-events-auto w-full h-[100dvh] sm:h-auto sm:max-h-[95vh] max-w-2xl bg-white dark:bg-dark-elevated rounded-none sm:rounded-3xl shadow-none sm:shadow-2xl relative flex flex-col p-0 overflow-hidden border-0 sm:border border-slate-200 dark:border-dark-border animate-modal">
+
+          <div className="dialog-header flex items-center justify-between p-4 sm:p-6 landscape:py-3 lg:landscape:p-6 bg-slate-50 dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border shrink-0">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <SearchCode className="h-5 w-5 text-emerald-500" /> Smart Discrepancy Analyzer
+              <SearchCode className="h-5 w-5 text-sky-500" /> Smart Discrepancy Analyzer
             </h3>
-            <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl transition-colors bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"><X className="h-5 w-5" /></button>
+            <button type="button" aria-label="Close dialog" onClick={onClose} className="icon-button p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl transition-colors bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"><X className="h-5 w-5" /></button>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 landscape:py-3 lg:landscape:p-6 space-y-5">
+          <div className="dialog-body flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 landscape:py-3 lg:landscape:p-6 space-y-5">
             {!isBalanced && analyzerFindings.length > 0 ? (
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-5 rounded-2xl space-y-4">
                 <h4 className="font-bold text-amber-900 dark:text-amber-400 flex items-center gap-2 text-sm border-b border-amber-200/50 dark:border-amber-800/50 pb-2">
@@ -138,28 +139,28 @@ export default function SmartDiagnosisModal({
                 </ul>
               </div>
             ) : !isBalanced ? (
-              <div className="bg-slate-50 dark:bg-[#1A1C23] p-5 rounded-2xl border border-slate-200 dark:border-[#2A2D35] text-center">
+              <div className="bg-slate-50 dark:bg-dark-surface p-5 rounded-2xl border border-slate-200 dark:border-dark-border text-center">
                 <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">The discrepancy pattern is irregular. Please carefully review the general checklist below to audit your inputs.</p>
               </div>
             ) : (
-              <div className="bg-emerald-50 dark:bg-emerald-900/20 p-6 rounded-2xl border border-emerald-200 dark:border-emerald-800/50 text-center">
-                <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-3" />
-                <p className="text-sm text-emerald-700 dark:text-emerald-400 font-bold">Ledger perfectly reconciled. No discrepancies detected.</p>
+              <div className="bg-sky-50 dark:bg-sky-900/20 p-6 rounded-2xl border border-sky-200 dark:border-sky-800/50 text-center">
+                <CheckCircle2 className="h-10 w-10 text-sky-500 mx-auto mb-3" />
+                <p className="text-sm text-sky-700 dark:text-sky-400 font-bold">Ledger perfectly reconciled. No discrepancies detected.</p>
               </div>
             )}
 
             <div className="space-y-4 text-xs text-slate-700 dark:text-slate-300 pt-2">
-              <h4 className="font-bold text-slate-900 dark:text-white px-1 uppercase tracking-wider text-[11px]">General Auditing Checklist</h4>
+              <h4 className="font-bold text-slate-900 dark:text-white px-1 tracking-normal text-sm">General Auditing Checklist</h4>
               <div className="grid gap-3">
-                <div className="bg-slate-50 dark:bg-[#1A1C23] p-4 rounded-xl space-y-1.5 border border-slate-200 dark:border-[#2A2D35]">
+                <div className="bg-slate-50 dark:bg-dark-surface p-4 rounded-xl space-y-1.5 border border-slate-200 dark:border-dark-border">
                   <h4 className="font-bold text-slate-900 dark:text-white">1. Beginning Balance Carryover Check</h4>
                   <p className="text-slate-500 dark:text-slate-400 leading-relaxed">Verify that your starting beginning balance correctly matches last month's final ending cash balance.</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-[#1A1C23] p-4 rounded-xl space-y-1.5 border border-slate-200 dark:border-[#2A2D35]">
+                <div className="bg-slate-50 dark:bg-dark-surface p-4 rounded-xl space-y-1.5 border border-slate-200 dark:border-dark-border">
                   <h4 className="font-bold text-slate-900 dark:text-white">2. Unassigned or Unrecorded Transactions</h4>
                   <p className="text-slate-500 dark:text-slate-400 leading-relaxed">Check if any cash collections, offerings, or disbursements were left unassigned or omitted from the ledger.</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-[#1A1C23] p-4 rounded-xl space-y-1.5 border border-slate-200 dark:border-[#2A2D35]">
+                <div className="bg-slate-50 dark:bg-dark-surface p-4 rounded-xl space-y-1.5 border border-slate-200 dark:border-dark-border">
                   <h4 className="font-bold text-slate-900 dark:text-white">3. San Jose Koop Passbook Pass-Throughs</h4>
                   <p className="text-slate-500 dark:text-slate-400 leading-relaxed">Ensure all Koop deposits and monthly interest earnings are logged accurately in the SJ Koop Ledger.</p>
                 </div>
@@ -167,11 +168,11 @@ export default function SmartDiagnosisModal({
             </div>
           </div>
           
-          <div className="p-4 sm:p-6 landscape:py-3 lg:landscape:p-6 bg-slate-100/50 dark:bg-[#0A0A0A] border-t border-slate-200 dark:border-[#27272A] shrink-0 sm:rounded-b-3xl">
+          <div className="dialog-footer p-4 sm:p-6 landscape:py-3 lg:landscape:p-6 bg-slate-100/50 dark:bg-dark-surface border-t border-slate-200 dark:border-dark-border shrink-0 sm:rounded-b-3xl">
             <button onClick={onClose} className="w-full sm:w-auto ml-auto px-6 py-3 sm:py-2.5 bg-slate-900 dark:bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors shadow-md block">Close Guide</button>
           </div>
         </div>
-      </div>
+      </DialogLayer>
     </>,
     document.body
   );

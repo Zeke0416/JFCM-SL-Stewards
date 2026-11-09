@@ -1,13 +1,25 @@
-import { useState, useEffect } from 'react';
+import UserAvatar from '../components/ui/UserAvatar';
+import { prepareProfilePhoto, PROFILE_PHOTO_UPDATED } from '../utils/profilePhoto';
+import { MissionIcon as ShieldCheck } from '../components/ui/StewardGlyph';
+import { useFeedback } from '../components/ui/useFeedback';
+import Input from '../components/ui/Input';
+import Select from '../components/ui/Select';
+import DialogLayer from '../components/ui/DialogLayer';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Users, FolderTree, Settings, Plus, Calendar, Edit2, Check, X, Trash2, AlertTriangle, ShieldCheck, KeyRound, CheckCircle2, Copy, Loader2, AlertCircle, FileText, FileCheck } from 'lucide-react';
+import { Camera, Users, FolderTree, Settings, Plus, Calendar, Edit2, Check, X, Trash2, AlertTriangle, KeyRound, CheckCircle2, Copy, Loader2, AlertCircle, FileText, FileCheck } from 'lucide-react';
 import type { Profile, Category, FinancialYear, FinancialPeriod } from '../types/database.types';
 
 export default function Admin() {
+  const { notify, confirmAction } = useFeedback();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'SYSTEM' | 'CATEGORIES' | 'USERS'>('USERS');
   const [churchId, setChurchId] = useState('');
+  const [canManagePhotos, setCanManagePhotos] = useState(false);
+  const [photoBusyId, setPhotoBusyId] = useState<string | null>(null);
+  const photoInput = useRef<HTMLInputElement>(null);
+  const photoTarget = useRef<string | null>(null);
   
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -62,6 +74,7 @@ export default function Admin() {
     
     if (currentProfile) {
       setChurchId(currentProfile.church_id);
+      setCanManagePhotos(currentProfile.role === 'admin');
       
       if (localStorage.getItem('mpr_start_day')) setMprStartDay(localStorage.getItem('mpr_start_day') as string);
       if (localStorage.getItem('mpr_deadline_day')) setMprDeadlineDay(localStorage.getItem('mpr_deadline_day') as string);
@@ -91,6 +104,23 @@ export default function Admin() {
         }
       }
     }
+  };
+
+  const saveProfilePhoto = async (profileId: string, file: File | null) => {
+    if (!canManagePhotos || !churchId || photoBusyId) return;
+    setPhotoBusyId(profileId);
+    let prepared = false;
+    try {
+      const avatar = file ? await prepareProfilePhoto(file) : null;
+      prepared = true;
+      const { data, error } = await supabase.from('profiles').update({ avatar_data_url: avatar }).eq('id', profileId).eq('church_id', churchId).select('id,avatar_data_url').single();
+      if (error || !data || data.id !== profileId) throw error || new Error('Photo was not updated.');
+      setProfiles(current => current.map(profile => profile.id === profileId ? { ...profile, avatar_data_url: data.avatar_data_url } : profile));
+      window.dispatchEvent(new CustomEvent(PROFILE_PHOTO_UPDATED, {detail:{profileId,photo:data.avatar_data_url}}));
+      notify(avatar ? 'Profile photo updated.' : 'Profile photo removed.', 'success');
+    } catch {
+      notify(prepared ? 'The photo save could not be confirmed. The current preview is unchanged; reload to check.' : 'That photo could not be read. Choose a JPEG, PNG or WebP smaller than 5 MB.');
+    } finally { setPhotoBusyId(null); }
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -130,14 +160,14 @@ export default function Admin() {
   };
 
   const handleDeleteUser = async (targetUserId: string, name: string) => {
-    if (targetUserId === user?.id) return alert("You cannot delete your own active administrator account.");
-    if (!confirm(`Are you sure you want to permanently delete test account "${name}"?`)) return;
+    if (targetUserId === user?.id) return notify("You cannot delete your own active administrator account.");
+    if (!await confirmAction(`Are you sure you want to permanently delete test account "${name}"?`)) return;
     try {
       const { error } = await supabase.functions.invoke('delete-user', { body: { userId: targetUserId } });
       if (error) throw error;
-      alert("User account successfully deleted.");
+      notify("User account successfully deleted.", 'success');
       fetchAdminData();
-    } catch (err: any) { alert("Failed to delete user: " + (err.message || err)); }
+    } catch (err: any) { notify("Failed to delete user: " + (err.message || err)); }
   };
 
   const handleCopyCredentials = () => {
@@ -160,7 +190,7 @@ export default function Admin() {
     e.preventDefault();
     if (!newYear.year) return;
     const { data: yearData, error } = await supabase.from('financial_years').insert({ church_id: churchId, year: newYear.year, approved_budget: parseFloat(newYear.budget) || 0 }).select().single();
-    if (error) return alert("Error creating year: " + error.message);
+    if (error) return notify("Error creating year: " + error.message);
 
     if (yearData) {
       const periodsToInsert = Array.from({ length: 12 }, (_, i) => {
@@ -176,20 +206,20 @@ export default function Admin() {
 
   const handleSaveUser = async (id: string) => {
     if (!editFullName.trim() || !editRole) return;
-    if (id === user?.id && editRole !== 'admin') return alert("You cannot remove your own administrator access.");
+    if (id === user?.id && editRole !== 'admin') return notify("You cannot remove your own administrator access.");
     await supabase.from('profiles').update({ full_name: editFullName.trim(), role: editRole }).eq('id', id);
     setEditingUserId(null);
     fetchAdminData();
   };
 
   const handleResetPeriod = async () => {
-    if (resetConfirmation !== 'RESET') return alert("Please type 'RESET' exactly to confirm deletion.");
+    if (resetConfirmation !== 'RESET') return notify("Please type 'RESET' exactly to confirm deletion.");
     if (!selectedResetPeriod) return;
     setResetting(true);
     const { error } = await supabase.rpc('reset_period_transactions', { p_period_id: selectedResetPeriod, p_church_id: churchId });
     setResetting(false);
-    if (error) alert("Failed to reset period: " + error.message);
-    else { alert("Transactions wiped clean!"); setResetConfirmation(''); }
+    if (error) notify("Failed to reset period: " + error.message);
+    else { notify("Period transactions removed.", 'success'); setResetConfirmation(''); }
   };
 
   const saveTimeframes = () => {
@@ -214,34 +244,36 @@ export default function Admin() {
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
-          <ShieldCheck className="h-7 w-7 text-brand dark:text-emerald-500" />
-          System Administration
+        <h1 className="system-page-title text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+          <ShieldCheck className="h-7 w-7 text-brand dark:text-sky-500" />
+          Administration
         </h1>
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Manage institutional users, temporary passwords, reset requests, and financial years.</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-1.5 p-1.5 bg-slate-200/70 dark:bg-slate-900/80 rounded-xl w-full max-w-xl border border-slate-300 dark:border-slate-800 shadow-inner overflow-x-auto custom-scrollbar">
-        <button onClick={() => setActiveTab('USERS')} className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'USERS' ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>
+      <div className="switch-tabs system-switch-tabs">
+        <button aria-pressed={activeTab === 'USERS'} onClick={() => setActiveTab('USERS')} className="switch-tab">
           <Users className="h-3.5 w-3.5 shrink-0" /> <span>Personnel</span>
         </button>
-        <button onClick={() => setActiveTab('SYSTEM')} className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'SYSTEM' ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>
+        <button aria-pressed={activeTab === 'SYSTEM'} onClick={() => setActiveTab('SYSTEM')} className="switch-tab">
           <Settings className="h-3.5 w-3.5 shrink-0" /> <span>System</span>
         </button>
-        <button onClick={() => setActiveTab('CATEGORIES')} className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'CATEGORIES' ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-md' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'}`}>
+        <button aria-pressed={activeTab === 'CATEGORIES'} onClick={() => setActiveTab('CATEGORIES')} className="switch-tab">
           <FolderTree className="h-3.5 w-3.5 shrink-0" /> <span>Categories</span>
         </button>
       </div>
 
+      <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" aria-label="Upload user profile photo" className="sr-only" tabIndex={-1} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file && photoTarget.current) void saveProfilePhoto(photoTarget.current, file); }}/>
+
       {activeTab === 'USERS' && (
-        <div className="bento-card space-y-6 bg-white dark:bg-[#121212]">
+        <div className="tab-panel bento-card space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Authorized Personnel & User Management</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Add new auditors, reassign roles, and handle credentials.</p>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Personnel & access</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Manage personnel, roles, credentials and profile photos.</p>
             </div>
             {!isAddingUser && (
-              <button onClick={() => setIsAddingUser(true)} className="flex items-center gap-2 bg-brand dark:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-brand-dark transition-colors shadow-sm shrink-0 w-full sm:w-auto justify-center">
+              <button onClick={() => setIsAddingUser(true)} className="flex items-center gap-2 bg-brand dark:bg-brand text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-brand-dark transition-colors shadow-sm shrink-0 w-full sm:w-auto justify-center">
                 <Plus className="h-4 w-4" /> Add New User
               </button>
             )}
@@ -255,33 +287,33 @@ export default function Admin() {
           )}
 
           {isAddingUser && (
-            <form onSubmit={handleCreateUser} className="bg-slate-50/50 dark:bg-[#1A1A1A] p-5 rounded-2xl border border-slate-200 dark:border-[#27272A] space-y-4">
-              <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Create User Account</h4>
+            <form onSubmit={handleCreateUser} className="bg-slate-50/50 dark:bg-dark-floating p-5 rounded-2xl border border-slate-200 dark:border-dark-border space-y-4">
+              <h4 className="text-xs font-bold text-slate-900 dark:text-white tracking-normal">Create User Account</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1 w-full">
-                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase">Full Name</label>
-                  <input type="text" required placeholder="Ezekiel Cabusay" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newUser.fullName} onChange={e => setNewUser({...newUser, fullName: e.target.value})} />
+                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 uppercase">Full Name</label>
+                  <Input aria-label="Full Name" type="text" required placeholder="Ezekiel Cabusay" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newUser.fullName} onChange={e => setNewUser({...newUser, fullName: e.target.value})} />
                 </div>
                 <div className="space-y-1 w-full">
-                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase">Email Address</label>
-                  <input type="email" required placeholder="user@jfcm.org" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} />
+                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 uppercase">Email Address</label>
+                  <Input aria-label="Email Address" type="email" required placeholder="user@jfcm.org" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} />
                 </div>
                 <div className="space-y-1 w-full">
-                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase">Temporary Password</label>
-                  <input type="text" required placeholder="Min 6 characters" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newUser.tempPassword} onChange={e => setNewUser({...newUser, tempPassword: e.target.value})} />
+                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 uppercase">Temporary Password</label>
+                  <Input aria-label="Temporary Password" type="text" required placeholder="Min 6 characters" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newUser.tempPassword} onChange={e => setNewUser({...newUser, tempPassword: e.target.value})} />
                 </div>
                 <div className="space-y-1 w-full">
-                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase">System Role</label>
-                  <select className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})}>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 uppercase">System Role</label>
+                  <Select aria-label="System Role" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})}>
                     <option value="auditor">Auditor</option>
                     <option value="missionary">Missionary</option>
                     <option value="admin">Administrator</option>
-                  </select>
+                  </Select>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setIsAddingUser(false)} className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-slate-600 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
-                <button type="submit" disabled={userLoading} className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-white bg-brand dark:bg-emerald-700 rounded-xl shadow-sm flex items-center justify-center gap-2 hover:bg-brand-dark">
+                <button type="submit" disabled={userLoading} className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-white bg-brand dark:bg-brand rounded-xl shadow-sm flex items-center justify-center gap-2 hover:bg-brand-dark">
                   {userLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   <span>{userLoading ? 'Creating User...' : 'Create & Assign Temp Password'}</span>
                 </button>
@@ -289,43 +321,46 @@ export default function Admin() {
             </form>
           )}
 
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#27272A] custom-scrollbar">
-            <table className="w-full text-left text-xs border-collapse min-w-[700px]">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-dark-border custom-scrollbar">
+            <table className="ui-data-table w-full text-left text-xs border-collapse min-w-[700px]">
               <thead>
-                <tr className="bg-slate-50 dark:bg-[#0A0A0A] border-b border-slate-200 dark:border-[#27272A] text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+                <tr className="bg-slate-50 dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border text-slate-500 font-semibold tracking-normal text-xs">
                   <th className="p-4 whitespace-nowrap">Real Name (Encoder)</th>
                   <th className="p-4 whitespace-nowrap">System Role</th>
                   <th className="p-4 whitespace-nowrap">Status</th>
                   <th className="p-4 text-right whitespace-nowrap">Admin Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]/50 bg-transparent">
+              <tbody className="divide-y divide-slate-100 dark:divide-dark-border/50 bg-transparent">
                 {profiles.map(p => (
                   <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group">
-                    <td className="p-4 whitespace-nowrap min-w-[200px]">
+                    <td className="p-4 min-w-[240px]">
+                      <div className="personnel-identity"><button type="button" className="profile-photo" aria-label={`Change profile photo for ${p.full_name}`} title="Upload or replace photo: JPEG, PNG or WebP up to 5 MB" disabled={!canManagePhotos || !!photoBusyId} onClick={() => { photoTarget.current = p.id; photoInput.current?.click(); }}>{photoBusyId === p.id ? <Loader2 size={20} className="animate-spin"/> : <UserAvatar photoUrl={p.avatar_data_url} size={42}/>}<span className="photo-camera"><Camera size={11}/></span></button><div className="personnel-name">
                       {editingUserId === p.id ? (
-                        <input type="text" autoFocus className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-900 dark:text-white" value={editFullName} onChange={(e) => setEditFullName(e.target.value)} />
+                        <Input aria-label="Edit personnel full name" type="text" autoFocus className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-900 dark:text-white" value={editFullName} onChange={(e) => setEditFullName(e.target.value)} />
                       ) : (
                         <span className="font-semibold text-slate-900 dark:text-white">{p.full_name}</span>
                       )}
+                      {canManagePhotos && <div className="profile-photo-actions"><button type="button" disabled={!!photoBusyId} onClick={() => { photoTarget.current = p.id; photoInput.current?.click(); }}>{p.avatar_data_url ? 'Change photo' : 'Add photo'}</button>{p.avatar_data_url && <button type="button" disabled={!!photoBusyId} onClick={() => void saveProfilePhoto(p.id, null)}>Remove photo</button>}</div>}
+                      </div></div>
                     </td>
                     <td className="p-4 whitespace-nowrap">
                       {editingUserId === p.id ? (
-                        <select className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-900 dark:text-white" value={editRole} onChange={(e) => setEditRole(e.target.value)}>
+                        <Select aria-label="User role" className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-900 dark:text-white" value={editRole} onChange={(e) => setEditRole(e.target.value)}>
                           <option value="auditor">Auditor</option>
                           <option value="missionary">Missionary</option>
                           <option value="admin">Administrator</option>
-                        </select>
+                        </Select>
                       ) : (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 uppercase`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 uppercase`}>
                           <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${p.role === 'admin' ? 'bg-purple-500' : p.role === 'missionary' ? 'bg-amber-500' : 'bg-blue-500'}`}></span>
                           {p.role}
                         </span>
                       )}
                     </td>
                     <td className="p-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 uppercase">
-                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${p.is_active ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 uppercase">
+                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${p.is_active ? 'bg-sky-500' : 'bg-red-500'}`}></span>
                         {p.is_active ? 'Active' : 'Disabled'}
                       </span>
                     </td>
@@ -333,14 +368,14 @@ export default function Admin() {
                       <div className="flex items-center justify-end gap-2">
                         {editingUserId === p.id ? (
                           <div className="inline-flex items-center gap-1">
-                            <button onClick={() => setEditingUserId(null)} className="p-1.5 text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg"><X className="h-4 w-4" /></button>
-                            <button onClick={() => handleSaveUser(p.id)} className="p-1.5 text-white bg-emerald-600 rounded-lg hover:bg-emerald-500"><Check className="h-4 w-4" /></button>
+                            <button type="button" aria-label="Close dialog" onClick={() => setEditingUserId(null)} className="icon-button p-1.5 text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg"><X className="h-4 w-4" /></button>
+                            <button onClick={() => handleSaveUser(p.id)} className="p-1.5 text-white bg-brand rounded-lg hover:bg-sky-500"><Check className="h-4 w-4" /></button>
                           </div>
                         ) : (
                           <>
-                            <button onClick={() => { setEditingUserId(p.id); setEditFullName(p.full_name); setEditRole(p.role); }} className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Edit Profile"><Edit2 className="h-3.5 w-3.5" /> Edit</button>
-                            <button onClick={() => { setResetTargetUser({ id: p.id, name: p.full_name }); setIsResettingPassword(true); }} className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Reset"><KeyRound className="h-3.5 w-3.5" /> Reset</button>
-                            <button onClick={() => handleDeleteUser(p.id, p.full_name)} className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete"><Trash2 className="h-3.5 w-3.5" /> Delete</button>
+                            <button onClick={() => { setEditingUserId(p.id); setEditFullName(p.full_name); setEditRole(p.role); }} className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold tracking-normal text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Edit Profile"><Edit2 className="h-3.5 w-3.5" /> Edit</button>
+                            <button onClick={() => { setResetTargetUser({ id: p.id, name: p.full_name }); setIsResettingPassword(true); }} className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold tracking-normal text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Reset"><KeyRound className="h-3.5 w-3.5" /> Reset</button>
+                            <button onClick={() => handleDeleteUser(p.id, p.full_name)} className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold tracking-normal text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete"><Trash2 className="h-3.5 w-3.5" /> Delete</button>
                           </>
                         )}
                       </div>
@@ -354,9 +389,9 @@ export default function Admin() {
       )}
 
       {isResettingPassword && resetTargetUser && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          {/* Unchanged password modal */}
-          <form onSubmit={handleManualPasswordReset} className="w-full max-w-md bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
+        <DialogLayer onDismiss={resetLoading ? undefined : () => { setIsResettingPassword(false); setResetTargetUser(null); }} label="Admin Password Reset" className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+          {/* Personnel password reset */}
+          <form onSubmit={handleManualPasswordReset} className="dialog-surface w-full max-w-md bg-white dark:bg-dark-elevated border border-slate-200 dark:border-dark-border rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
             <div className="text-center space-y-2">
               <div className="mx-auto h-14 w-14 bg-amber-100 dark:bg-amber-950/60 rounded-2xl flex items-center justify-center text-amber-600"><KeyRound className="h-7 w-7" /></div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Admin Password Reset</h3>
@@ -364,47 +399,47 @@ export default function Admin() {
             </div>
             {resetError && <div className="bg-red-50 text-red-700 p-3.5 rounded-xl text-xs font-medium border border-red-200">{resetError}</div>}
             <div className="space-y-1.5">
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase">New Temporary Password</label>
-              <input type="text" required placeholder="Min 6 characters" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-3 text-xs font-medium text-slate-900 dark:text-white" value={newTempPassword} onChange={e => setNewTempPassword(e.target.value)} />
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 uppercase">New Temporary Password</label>
+              <Input aria-label="New Temporary Password" type="text" required placeholder="Min 6 characters" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-3 text-xs font-medium text-slate-900 dark:text-white" value={newTempPassword} onChange={e => setNewTempPassword(e.target.value)} />
             </div>
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button type="button" onClick={() => { setIsResettingPassword(false); setResetTargetUser(null); }} className="w-full sm:flex-1 py-3.5 rounded-xl text-xs font-bold text-slate-600 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">Cancel</button>
-              <button type="submit" disabled={resetLoading} className="w-full sm:flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 transition-all shadow-md">
+              <button type="submit" aria-busy={resetLoading} disabled={resetLoading} className="w-full sm:flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 transition-all shadow-md">
                 {resetLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 <span>{resetLoading ? 'Resetting...' : 'Confirm Reset'}</span>
               </button>
             </div>
           </form>
-        </div>
+        </DialogLayer>
       )}
 
       {createdUserResult && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+        <DialogLayer label="Admin" className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
           {/* Unchanged copy modal */}
-          <div className="w-full max-w-md bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-3xl p-8 shadow-2xl space-y-6 animate-modal text-center">
-            <div className="mx-auto h-16 w-16 bg-emerald-100 dark:bg-emerald-950/60 rounded-2xl flex items-center justify-center text-emerald-600 animate-bounce"><CheckCircle2 className="h-8 w-8" /></div>
+          <div className="dialog-surface w-full max-w-md bg-white dark:bg-dark-elevated border border-slate-200 dark:border-dark-border rounded-3xl p-8 shadow-2xl space-y-6 animate-modal text-center">
+            <div className="mx-auto h-16 w-16 bg-sky-100 dark:bg-sky-950/60 rounded-2xl flex items-center justify-center text-brand animate-bounce"><CheckCircle2 className="h-8 w-8" /></div>
             <div className="space-y-1">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">{createdUserResult.type === 'CREATED' ? 'Auditor Account Created!' : 'Password Reset Successful!'}</h3>
               <p className="text-xs text-slate-500">The user has been successfully provisioned with a temporary password.</p>
             </div>
             <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-left space-y-2 text-xs font-mono">
               <div className="flex justify-between"><span className="text-slate-400">Name:</span><span className="font-bold text-slate-900 dark:text-white">{createdUserResult.fullName}</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">Temp Password:</span><span className="font-bold text-emerald-600">{createdUserResult.tempPass}</span></div>
+              <div className="flex justify-between"><span className="text-slate-400">Temp Password:</span><span className="font-bold text-brand">{createdUserResult.tempPass}</span></div>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button onClick={handleCopyCredentials} className="w-full sm:flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200"><Copy className="h-4 w-4" />{copied ? 'Copied Details!' : 'Copy Credentials'}</button>
-              <button onClick={() => setCreatedUserResult(null)} className="w-full sm:flex-1 py-3.5 rounded-xl text-xs font-bold text-white bg-brand dark:bg-emerald-700 shadow-md">Done</button>
+              <button onClick={() => setCreatedUserResult(null)} className="w-full sm:flex-1 py-3.5 rounded-xl text-xs font-bold text-white bg-brand dark:bg-brand shadow-md">Done</button>
             </div>
           </div>
-        </div>
+        </DialogLayer>
       )}
 
       {activeTab === 'SYSTEM' && (
-        <div className="space-y-6">
+        <div className="tab-panel space-y-6">
 
-          <div className="bento-card border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] space-y-4">
+          <div className="bento-card border border-slate-200 dark:border-dark-border space-y-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-brand/10 dark:bg-emerald-900/40 rounded-xl text-brand dark:text-emerald-500">
+              <div className="p-2.5 bg-brand/10 dark:bg-sky-900/40 rounded-xl text-brand dark:text-sky-500">
                 <FileText className="h-5 w-5" />
               </div>
               <div>
@@ -414,88 +449,88 @@ export default function Admin() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-              <div className="space-y-4 bg-slate-50 dark:bg-[#1A1A1A] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50">
-                <h4 className="text-[11px] font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-slate-400" /> MPR Deadline Rule</h4>
+              <div className="space-y-4 bg-slate-50 dark:bg-dark-floating p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-slate-400" /> MPR Deadline Rule</h4>
                 <div className="flex gap-4">
                   <div className="space-y-1 flex-1">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Alert Starts (Day)</label>
-                    <input type="number" min="1" max="31" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:border-brand" value={mprStartDay} onChange={(e) => setMprStartDay(e.target.value)} />
+                    <label className="block text-xs font-bold text-slate-500 uppercase">Alert Starts (Day)</label>
+                    <Input aria-label="Alert Starts (Day)" type="number" min="1" max="31" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:border-brand" value={mprStartDay} onChange={(e) => setMprStartDay(e.target.value)} />
                   </div>
                   <div className="space-y-1 flex-1">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Deadline (Day)</label>
-                    <input type="number" min="1" max="31" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:border-brand" value={mprDeadlineDay} onChange={(e) => setMprDeadlineDay(e.target.value)} />
+                    <label className="block text-xs font-bold text-slate-500 uppercase">Deadline (Day)</label>
+                    <Input aria-label="Deadline (Day)" type="number" min="1" max="31" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:border-brand" value={mprDeadlineDay} onChange={(e) => setMprDeadlineDay(e.target.value)} />
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-4 bg-slate-50 dark:bg-[#1A1A1A] p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50">
-                <h4 className="text-[11px] font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><FileCheck className="h-3.5 w-3.5 text-slate-400" /> Mission Readiness Rule</h4>
+              <div className="space-y-4 bg-slate-50 dark:bg-dark-floating p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><FileCheck className="h-3.5 w-3.5 text-slate-400" /> Mission Readiness Rule</h4>
                 <div className="flex gap-4">
                   <div className="space-y-1 flex-1">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Alert Starts (Day)</label>
-                    <input type="number" min="1" max="31" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:border-brand" value={mrStartDay} onChange={(e) => setMrStartDay(e.target.value)} />
+                    <label className="block text-xs font-bold text-slate-500 uppercase">Alert Starts (Day)</label>
+                    <Input aria-label="Alert Starts (Day)" type="number" min="1" max="31" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:border-brand" value={mrStartDay} onChange={(e) => setMrStartDay(e.target.value)} />
                   </div>
                   <div className="space-y-1 flex-1">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Deadline (Day)</label>
-                    <input type="number" min="1" max="31" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:border-brand" value={mrDeadlineDay} onChange={(e) => setMrDeadlineDay(e.target.value)} />
+                    <label className="block text-xs font-bold text-slate-500 uppercase">Deadline (Day)</label>
+                    <Input aria-label="Deadline (Day)" type="number" min="1" max="31" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:border-brand" value={mrDeadlineDay} onChange={(e) => setMrDeadlineDay(e.target.value)} />
                   </div>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center justify-between mt-2 pt-4 border-t border-slate-100 dark:border-[#27272A]">
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">{timeframeMsg}</span>
+            <div className="flex items-center justify-between mt-2 pt-4 border-t border-slate-100 dark:border-dark-border">
+              <span className="text-xs font-bold editor-accent">{timeframeMsg}</span>
               <button onClick={saveTimeframes} className="w-full sm:w-auto bg-slate-900 dark:bg-slate-800 hover:bg-black dark:hover:bg-slate-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all">Save Timeframes</button>
             </div>
           </div>
 
-          <div className="bento-card space-y-6 bg-white dark:bg-[#121212]">
+          <div className="bento-card space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">Financial Years</h3>
                 <p className="text-xs text-slate-500 mt-0.5">Initializing a new year automatically provisions its 12 open monthly reporting periods.</p>
               </div>
               {!isAddingYear && (
-                <button onClick={() => setIsAddingYear(true)} className="flex items-center justify-center gap-2 bg-brand dark:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm w-full sm:w-auto">
+                <button onClick={() => setIsAddingYear(true)} className="flex items-center justify-center gap-2 bg-brand dark:bg-brand text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm w-full sm:w-auto">
                   <Calendar className="h-4 w-4" /> Initialize New Year
                 </button>
               )}
             </div>
 
             {isAddingYear && (
-              <form onSubmit={handleAddYear} className="bg-slate-50/50 dark:bg-[#1A1A1A] p-5 rounded-2xl border border-slate-200 dark:border-[#27272A] flex flex-col sm:flex-row items-end gap-4 animate-in fade-in">
+              <form onSubmit={handleAddYear} className="bg-slate-50/50 dark:bg-dark-floating p-5 rounded-2xl border border-slate-200 dark:border-dark-border flex flex-col sm:flex-row items-end gap-4 animate-in fade-in">
                 <div className="space-y-1.5 w-full sm:flex-1 sm:min-w-[150px]">
-                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase">Year</label>
-                  <input type="number" required className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newYear.year} onChange={e => setNewYear({...newYear, year: parseInt(e.target.value)})} />
+                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 uppercase">Year</label>
+                  <Input aria-label="Year" type="number" required className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newYear.year} onChange={e => setNewYear({...newYear, year: parseInt(e.target.value)})} />
                 </div>
                 <div className="space-y-1.5 w-full sm:flex-1 sm:min-w-[150px]">
-                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase">Approved Budget</label>
-                  <input type="number" required className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newYear.budget} onChange={e => setNewYear({...newYear, budget: e.target.value})} />
+                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 uppercase">Approved Budget</label>
+                  <Input aria-label="Approved Budget" type="number" required className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newYear.budget} onChange={e => setNewYear({...newYear, budget: e.target.value})} />
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                  <button type="button" onClick={() => setIsAddingYear(false)} className="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold text-slate-600 bg-white dark:bg-[#121212] border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
-                  <button type="submit" className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold text-white bg-brand dark:bg-emerald-700 rounded-xl shadow-sm">Save Year</button>
+                  <button type="button" onClick={() => setIsAddingYear(false)} className="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold text-slate-600 bg-white dark:bg-dark-elevated border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
+                  <button type="submit" className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold text-white bg-brand dark:bg-brand rounded-xl shadow-sm">Save Year</button>
                 </div>
               </form>
             )}
 
-            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#27272A] custom-scrollbar">
-              <table className="w-full text-left text-xs border-collapse min-w-[500px]">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-dark-border custom-scrollbar">
+              <table className="ui-data-table w-full text-left text-xs border-collapse min-w-[500px]">
                 <thead>
-                  <tr className="bg-transparent border-b border-slate-200 dark:border-[#27272A] text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+                  <tr className="bg-transparent border-b border-slate-200 dark:border-dark-border text-slate-500 font-semibold tracking-normal text-xs">
                     <th className="p-4">Financial Year</th>
                     <th className="p-4">Approved Budget</th>
                     <th className="p-4">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]/50 bg-transparent">
+                <tbody className="divide-y divide-slate-100 dark:divide-dark-border/50 bg-transparent">
                   {years.map(y => (
                     <tr key={y.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
                       <td className="p-4 font-semibold text-slate-900 dark:text-white">{y.year}</td>
-                      <td className="p-4 font-mono font-medium text-slate-700 dark:text-slate-300">₱{Number(y.approved_budget).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      <td className="p-4 font-mono font-medium text-slate-700 dark:text-slate-300">{y.approved_budget != null && Number.isFinite(Number(y.approved_budget)) ? new Intl.NumberFormat('en-PH', {style:'currency',currency:'PHP'}).format(Number(y.approved_budget)) : 'Not set'}</td>
                       <td className="p-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 uppercase">
-                          <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${y.is_closed ? 'bg-slate-400' : 'bg-emerald-500'}`}></span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 uppercase">
+                          <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${y.is_closed ? 'bg-slate-400' : 'bg-sky-500'}`}></span>
                           {y.is_closed ? 'Closed' : 'Active'}
                         </span>
                       </td>
@@ -519,23 +554,23 @@ export default function Admin() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase">Select Period to Reset</label>
-                <select 
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-semibold text-slate-900 dark:text-white shadow-sm"
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 uppercase">Select Period to Reset</label>
+                <Select aria-label="Select Period to Reset"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3.5 py-2.5 text-xs font-semibold text-slate-900 dark:text-white shadow-sm"
                   value={selectedResetPeriod}
                   onChange={(e) => setSelectedResetPeriod(e.target.value)}
                 >
                   {periods.map(p => (
                     <option key={p.id} value={p.id}>{p.period_name}</option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase">Type "RESET" to Confirm</label>
-                <input 
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 uppercase">Type "RESET" to Confirm</label>
+                <Input aria-label={'Type "RESET" to confirm'}
                   type="text" 
                   placeholder="Type RESET here" 
-                  className="w-full rounded-xl border border-red-200 dark:border-red-900/50 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-bold text-red-900 dark:text-red-300 shadow-sm"
+                  className="w-full rounded-xl border border-red-200 dark:border-red-900/50 bg-white dark:bg-dark-elevated px-3.5 py-2.5 text-xs font-bold text-red-900 dark:text-red-300 shadow-sm"
                   value={resetConfirmation}
                   onChange={(e) => setResetConfirmation(e.target.value)}
                 />
@@ -556,58 +591,58 @@ export default function Admin() {
       )}
 
       {activeTab === 'CATEGORIES' && (
-        <div className="bento-card space-y-6 bg-white dark:bg-[#121212]">
+        <div className="tab-panel bento-card space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">Dynamic ComBud Categories</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Manage official ComBud account codes and custom institutional categories.</p>
             </div>
             {!isAddingCat && (
-              <button onClick={() => setIsAddingCat(true)} className="flex items-center justify-center gap-2 bg-brand dark:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-brand-dark shadow-sm w-full sm:w-auto">
+              <button onClick={() => setIsAddingCat(true)} className="flex items-center justify-center gap-2 bg-brand dark:bg-brand text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-brand-dark shadow-sm w-full sm:w-auto">
                 <Plus className="h-4 w-4" /> Add Category
               </button>
             )}
           </div>
 
           {isAddingCat && (
-            <form onSubmit={handleAddCategory} className="bg-slate-50/50 dark:bg-[#1A1A1A] p-5 rounded-2xl border border-slate-200 dark:border-[#27272A] flex flex-col sm:flex-row items-end gap-4 animate-in fade-in">
+            <form onSubmit={handleAddCategory} className="bg-slate-50/50 dark:bg-dark-floating p-5 rounded-2xl border border-slate-200 dark:border-dark-border flex flex-col sm:flex-row items-end gap-4 animate-in fade-in">
               <div className="space-y-1.5 w-full sm:flex-1 sm:min-w-[120px]">
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Type</label>
-                <select className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newCat.type} onChange={e => setNewCat({...newCat, type: e.target.value as 'INCOME' | 'EXPENSE'})}>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 tracking-normal">Type</label>
+                <Select aria-label="Type" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newCat.type} onChange={e => setNewCat({...newCat, type: e.target.value as 'INCOME' | 'EXPENSE'})}>
                   <option value="EXPENSE">Expense</option>
                   <option value="INCOME">Income</option>
-                </select>
+                </Select>
               </div>
               <div className="space-y-1.5 w-full sm:flex-1 sm:min-w-[120px]">
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Account Code</label>
-                <input type="text" required placeholder="e.g. 501" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newCat.code} onChange={e => setNewCat({...newCat, code: e.target.value})} />
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 tracking-normal">Account Code</label>
+                <Input aria-label="Account Code" type="text" required placeholder="e.g. 501" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newCat.code} onChange={e => setNewCat({...newCat, code: e.target.value})} />
               </div>
               <div className="space-y-1.5 w-full sm:flex-[2] sm:min-w-[200px]">
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Category Name</label>
-                <input type="text" required placeholder="e.g. Honorarium" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newCat.name} onChange={e => setNewCat({...newCat, name: e.target.value})} />
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 tracking-normal">Category Name</label>
+                <Input aria-label="Category Name" type="text" required placeholder="e.g. Honorarium" className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-dark-elevated px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white" value={newCat.name} onChange={e => setNewCat({...newCat, name: e.target.value})} />
               </div>
               <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                <button type="button" onClick={() => setIsAddingCat(false)} className="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-[#121212] border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
-                <button type="submit" className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold text-white bg-brand dark:bg-emerald-700 rounded-xl shadow-sm hover:bg-brand-dark dark:hover:bg-emerald-800 transition-colors">Save</button>
+                <button type="button" onClick={() => setIsAddingCat(false)} className="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-dark-elevated border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+                <button type="submit" className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold text-white bg-brand dark:bg-brand rounded-xl shadow-sm hover:bg-brand-dark dark:hover:bg-sky-800 transition-colors">Save</button>
               </div>
             </form>
           )}
 
-          <div className="max-h-[500px] overflow-y-auto custom-scrollbar rounded-xl border border-slate-200 dark:border-[#27272A]">
-            <table className="w-full text-left text-xs border-collapse relative min-w-[500px]">
-              <thead className="sticky top-0 bg-transparent z-10 border-b border-slate-200 dark:border-[#27272A] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px] backdrop-blur-md">
+          <div className="max-h-[500px] overflow-y-auto custom-scrollbar rounded-xl border border-slate-200 dark:border-dark-border">
+            <table className="ui-data-table w-full text-left text-xs border-collapse relative min-w-[500px]">
+              <thead className="sticky top-0 bg-transparent z-10 border-b border-slate-200 dark:border-dark-border text-slate-500 dark:text-slate-400 font-semibold tracking-normal text-xs backdrop-blur-md">
                 <tr>
                   <th className="p-4 w-28">Type</th>
                   <th className="p-4 w-36">Account Code</th>
                   <th className="p-4">Account Name</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]/50 bg-transparent">
+              <tbody className="divide-y divide-slate-100 dark:divide-dark-border/50 bg-transparent">
                 {categories.map(c => (
                   <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
                     <td className="p-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 uppercase">
-                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${c.type === 'INCOME' ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 uppercase">
+                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${c.type === 'INCOME' ? 'bg-sky-500' : 'bg-slate-400'}`}></span>
                         {c.type}
                       </span>
                     </td>

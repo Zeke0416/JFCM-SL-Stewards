@@ -1,8 +1,10 @@
+import { LedgerMotion, MotionToggle } from '../components/ui/Motion';
+import { useTheme } from '../contexts/ThemeContext';
+import { Moon, Sun } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
-import { Lock, Mail, ArrowRight, AlertCircle, Loader2, X, CheckCircle2 } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, Loader2, X, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import logo from '../assets/favicon.png';
 
 interface SavedAccount {
@@ -11,6 +13,7 @@ interface SavedAccount {
 }
 
 export default function Login() {
+  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
@@ -25,6 +28,7 @@ export default function Login() {
   const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
 
   const navigate = useNavigate();
+  const { darkMode, toggleDarkMode, transitioning } = useTheme();
 
   useEffect(() => {
     const stored = localStorage.getItem('jfcm_saved_accounts');
@@ -151,202 +155,33 @@ export default function Login() {
   const isLocked = lockoutUntil > 0 && Date.now() < lockoutUntil;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-[#05070A] p-4 sm:p-6 transition-colors duration-200">
-      
-      {/* Login Success Modal */}
-      {showSuccessModal && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl p-8 shadow-2xl flex flex-col items-center justify-center space-y-4 animate-in zoom-in-95 duration-300 min-w-[300px]">
-            <div className="h-16 w-16 bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 animate-bounce">
-              <CheckCircle2 className="h-8 w-8" />
-            </div>
-            <div className="text-center space-y-1">
-              <h3 className="text-base font-bold uppercase tracking-wider text-slate-900 dark:text-white">Authentication Verified</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Redirecting to secure financial portal...</p>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      <div className="w-full max-w-md bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl p-6 sm:p-10 shadow-2xl space-y-6 sm:space-y-8 animate-in fade-in zoom-in-95 duration-300">
-        
-        {/* Header Section */}
-        <div className="text-center space-y-3">
-          <img 
-            src={logo} 
-            alt="JFCM-SL Logo" 
-            className="mx-auto h-16 w-16 object-contain drop-shadow-md"
-          />
-          <div className="space-y-1">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">JFCM-SL Stewards</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Church Financial Operations & Audit Portal</p>
-          </div>
+    <div className="login-page">
+      <aside className="login-story">
+        <div className="login-brand"><img src={logo} alt="JFCM-SL" /><span><strong>Stewards.</strong><span>JFCM-SL financial workspace</span></span></div>
+        <div className="login-story-copy"><span className="story-caption">Honesty. Integrity. Responsibility.</span><h1>Faithful stewardship.<br />Honest records.</h1><p>Care for the resources entrusted to the church,<br />with accountability before God and His people.</p></div>
+        <div className="login-motion-stage"><LedgerMotion /><div className="motion-stage-caption"><span className="caption-rule" /><span>Faithful stewardship before God.</span><MotionToggle /></div></div>
+        <div className="login-story-footer"><span>JFCM-SL</span><span>Serve with integrity.</span></div>
+      </aside>
+      <main className="login-main"><div className="login-utility"><span>Personnel access</span><button type="button" className="icon-button" onClick={toggleDarkMode} disabled={transitioning} aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}>{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button><MotionToggle compact /></div>
+        <div className="login-form-wrap" id="login-form">
+          <div className="login-mobile-brand"><img src={logo} alt="" /><span>JFCM-SL Stewards</span></div>
+          <div className="login-heading"><span className="login-welcome">Church financial system</span><h2>Welcome back.</h2><p>Sign in to your church financial workspace.</p></div>
+          {showSuccessModal ? <div className="login-success" role="status"><CheckCircle2 size={30} /><h3>You're signed in.</h3><p>Opening your workspace…</p></div> : <>
+            {savedAccounts.length > 0 && !selectedAccount && <section className="saved-accounts" aria-label="Saved accounts"><p className="text-sm text-light-textSecondary dark:text-dark-textSecondary mb-3">Continue with a saved account</p>{savedAccounts.map(account => <div key={account.email} className="saved-account"><button type="button" onClick={() => handleSelectAccount(account)}><span className="account-avatar">{account.fullName.charAt(0).toUpperCase()}</span><span className="min-w-0"><strong>{account.fullName}</strong><span>{account.email}</span></span></button><button type="button" aria-label={`Remove saved account ${account.fullName}`} onClick={e => handleRemoveSavedAccount(e, account.email)}><X size={16} /></button></div>)}</section>}
+            {selectedAccount && <div className="selected-account"><div><span className="text-sm">Signing in as</span><strong>{selectedAccount}</strong></div><button type="button" onClick={() => { setSelectedAccount(null); setPassword(''); }}>Change</button></div>}
+            {error && <div className="login-error" role="alert" id="login-error"><AlertCircle size={18} /><span>{error}</span></div>}
+            {isLocked && <p role="status" className="text-sm text-rose-700 dark:text-rose-300 mb-4">Please wait {remainingSeconds} seconds before trying again.</p>}
+            <form onSubmit={handleLogin} className="stewards-login-form" aria-busy={loading}>
+              {!selectedAccount && <div><label htmlFor="login-email">Email address</label><div className="login-input"><Mail size={18} /><input id="login-email" type="email" required autoComplete="username" disabled={isLocked || loading} value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.org" aria-describedby={error ? 'login-error' : undefined} /></div></div>}
+              <div><label htmlFor="login-password">Password</label><div className="login-input"><Lock size={18} /><input id="login-password" type={showPassword ? 'text' : 'password'} required autoComplete="current-password" disabled={isLocked || loading} autoFocus={!!selectedAccount} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" aria-describedby={error ? 'login-error' : undefined} /><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></div>
+              <label className="remember-account"><input type="checkbox" disabled={isLocked || loading} checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} />Remember account on this device</label>
+              <button type="submit" className="login-submit" disabled={loading || isLocked}>{loading ? <Loader2 size={18} className="animate-spin" /> : null}<span>{loading ? 'Signing in…' : isLocked ? `Try again in ${remainingSeconds}s` : 'Sign in'}</span>{!loading && !isLocked && <ArrowRight size={18} />}</button>
+            </form>
+          </>}
+          <div className="login-footnote"><Lock size={14} /><span>For authorized church personnel</span></div>
         </div>
-
-        {/* Saved Accounts Picker */}
-        {savedAccounts.length > 0 && !selectedAccount && !isLocked && (
-          <div className="space-y-3 pt-1">
-            <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Recent Accounts</p>
-            
-            {savedAccounts.length === 1 ? (
-              <div
-                onClick={() => handleSelectAccount(savedAccounts[0])}
-                className="group relative bg-slate-50 dark:bg-[#121212] hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 border border-slate-200 dark:border-[#27272A] hover:border-emerald-500/50 p-4 rounded-xl cursor-pointer transition-all flex items-center justify-between shadow-sm"
-              >
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="h-11 w-11 shrink-0 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-base shadow-inner">
-                    {savedAccounts[0].fullName.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 text-left">
-                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{savedAccounts[0].fullName}</p>
-                    <p className="text-[11px] text-slate-400 truncate">{savedAccounts[0].email}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={(e) => handleRemoveSavedAccount(e, savedAccounts[0].email)}
-                  className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-slate-200 dark:hover:bg-[#1A1A1A] transition-all shrink-0"
-                  title="Remove account"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {savedAccounts.map((acc) => (
-                  <div
-                    key={acc.email}
-                    onClick={() => handleSelectAccount(acc)}
-                    className="group relative bg-slate-50 dark:bg-[#121212] hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200 dark:border-[#27272A] hover:border-emerald-500/50 p-4 rounded-xl cursor-pointer transition-all flex items-center sm:flex-col sm:items-center text-left sm:text-center space-x-3 sm:space-x-0 sm:space-y-2 shadow-sm"
-                  >
-                    <button
-                      onClick={(e) => handleRemoveSavedAccount(e, acc.email)}
-                      className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 p-1.5 rounded-full text-slate-400 hover:text-rose-500 hover:bg-slate-200 dark:hover:bg-[#1A1A1A] transition-all"
-                      title="Remove account"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                    <div className="h-10 w-10 shrink-0 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm shadow-inner">
-                      {acc.fullName.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="w-full truncate">
-                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{acc.fullName}</p>
-                      <p className="text-[10px] text-slate-400 truncate">{acc.email}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="relative flex py-3 items-center">
-              <div className="flex-grow border-t border-slate-200 dark:border-[#27272A]"></div>
-              <span className="flex-shrink mx-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">or log in with email</span>
-              <div className="flex-grow border-t border-slate-200 dark:border-[#27272A]"></div>
-            </div>
-          </div>
-        )}
-
-        {selectedAccount && (
-          <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 p-4 rounded-xl">
-            <div className="flex items-center gap-3 truncate">
-              <div className="h-9 w-9 shrink-0 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                {selectedAccount.charAt(0).toUpperCase()}
-              </div>
-              <div className="truncate">
-                <p className="text-xs font-bold text-slate-900 dark:text-white">Signing in as</p>
-                <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-mono truncate">{selectedAccount}</p>
-              </div>
-            </div>
-            <button 
-              onClick={() => { setSelectedAccount(null); setEmail(''); }} 
-              className="text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white underline shrink-0 ml-2"
-            >
-              Switch
-            </button>
-          </div>
-        )}
-
-        {isLocked && (
-          <div className="bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 p-4 rounded-xl text-xs font-medium flex items-center gap-2.5 border border-rose-200 dark:border-rose-900/50">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>Account temporarily suspended due to multiple failed logins. Please retry in <strong>{remainingSeconds}s</strong>.</span>
-          </div>
-        )}
-
-        {error && !isLocked && (
-          <div className="bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 p-4 rounded-xl text-xs font-medium flex items-center gap-2.5 border border-rose-200 dark:border-rose-900/50">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
-          {!selectedAccount && (
-            <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-                <input
-                  type="email"
-                  required
-                  disabled={isLocked}
-                  autoComplete="email"
-                  placeholder="steward@jfcm.org"
-                  className="w-full pl-10 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] text-xs font-medium text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-colors disabled:opacity-50"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-              <input
-                type="password"
-                required
-                disabled={isLocked}
-                autoFocus={!!selectedAccount}
-                autoComplete="current-password"
-                placeholder="Enter password..."
-                className="w-full pl-10 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] text-xs font-medium text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-colors disabled:opacity-50"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-xs pt-1">
-            <label className="flex items-center gap-2.5 cursor-pointer text-slate-600 dark:text-slate-400 font-medium">
-              <input 
-                type="checkbox" 
-                disabled={isLocked}
-                checked={rememberMe} 
-                onChange={(e) => setRememberMe(e.target.checked)} 
-                className="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4 border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-[#1A1A1A]" 
-              />
-              Remember account on this device
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading || isLocked}
-            className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all shadow-md mt-2 disabled:opacity-50"
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            <span>{loading ? 'Authenticating...' : isLocked ? `Locked (${remainingSeconds}s)` : 'Sign In to Portal'}</span>
-            {!loading && !isLocked && <ArrowRight className="h-4 w-4" />}
-          </button>
-        </form>
-
-        <div className="text-center pt-3 border-t border-slate-200 dark:border-[#27272A]">
-          <p className="text-[11px] text-slate-400 dark:text-slate-500">Authorized personnel only. All access is audited.</p>
-        </div>
-
-      </div>
+        <footer className="login-footer church-login-footer"><strong>Jesus First Christian Ministries Inc. - Sapang Lamig</strong><span>Stewards · Honest records. Faithful service.</span></footer>
+      </main>
     </div>
   );
 }

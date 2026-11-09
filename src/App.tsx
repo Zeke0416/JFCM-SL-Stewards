@@ -1,5 +1,7 @@
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { FeedbackProvider } from './components/ui/Feedback';
+import { MotionProvider, LedgerMotion } from './components/ui/Motion';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -16,7 +18,7 @@ import MissionaryReport from './pages/MissionaryReport';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-brand-bg dark:bg-brand-darkBg text-slate-600 dark:text-slate-300 font-medium">Loading session...</div>;
+  if (loading) return <div className="session-loading" role="status"><span className="session-loading-brand">JFCM-SL / Stewards</span><LedgerMotion variant="transition" /><h1>Opening your workspace.</h1><p>Retrieving your session</p><div className="session-loading-track"><span /></div></div>;
   if (!session) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
@@ -45,9 +47,9 @@ export default function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <Router>
+        <MotionProvider><FeedbackProvider><Router>
           <AppRoutes />
-        </Router>
+        </Router></FeedbackProvider></MotionProvider>
       </ThemeProvider>
     </AuthProvider>
   );

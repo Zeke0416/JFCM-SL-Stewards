@@ -1,0 +1,523 @@
+{
+  "communities": {
+    "0": [
+      "ref_react",
+      "ref_react_dom",
+      "src_app",
+      "src_app_app",
+      "src_app_approutes",
+      "src_app_protectedroute",
+      "src_assets_favicon",
+      "src_assets_jfcm_sl_logo",
+      "src_components_forcepasswordchangemodal",
+      "src_components_forcepasswordchangemodal_forcepasswordchangemodal",
+      "src_components_forcepasswordchangemodal_props",
+      "src_components_layout",
+      "src_components_layout_layout",
+      "src_components_smartdiagnosismodal",
+      "src_components_smartdiagnosismodal_smartdiagnosismodal",
+      "src_components_smartdiagnosismodal_smartdiagnosismodalprops",
+      "src_contexts_authcontext",
+      "src_contexts_authcontext_authcontext",
+      "src_contexts_authcontext_authcontexttype",
+      "src_contexts_authcontext_authprovider",
+      "src_contexts_authcontext_useauth",
+      "src_contexts_themecontext",
+      "src_contexts_themecontext_themecontext",
+      "src_contexts_themecontext_themecontexttype",
+      "src_contexts_themecontext_themeprovider",
+      "src_contexts_themecontext_usetheme",
+      "src_index",
+      "src_lib_supabase",
+      "src_lib_supabase_supabase",
+      "src_main",
+      "src_pages_admin",
+      "src_pages_admin_admin",
+      "src_pages_coopledger",
+      "src_pages_coopledger_coopledger",
+      "src_pages_exportcenter",
+      "src_pages_exportcenter_exportcenter",
+      "src_pages_financialsetup",
+      "src_pages_financialsetup_financialsetup",
+      "src_pages_financialsetup_notificationstate",
+      "src_pages_login",
+      "src_pages_login_login",
+      "src_pages_login_savedaccount",
+      "src_pages_missionaryreport",
+      "src_pages_missionaryreport_missionaryreport",
+      "src_pages_missionreadiness",
+      "src_pages_missionreadiness_missionreadiness",
+      "src_pages_missionreadiness_reconstate",
+      "src_pages_tithers",
+      "src_pages_tithers_tithers",
+      "src_types_database_types_financialperiod",
+      "src_types_database_types_financialyear"
+    ],
+    "1": [
+      "github_workflows_deploy",
+      "github_workflows_deploy_build_runs_on",
+      "github_workflows_deploy_build_steps",
+      "github_workflows_deploy_deploy_environment",
+      "github_workflows_deploy_deploy_needs",
+      "github_workflows_deploy_deploy_runs_on",
+      "github_workflows_deploy_deploy_steps",
+      "github_workflows_deploy_env_vite_supabase_anon_key",
+      "github_workflows_deploy_env_vite_supabase_url",
+      "github_workflows_deploy_environment_name",
+      "github_workflows_deploy_environment_url",
+      "github_workflows_deploy_jobs",
+      "github_workflows_deploy_jobs_build",
+      "github_workflows_deploy_jobs_deploy",
+      "github_workflows_deploy_name",
+      "github_workflows_deploy_on",
+      "github_workflows_deploy_on_push",
+      "github_workflows_deploy_permissions",
+      "github_workflows_deploy_permissions_contents",
+      "github_workflows_deploy_permissions_id_token",
+      "github_workflows_deploy_permissions_pages",
+      "github_workflows_deploy_push_branches",
+      "github_workflows_deploy_steps_env",
+      "github_workflows_deploy_steps_id",
+      "github_workflows_deploy_steps_name",
+      "github_workflows_deploy_steps_run",
+      "github_workflows_deploy_steps_uses",
+      "github_workflows_deploy_steps_with",
+      "github_workflows_deploy_with_cache",
+      "github_workflows_deploy_with_node_version",
+      "github_workflows_deploy_with_path"
+    ],
+    "2": [
+      "src_components_categoryguidemodal",
+      "src_components_categoryguidemodal_categoryguidemodal",
+      "src_components_categoryguidemodal_categoryguidemodalprops",
+      "src_components_transactiondetailmodal",
+      "src_components_transactiondetailmodal_enrichedtransaction",
+      "src_components_transactiondetailmodal_transactiondetailmodal",
+      "src_components_transactiondetailmodal_transactiondetailmodalprops",
+      "src_components_transactionduplicatescanner",
+      "src_components_transactionduplicatescanner_amountincents",
+      "src_components_transactionduplicatescanner_buildduplicatecandidate",
+      "src_components_transactionduplicatescanner_datedistanceindays",
+      "src_components_transactionduplicatescanner_duplicatecandidate",
+      "src_components_transactionduplicatescanner_duplicateconfidence",
+      "src_components_transactionduplicatescanner_duplicatescantransaction",
+      "src_components_transactionduplicatescanner_findduplicatecandidates",
+      "src_components_transactionduplicatescanner_formatphp",
+      "src_components_transactionduplicatescanner_generic_words",
+      "src_components_transactionduplicatescanner_meaningfultokens",
+      "src_components_transactionduplicatescanner_normalizedreceipt",
+      "src_components_transactionduplicatescanner_normalizetext",
+      "src_components_transactionduplicatescanner_tokencomparison",
+      "src_components_transactionduplicatescanner_transactionduplicatescanner",
+      "src_components_transactionduplicatescanner_transactionduplicatescannerprops",
+      "src_pages_transactions",
+      "src_pages_transactions_enrichedtransaction",
+      "src_pages_transactions_sortdirection",
+      "src_pages_transactions_sortfield",
+      "src_pages_transactions_transactions",
+      "src_types_database_types_category"
+    ],
+    "3": [
+      "src_components_transactionmodal",
+      "src_components_transactionmodal_enrichedtransaction",
+      "src_components_transactionmodal_transactionmodal",
+      "src_components_transactionmodal_transactionmodal_handleclickoutside",
+      "src_components_transactionmodal_transactionmodalprops",
+      "src_components_transactionreviewmodal",
+      "src_components_transactionreviewmodal_reviewdata",
+      "src_components_transactionreviewmodal_transactionreviewmodal",
+      "src_components_transactionreviewmodal_transactionreviewmodalprops",
+      "src_types_database_types",
+      "src_types_database_types_auditlog",
+      "src_types_database_types_church",
+      "src_types_database_types_coopmonthlylog",
+      "src_types_database_types_coopweeklylog",
+      "src_types_database_types_duplicatereceiptrule",
+      "src_types_database_types_exporthistory",
+      "src_types_database_types_exporttemplate",
+      "src_types_database_types_mprreport",
+      "src_types_database_types_periodstatus",
+      "src_types_database_types_profile",
+      "src_types_database_types_projectlog",
+      "src_types_database_types_systemsettings",
+      "src_types_database_types_tither",
+      "src_types_database_types_transaction",
+      "src_types_database_types_transactionlog",
+      "src_types_database_types_transactiontype",
+      "src_types_database_types_userrole",
+      "src_types_database_types_worshipservicelog"
+    ],
+    "4": [
+      "src_pages_reconciliation",
+      "src_pages_reconciliation_breakdownitem",
+      "src_pages_reconciliation_combud_expected_type_by_label",
+      "src_pages_reconciliation_combud_export_code_by_label",
+      "src_pages_reconciliation_combud_header_aliases",
+      "src_pages_reconciliation_combud_known_alias_codes",
+      "src_pages_reconciliation_enrichedtransaction",
+      "src_pages_reconciliation_eventdateclue",
+      "src_pages_reconciliation_excelrecord",
+      "src_pages_reconciliation_extracteventdateclues",
+      "src_pages_reconciliation_extracteventdaysformonth",
+      "src_pages_reconciliation_formatcentsasamount",
+      "src_pages_reconciliation_getcombudaccountcode",
+      "src_pages_reconciliation_iscombudfooterlabel",
+      "src_pages_reconciliation_iscombudremark",
+      "src_pages_reconciliation_month_number_by_alias",
+      "src_pages_reconciliation_normalizecombudlabel",
+      "src_pages_reconciliation_normalizestructuraltoken",
+      "src_pages_reconciliation_parsecombudmoney",
+      "src_pages_reconciliation_parsetransactionbreakdown",
+      "src_pages_reconciliation_reconciliation",
+      "src_pages_reconciliation_sheet_month_map",
+      "src_pages_reconciliation_summaryrow",
+      "src_pages_reconciliation_tocents"
+    ],
+    "5": [
+      "ref_lucide_react",
+      "src_components_animatednumber",
+      "src_components_animatednumber_animatednumber",
+      "src_components_dashboard_actionalerts",
+      "src_components_dashboard_actionalerts_actionalerts",
+      "src_components_dashboard_actionalerts_actionalertsprops",
+      "src_components_dashboard_actionalerts_reminderinfo",
+      "src_components_dashboard_budgettracker",
+      "src_components_dashboard_budgettracker_budgettracker",
+      "src_components_dashboard_metricscards",
+      "src_components_dashboard_metricscards_metricscards",
+      "src_components_dashboard_targetmonitor",
+      "src_components_dashboard_targetmonitor_targetmonitor",
+      "src_components_dashboard_trendchart",
+      "src_components_dashboard_trendchart_trendchart",
+      "src_components_dashboard_trendchart_visibleline",
+      "src_components_transactionlogsmodal",
+      "src_components_transactionlogsmodal_transactionlogsmodal",
+      "src_components_transactionlogsmodal_transactionlogsmodalprops",
+      "src_pages_dashboard",
+      "src_pages_dashboard_dashboard",
+      "src_utils_exportlogstoexcel",
+      "src_utils_exportlogstoexcel_exportlogstoexcel"
+    ],
+    "6": [
+      "tsconfig_app",
+      "tsconfig_app_compileroptions",
+      "tsconfig_app_compileroptions_allowarbitraryextensions",
+      "tsconfig_app_compileroptions_allowimportingtsextensions",
+      "tsconfig_app_compileroptions_erasablesyntaxonly",
+      "tsconfig_app_compileroptions_jsx",
+      "tsconfig_app_compileroptions_lib",
+      "tsconfig_app_compileroptions_module",
+      "tsconfig_app_compileroptions_moduledetection",
+      "tsconfig_app_compileroptions_moduleresolution",
+      "tsconfig_app_compileroptions_noemit",
+      "tsconfig_app_compileroptions_nofallthroughcasesinswitch",
+      "tsconfig_app_compileroptions_nounusedlocals",
+      "tsconfig_app_compileroptions_nounusedparameters",
+      "tsconfig_app_compileroptions_skiplibcheck",
+      "tsconfig_app_compileroptions_target",
+      "tsconfig_app_compileroptions_tsbuildinfofile",
+      "tsconfig_app_compileroptions_types",
+      "tsconfig_app_compileroptions_verbatimmodulesyntax",
+      "tsconfig_app_include"
+    ],
+    "7": [
+      "tsconfig_node",
+      "tsconfig_node_compileroptions",
+      "tsconfig_node_compileroptions_allowimportingtsextensions",
+      "tsconfig_node_compileroptions_erasablesyntaxonly",
+      "tsconfig_node_compileroptions_lib",
+      "tsconfig_node_compileroptions_module",
+      "tsconfig_node_compileroptions_moduledetection",
+      "tsconfig_node_compileroptions_noemit",
+      "tsconfig_node_compileroptions_nofallthroughcasesinswitch",
+      "tsconfig_node_compileroptions_nounusedlocals",
+      "tsconfig_node_compileroptions_nounusedparameters",
+      "tsconfig_node_compileroptions_skiplibcheck",
+      "tsconfig_node_compileroptions_target",
+      "tsconfig_node_compileroptions_tsbuildinfofile",
+      "tsconfig_node_compileroptions_types",
+      "tsconfig_node_compileroptions_verbatimmodulesyntax",
+      "tsconfig_node_include"
+    ],
+    "8": [
+      "package_dependencies",
+      "package_dependencies_clsx",
+      "package_dependencies_date_fns",
+      "package_dependencies_lucide_react",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "package_dependencies_react_router_dom",
+      "package_dependencies_supabase_supabase_js",
+      "package_dependencies_xlsx",
+      "package_dependencies_zod",
+      "ref_clsx",
+      "ref_date_fns",
+      "ref_react_router_dom",
+      "ref_supabase_supabase_js",
+      "ref_xlsx",
+      "ref_zod"
+    ],
+    "9": [
+      "package_devdependencies",
+      "package_devdependencies_autoprefixer",
+      "package_devdependencies_oxlint",
+      "package_devdependencies_postcss",
+      "package_devdependencies_tailwindcss",
+      "package_devdependencies_types_file_saver",
+      "package_devdependencies_types_react_dom",
+      "package_devdependencies_typescript",
+      "ref_autoprefixer",
+      "ref_oxlint",
+      "ref_postcss",
+      "ref_tailwindcss",
+      "ref_types_file_saver",
+      "ref_types_react_dom",
+      "ref_typescript"
+    ],
+    "10": [
+      "package",
+      "package_dependencies_exceljs",
+      "package_dependencies_file_saver",
+      "package_name",
+      "package_private",
+      "package_type",
+      "package_version",
+      "ref_exceljs",
+      "ref_file_saver"
+    ],
+    "11": [
+      "public_manifest",
+      "public_manifest_background_color",
+      "public_manifest_display",
+      "public_manifest_icons",
+      "public_manifest_name",
+      "public_manifest_short_name",
+      "public_manifest_start_url",
+      "public_manifest_theme_color"
+    ],
+    "12": [
+      "oxlintrc",
+      "oxlintrc_plugins",
+      "oxlintrc_rules",
+      "oxlintrc_rules_react_only_export_components",
+      "oxlintrc_rules_react_rules_of_hooks",
+      "oxlintrc_schema"
+    ],
+    "13": [
+      "package_devdependencies_vite",
+      "package_devdependencies_vitejs_plugin_react",
+      "ref_vite",
+      "ref_vitejs_plugin_react",
+      "vite_config"
+    ],
+    "14": [
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_lint",
+      "package_scripts_preview"
+    ],
+    "15": [
+      "tsconfig",
+      "tsconfig_files",
+      "tsconfig_references"
+    ],
+    "16": [
+      "package_dependencies_recharts",
+      "ref_recharts"
+    ],
+    "17": [
+      "package_dependencies_tailwind_merge",
+      "ref_tailwind_merge"
+    ],
+    "18": [
+      "package_devdependencies_types_node",
+      "ref_types_node"
+    ],
+    "19": [
+      "package_devdependencies_types_react",
+      "ref_types_react"
+    ],
+    "20": [
+      "tailwind_config",
+      "tailwindcss"
+    ],
+    "21": [
+      "postcss_config"
+    ],
+    "22": [
+      "src_vite_env"
+    ]
+  },
+  "cohesion": {
+    "0": 0.1207843137254902,
+    "1": 0.06881720430107527,
+    "2": 0.12315270935960591,
+    "3": 0.0873015873015873,
+    "4": 0.15217391304347827,
+    "5": 0.17391304347826086,
+    "6": 0.1,
+    "7": 0.11764705882352941,
+    "8": 0.125,
+    "9": 0.13333333333333333,
+    "10": 0.2222222222222222,
+    "11": 0.25,
+    "12": 0.3333333333333333,
+    "13": 0.4,
+    "14": 0.4,
+    "15": 0.6666666666666666,
+    "16": 1.0,
+    "17": 1.0,
+    "18": 1.0,
+    "19": 1.0,
+    "20": 1.0,
+    "21": 1.0,
+    "22": 1.0
+  },
+  "gods": [
+    {
+      "id": "ref_lucide_react",
+      "label": "lucide-react",
+      "degree": 27
+    },
+    {
+      "id": "ref_react",
+      "label": "react",
+      "degree": 27
+    },
+    {
+      "id": "src_contexts_authcontext_useauth",
+      "label": "useAuth()",
+      "degree": 25
+    },
+    {
+      "id": "tsconfig_app_compileroptions",
+      "label": "compilerOptions",
+      "degree": 18
+    },
+    {
+      "id": "src_lib_supabase_supabase",
+      "label": "supabase",
+      "degree": 17
+    },
+    {
+      "id": "src_pages_reconciliation_reconciliation",
+      "label": "Reconciliation()",
+      "degree": 16
+    },
+    {
+      "id": "src_app_approutes",
+      "label": "AppRoutes()",
+      "degree": 15
+    },
+    {
+      "id": "tsconfig_node_compileroptions",
+      "label": "compilerOptions",
+      "degree": 15
+    },
+    {
+      "id": "ref_react_dom",
+      "label": "react-dom",
+      "degree": 14
+    },
+    {
+      "id": "src_pages_transactions_transactions",
+      "label": "Transactions()",
+      "degree": 11
+    }
+  ],
+  "surprises": [
+    {
+      "source": "AppRoutes()",
+      "target": "Dashboard()",
+      "source_files": [
+        "src/App.tsx",
+        "src/pages/Dashboard.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "AppRoutes()",
+      "target": "Reconciliation()",
+      "source_files": [
+        "src/App.tsx",
+        "src/pages/Reconciliation.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "AppRoutes()",
+      "target": "Transactions()",
+      "source_files": [
+        "src/App.tsx",
+        "src/pages/Transactions.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "Transactions()",
+      "target": "AnimatedNumber()",
+      "source_files": [
+        "src/pages/Transactions.tsx",
+        "src/components/AnimatedNumber.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "Reconciliation()",
+      "target": "TransactionDetailModal()",
+      "source_files": [
+        "src/pages/Reconciliation.tsx",
+        "src/components/TransactionDetailModal.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `lucide-react` connect `Community 5` to `Community 0`, `Community 2`, `Community 3`, `Community 4`, `Community 8`, `Community 10`?",
+      "why": "High betweenness centrality (0.099) - this node is a cross-community bridge."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.1207843137254902 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `react` connect `Community 0` to `Community 2`, `Community 3`, `Community 4`, `Community 5`, `Community 8`, `Community 10`?",
+      "why": "High betweenness centrality (0.096) - this node is a cross-community bridge."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.06881720430107527 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `react-dom` connect `Community 0` to `Community 2`, `Community 3`, `Community 5`, `Community 8`, `Community 10`?",
+      "why": "High betweenness centrality (0.027) - this node is a cross-community bridge."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 2` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.12315270935960591 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 3` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.0873015873015873 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

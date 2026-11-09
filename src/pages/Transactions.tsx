@@ -1,14 +1,21 @@
+import UserAvatar from '../components/ui/UserAvatar';
+import AnimatedNumber from '../components/AnimatedNumber';
+import { LedgerIcon as Receipt } from '../components/ui/StewardGlyph';
+import { useFeedback } from '../components/ui/useFeedback';
+import { StewardGlyph } from '../components/ui/StewardGlyph';
+import Select from '../components/ui/Select';
+import Input from '../components/ui/Input';
+import DialogLayer from '../components/ui/DialogLayer';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Transaction, Category, FinancialPeriod } from '../types/database.types';
-import { Plus, Search, Receipt, UserCircle, ArrowUpDown, ArrowDown, ArrowUp, Edit2, Eye, Calendar, Trash2, Paperclip, CheckCircle2, AlertTriangle, BookOpen, X, Activity, ToggleLeft, ToggleRight, TrendingUp, TrendingDown, Loader2, Clock, FileText, ChevronDown } from 'lucide-react';
+import { Plus, Search, ArrowLeft, ArrowRight, ArrowUpDown, ArrowDown, ArrowUp, Edit2, Eye, Trash2, Paperclip, CheckCircle2, AlertTriangle, BookOpen, X, Activity, Loader2, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import TransactionModal from '../components/TransactionModal';
 import TransactionDetailModal from '../components/TransactionDetailModal';
 import CategoryGuideModal from '../components/CategoryGuideModal';
 import TransactionLogsModal from '../components/TransactionLogsModal';
 import { useAuth } from '../contexts/AuthContext';
-import AnimatedNumber from '../components/AnimatedNumber';
 import TransactionDuplicateScanner, {
   findDuplicateCandidates,
   type DuplicateCandidate,
@@ -16,21 +23,21 @@ import TransactionDuplicateScanner, {
 
 type EnrichedTransaction = Transaction & { 
   categories?: Category;
-  profiles?: { full_name: string }; 
-  updated_by_profile?: { full_name: string };
+  profiles?: { full_name: string; avatar_data_url?: string | null };
+  updated_by_profile?: { full_name: string; avatar_data_url?: string | null };
 };
 
-type SortField = 'date' | 'type' | 'category' | 'payee_remarks' | 'encoded_by' | 'amount';
+type SortField = 'date' | 'type' | 'category' | 'remarks' | 'encoded_by' | 'amount';
 type SortDirection = 'asc' | 'desc';
 
 export default function Transactions() {
+  const { notify } = useFeedback();
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<EnrichedTransaction[]>([]);
   const [periods, setPeriods] = useState<FinancialPeriod[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0); 
-  const [chartAnimKey, setChartAnimKey] = useState(0);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<EnrichedTransaction | null>(null);
@@ -44,6 +51,7 @@ export default function Transactions() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
   const [detailedMode, setDetailedMode] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
   const [selectedPeriodFilter, setSelectedPeriodFilter] = useState<string>('ALL');
@@ -62,7 +70,7 @@ export default function Transactions() {
 
   useEffect(() => {
     if (!loading) {
-      setChartAnimKey(prev => prev + 1);
+
     }
   }, [loading]);
 
@@ -144,8 +152,8 @@ export default function Transactions() {
       const enriched = (txRes.data || []).map(tx => ({
         ...tx,
         categories: catMap.get(tx.category_id || ''),
-        profiles: { full_name: profMap.get(tx.entered_by)?.full_name || 'System Administrator' },
-        updated_by_profile: tx.updated_by ? { full_name: profMap.get(tx.updated_by)?.full_name || 'System Administrator' } : undefined
+        profiles: { full_name: profMap.get(tx.entered_by)?.full_name || 'Encoder unavailable', avatar_data_url: profMap.get(tx.entered_by)?.avatar_data_url || null },
+        updated_by_profile: tx.updated_by ? { full_name: profMap.get(tx.updated_by)?.full_name || 'Encoder unavailable', avatar_data_url: profMap.get(tx.updated_by)?.avatar_data_url || null } : undefined
       }));
 
       setTransactions(enriched);
@@ -154,6 +162,7 @@ export default function Transactions() {
   };
 
   const handlePeriodChange = (val: string) => {
+    setPage(1);
     setSelectedPeriodFilter(val);
     localStorage.setItem('selectedPeriodFilter', val);
   };
@@ -190,7 +199,7 @@ export default function Transactions() {
       setDeletedSuccessInfo({ description: targetDesc });
       fetchInitialData();
     } catch (err: any) {
-      alert("Failed to delete transaction: " + err.message);
+      notify("Failed to delete transaction: " + err.message);
     } finally {
       setIsDeleting(false);
     }
@@ -244,10 +253,10 @@ export default function Transactions() {
       switch (sortField) {
         case 'date': aValue = new Date(a.date).getTime(); bValue = new Date(b.date).getTime(); break;
         case 'amount': aValue = Number(a.amount); bValue = Number(a.amount); break;
-        case 'category': aValue = `[${a.categories?.export_code}] ${a.categories?.name}`.toLowerCase(); bValue = `[${b.categories?.export_code}] ${b.categories?.name}`.toLowerCase(); break;
-        case 'payee_remarks': aValue = `${a.payee_name} ${a.remarks}`.toLowerCase(); bValue = `${b.payee_name} ${b.remarks}`.toLowerCase(); break;
+        case 'category': aValue = `${a.categories?.name || ''} ${a.categories?.export_code || ''}`.toLowerCase(); bValue = `${b.categories?.name || ''} ${b.categories?.export_code || ''}`.toLowerCase(); break;
+        case 'remarks': aValue = `${a.remarks || ''}`.toLowerCase(); bValue = `${b.remarks || ''}`.toLowerCase(); break;
         case 'encoded_by': aValue = (a.profiles?.full_name || '').toLowerCase(); bValue = (b.profiles?.full_name || '').toLowerCase(); break;
-        case 'type': aValue = a.type.toLowerCase(); bValue = a.type.toLowerCase(); break;
+        case 'type': aValue = a.type.toLowerCase(); bValue = b.type.toLowerCase(); break;
         default: aValue = ''; bValue = '';
       }
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
@@ -269,33 +278,12 @@ export default function Transactions() {
     return filteredTransactions.filter(tx => !tx.categories || tx.categories.export_code === '???');
   }, [filteredTransactions]);
 
-  const generateSparkline = (key: 'income' | 'expense') => {
-    const targetType = key === 'income' ? 'INCOME' : 'EXPENSE';
-    const typeTxs = filteredTransactions.filter(t => t.type === targetType);
-    if (typeTxs.length < 2) {
-      return { path: 'M 0,55 C 42,40 84,70 126,55 C 168,40 210,70 252,55 C 273,47 286,60 300,55', width: 300, height: 100 };
-    }
-    const vals = typeTxs.map(t => Number(t.amount) || 0);
-    const max = Math.max(...vals, 10);
-    const points = vals.slice(0, 12).map((val, i, arr) => [
-      (i / Math.max(arr.length - 1, 1)) * 300,
-      80 - ((val / max) * 55)
-    ]);
-    let path = `M ${points[0][0]},${points[0][1]}`;
-    for (let i = 0; i < points.length - 1; i++) {
-      const x0 = points[i][0], y0 = points[i][1];
-      const x1 = points[i+1][0], y1 = points[i+1][1];
-      const cx1 = x0 + (x1 - x0) * 0.42;
-      const cx2 = x1 - (x1 - x0) * 0.42;
-      path += ` C ${cx1},${y0} ${cx2},${y1} ${x1},${y1}`;
-    }
-    return { path, width: 300, height: 100 };
-  };
-
-  const incSparkData = generateSparkline('income');
-  const expSparkData = generateSparkline('expense');
+  const pageCount = Math.max(1, Math.ceil(sortedTransactions.length / 12));
+  const currentPage = Math.min(page, pageCount);
+  const visibleTransactions = sortedTransactions.slice((currentPage - 1) * 12, currentPage * 12);
 
   const handleSort = (field: SortField) => {
+    setPage(1);
     if (sortField === field) setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortDirection(field === 'amount' || field === 'date' ? 'desc' : 'asc'); }
   };
@@ -303,13 +291,13 @@ export default function Transactions() {
   const SortableHeader = ({ field, label, align = 'left' }: { field: SortField, label: string, align?: 'left' | 'right' }) => {
     const isActive = sortField === field;
     return (
-      <th onClick={() => handleSort(field)} className={`p-4 cursor-pointer select-none group transition-colors hover:text-slate-900 dark:hover:text-white ${isActive ? 'text-slate-900 dark:text-white' : ''}`}>
-        <div className={`flex items-center gap-2 ${align === 'right' ? 'justify-end' : 'justify-start'}`}>
+      <th scope="col" aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'} className={`p-4 cursor-pointer select-none group transition-colors hover:text-slate-900 dark:hover:text-white ${isActive ? 'text-slate-900 dark:text-white' : ''}`}>
+        <button type="button" onClick={() => handleSort(field)} className={`flex w-full items-center gap-2 ${align === 'right' ? 'justify-end' : 'justify-start'}`}>
           {label}
           <span className={`flex items-center justify-center h-4 w-4 rounded transition-colors ${isActive ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300' : 'text-slate-400 group-hover:bg-slate-100 dark:group-hover:bg-slate-800/50'}`}>
             {!isActive ? <ArrowUpDown className="h-3 w-3 opacity-50" /> : (sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
           </span>
-        </div>
+        </button>
       </th>
     );
   };
@@ -317,118 +305,34 @@ export default function Transactions() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       
-      <style>{`
-        @keyframes drawLine {
-          from { stroke-dashoffset: 1000; }
-          to { stroke-dashoffset: 0; }
-        }
-        .animate-draw {
-          stroke-dasharray: 1000;
-          animation: drawLine 2.5s cubic-bezier(0.2, 0, 0.2, 1) forwards;
-        }
-      `}</style>
-
       {/* Page Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Transactions Ledger</h1>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Record, search, and dynamically audit financial records.</p>
+          <h1 className="system-page-title text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Transactions</h1>
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Record receipts and expenses. Review every detail in one place.</p>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto mt-2 lg:mt-0">
           <div className="grid grid-cols-2 gap-3 w-full sm:w-auto sm:flex sm:flex-row">
-            <button onClick={() => setShowLogsModal(true)} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] text-emerald-600 dark:text-emerald-400 rounded-xl hover:bg-slate-50 dark:hover:bg-[#121212] transition-colors shadow-sm" title="View Database Logs">
+            <button onClick={() => setShowLogsModal(true)} className="button-secondary" title="View Database Logs">
               <Activity className="h-4 w-4 shrink-0" />
               <span className="text-xs font-bold whitespace-nowrap">Audit Logs</span>
             </button>
-            <button onClick={() => setShowCategoryGuide(true)} className="flex items-center justify-center gap-2 bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-50 dark:hover:bg-[#121212] transition-all shadow-sm">
+            <button onClick={() => setShowCategoryGuide(true)} className="button-secondary">
               <BookOpen className="h-4 w-4 shrink-0" />
               <span className="whitespace-nowrap">Guide</span>
             </button>
           </div>
-          <button onClick={handleOpenNew} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all">
+          <button onClick={handleOpenNew} className="button-primary">
             <Plus className="h-4 w-4 shrink-0" /> Add Transaction
           </button>
         </div>
       </div>
 
-      {/* Metrics Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        
-        {/* Filtered Income Card */}
-        <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl p-5 flex items-center justify-between shadow-sm relative overflow-visible group">
-          <div className="relative z-10">
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Filtered Income</p>
-            {loading ? (
-              <div className="h-7 w-32 bg-slate-200 dark:bg-[#1a1a1a] rounded-lg animate-pulse mt-1"></div>
-            ) : (
-              <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">
-                ₱<AnimatedNumber value={metrics.income} formatPHP={true} />
-              </h3>
-            )}
-          </div>
-          <div className="relative z-10 p-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400"><TrendingUp className="h-5 w-5" /></div>
-          
-          {!loading && (
-            <div className="absolute inset-0 opacity-25 group-hover:opacity-50 transition-opacity pointer-events-none rounded-2xl overflow-hidden">
-               <svg key={`inc-${chartAnimKey}`} viewBox={`0 0 ${incSparkData.width} ${incSparkData.height}`} preserveAspectRatio="none" className="w-full h-full overflow-visible">
-                 <defs>
-                   <filter id="txIncomeDotGlow" x="-50%" y="-50%" width="200%" height="200%">
-                     <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                     <feMerge>
-                       <feMergeNode in="coloredBlur"/>
-                       <feMergeNode in="SourceGraphic"/>
-                     </feMerge>
-                   </filter>
-                 </defs>
-                 <path id="txIncomeSparkPath" d={incSparkData.path} fill="none" stroke="#10B981" strokeWidth="2.5" vectorEffect="non-scaling-stroke" className="animate-draw" />
-                 <circle r="4.5" fill="#34D399" filter="url(#txIncomeDotGlow)">
-                   <animateMotion dur="8s" repeatCount="indefinite">
-                     <mpath href="#txIncomeSparkPath" />
-                   </animateMotion>
-                 </circle>
-               </svg>
-            </div>
-          )}
-        </div>
-
-        {/* Filtered Expense Card */}
-        <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl p-5 flex items-center justify-between shadow-sm relative overflow-visible group">
-          <div className="relative z-10">
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Filtered Expense</p>
-            {loading ? (
-              <div className="h-7 w-32 bg-slate-200 dark:bg-[#1a1a1a] rounded-lg animate-pulse mt-1"></div>
-            ) : (
-              <h3 className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1 tabular-nums">
-                ₱<AnimatedNumber value={metrics.expense} formatPHP={true} />
-              </h3>
-            )}
-          </div>
-          <div className="relative z-10 p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl text-amber-600 dark:text-amber-400"><TrendingDown className="h-5 w-5" /></div>
-
-          {!loading && (
-            <div className="absolute inset-0 opacity-25 group-hover:opacity-50 transition-opacity pointer-events-none rounded-2xl overflow-hidden">
-               <svg key={`exp-${chartAnimKey}`} viewBox={`0 0 ${expSparkData.width} ${expSparkData.height}`} preserveAspectRatio="none" className="w-full h-full overflow-visible">
-                 <defs>
-                   <filter id="txExpenseDotGlow" x="-50%" y="-50%" width="200%" height="200%">
-                     <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                     <feMerge>
-                       <feMergeNode in="coloredBlur"/>
-                       <feMergeNode in="SourceGraphic"/>
-                     </feMerge>
-                   </filter>
-                 </defs>
-                 <path id="txExpenseSparkPath" d={expSparkData.path} fill="none" stroke="#F59E0B" strokeWidth="2.5" vectorEffect="non-scaling-stroke" className="animate-draw" />
-                 <circle r="4.5" fill="#FBBF24" filter="url(#txExpenseDotGlow)">
-                   <animateMotion dur="6s" repeatCount="indefinite">
-                     <mpath href="#txExpenseSparkPath" />
-                   </animateMotion>
-                 </circle>
-               </svg>
-            </div>
-          )}
-        </div>
-
+      <div className="ledger-summary" aria-label="Filtered totals">
+        <div><span>Income in this view</span><strong className="text-brand dark:text-brand-glow tabular-nums"><AnimatedNumber value={metrics.income} formatPHP /></strong></div>
+        <div><span>Expenses in this view</span><strong className="text-amber-700 dark:text-amber-300 tabular-nums"><AnimatedNumber value={metrics.expense} formatPHP /></strong></div>
+        <div><span>Matching records</span><strong className="tabular-nums">{filteredTransactions.length.toLocaleString()}</strong></div>
       </div>
 
       {/* Alert Notices */}
@@ -444,39 +348,7 @@ export default function Transactions() {
              </div>
           )}
 
-          {unassignedTxs.length > 0 && (
-            <div className="bg-white dark:bg-[#0A0A0A] border border-amber-500/40 rounded-2xl shadow-sm overflow-hidden relative">
-              <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.6)]"></div>
-              <div className="px-5 py-4 border-b border-slate-200 dark:border-[#27272A] bg-amber-50/50 dark:bg-amber-950/20 flex justify-between items-center">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg">
-                    <AlertTriangle className="h-4 w-4 animate-pulse" />
-                  </div>
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Review Required: <span className="text-amber-600 dark:text-amber-400">{unassignedTxs.length} unassigned transaction(s)</span> pending category audit.
-                  </h3>
-                </div>
-                <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400 uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded">ACTION REQUIRED</span>
-              </div>
-              <div className="p-4 space-y-2 bg-slate-50 dark:bg-[#111111]">
-                 {unassignedTxs.map(tx => {
-                   const pName = periods.find(p => p.id === tx.financial_period_id)?.period_name || 'Unknown';
-                   return (
-                     <div key={tx.id} className="flex justify-between items-center bg-white dark:bg-[#1A1A1A] px-4 py-3 rounded-xl shadow-sm border border-slate-200 dark:border-[#27272A] hover:border-amber-500/40 transition-colors">
-                       <div className="flex items-center gap-3 min-w-0">
-                         <span className="text-[10px] font-mono font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-1 rounded">[{pName}]</span>
-                         <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">{tx.date} — {tx.payee_name || tx.remarks}</span>
-                       </div>
-                       <div className="flex items-center gap-4 shrink-0">
-                         <span className="font-mono font-bold text-slate-900 dark:text-white text-xs">₱{Number(tx.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
-                         <button onClick={() => handleEdit(tx)} className="text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded-lg transition-colors shadow-sm">Assign Category</button>
-                       </div>
-                     </div>
-                   );
-                 })}
-              </div>
-            </div>
-          )}
+          {unassignedTxs.length > 0 && <details className="review-queue"><summary><AlertTriangle size={16}/><strong>{unassignedTxs.length} {unassignedTxs.length === 1 ? 'entry needs' : 'entries need'} a category</strong><span>Review entries</span></summary><div className="review-queue-list">{unassignedTxs.map(tx => <div key={tx.id}><div><strong>{tx.payee_name || tx.remarks || 'Unassigned entry'}</strong><span>{tx.date} · {periods.find(p => p.id === tx.financial_period_id)?.period_name || 'Unknown period'}</span></div><span>₱{Number(tx.amount).toLocaleString('en-PH', {minimumFractionDigits:2,maximumFractionDigits:2})}</span><button className="button-secondary" onClick={() => handleEdit(tx)}>Assign category</button></div>)}</div></details>}
 
           {duplicateCandidates.length > 0 && (
             <TransactionDuplicateScanner
@@ -492,64 +364,26 @@ export default function Transactions() {
         </div>
       )}
 
-      {/* Filter & Tab Controls */}
-      <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl p-5 space-y-4 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          
-          <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-[#121212] rounded-xl w-full lg:w-fit border border-slate-200 dark:border-[#27272A] shadow-inner overflow-x-auto custom-scrollbar">
-            <button onClick={() => setActiveTab('ALL')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'ALL' ? 'bg-white dark:bg-[#262626] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>All Records</button>
-            <button onClick={() => setActiveTab('INCOME')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'INCOME' ? 'bg-white dark:bg-[#262626] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Income</button>
-            <button onClick={() => setActiveTab('EXPENSE')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'EXPENSE' ? 'bg-white dark:bg-[#262626] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Expenses</button>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-xl px-4 py-2.5 w-full sm:w-auto shadow-sm min-w-[220px] relative">
-              <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
-              <select 
-                className="w-full bg-transparent border-none text-xs font-bold text-slate-700 dark:text-slate-200 focus:ring-0 outline-none cursor-pointer pr-4 appearance-none"
-                value={selectedPeriodFilter}
-                onChange={(e) => handlePeriodChange(e.target.value)}
-              >
-                <option value="ALL" className="bg-white dark:bg-[#121212] text-slate-900 dark:text-white">All Financial Periods</option>
-                {periods.map(p => <option key={p.id} value={p.id} className="bg-white dark:bg-[#121212] text-slate-900 dark:text-white">{p.period_name} {p.status === 'OPEN' ? '(OPEN)' : ''}</option>)}
-              </select>
-              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none"><ChevronDown className="h-4 w-4 text-slate-400" /></div>
-            </div>
-            
-            <button 
-              onClick={() => setDetailedMode(!detailedMode)} 
-              className="flex items-center justify-between sm:justify-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
-            >
-              <span>Detailed View</span>
-              {detailedMode ? <ToggleRight className="h-5 w-5 text-emerald-500 shrink-0" /> : <ToggleLeft className="h-5 w-5 text-slate-400 shrink-0" />}
-            </button>
-          </div>
-        </div>
-
-        <div className="relative">
-          <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-          <input type="text" placeholder="Search remarks, payee, receipt #, category, or encoder..." className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 dark:border-[#27272A] text-xs font-medium bg-slate-50 dark:bg-[#121212] text-slate-900 dark:text-white shadow-sm outline-none focus:border-emerald-500" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-          {searchQuery && (
-             <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 dark:hover:text-white">
-                <X className="h-4 w-4" />
-             </button>
-          )}
-        </div>
+      <div className="ledger-toolbar compact-ledger-toolbar">
+        <div className="segmented-control" aria-label="Transaction type">{(['ALL','INCOME','EXPENSE'] as const).map(tab => <button key={tab} aria-pressed={activeTab === tab} onClick={() => {setPage(1);setActiveTab(tab);}}>{tab === 'ALL' ? 'All records' : tab === 'INCOME' ? 'Income' : 'Expenses'}</button>)}</div>
+        <div className="ledger-search"><Search size={16}/><Input aria-label="Search transactions" placeholder="Search records…" value={searchQuery} onChange={e=>{setPage(1);setSearchQuery(e.target.value);}}/>{searchQuery && <button className="icon-button" aria-label="Clear transaction search" onClick={()=>setSearchQuery('')}><X size={15}/></button>}</div>
+        <Select aria-label="Financial period" value={selectedPeriodFilter} onChange={e=>handlePeriodChange(e.target.value)}><option value="ALL">All financial periods</option>{periods.map(p=><option key={p.id} value={p.id}>{p.period_name} {p.status === 'OPEN' ? '(OPEN)' : ''}</option>)}</Select>
+        <button className="button-secondary audit-toggle" aria-pressed={detailedMode} onClick={()=>setDetailedMode(!detailedMode)}><Eye size={15}/>Audit details</button>
       </div>
 
       {/* Transactions Table with Skeleton Loading */}
-      <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#111111] rounded-t-2xl flex justify-between items-center text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+      <div className="bg-white dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-2xl overflow-hidden shadow-sm">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-elevated rounded-t-2xl flex justify-between items-center text-xs font-bold text-slate-500 dark:text-slate-400 tracking-normal">
           <span>{selectedPeriodFilter === 'ALL' ? 'Showing records across All Periods' : `Viewing ${periods.find(p => p.id === selectedPeriodFilter)?.period_name}`}</span>
           <span>{sortedTransactions.length} records</span>
         </div>
         
         {loading ? (
           <div className="p-8 space-y-4 animate-pulse">
-            <div className="h-10 bg-slate-100 dark:bg-[#1a1a1a] rounded-xl w-full"></div>
-            <div className="h-12 bg-slate-100 dark:bg-[#1a1a1a] rounded-xl w-full"></div>
-            <div className="h-12 bg-slate-100 dark:bg-[#1a1a1a] rounded-xl w-full"></div>
-            <div className="h-12 bg-slate-100 dark:bg-[#1a1a1a] rounded-xl w-full"></div>
+            <div className="h-10 bg-slate-100 dark:bg-dark-floating rounded-xl w-full"></div>
+            <div className="h-12 bg-slate-100 dark:bg-dark-floating rounded-xl w-full"></div>
+            <div className="h-12 bg-slate-100 dark:bg-dark-floating rounded-xl w-full"></div>
+            <div className="h-12 bg-slate-100 dark:bg-dark-floating rounded-xl w-full"></div>
           </div>
         ) : sortedTransactions.length === 0 ? (
           <div className="p-16 text-center space-y-3">
@@ -557,145 +391,25 @@ export default function Transactions() {
             <p className="text-slate-600 dark:text-slate-400 text-xs font-medium">No transactions match your current view.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse text-xs whitespace-nowrap min-w-[1050px]">
-              <thead>
-                <tr className="bg-transparent border-b border-slate-200 dark:border-[#27272A] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-                  {detailedMode && <SortableHeader field="date" label="Date Logged" />}
-                  {!detailedMode && <SortableHeader field="date" label="Tx Date" />}
-                  <SortableHeader field="type" label="Type" />
-                  <SortableHeader field="category" label="Account No. / Name" />
-                  <SortableHeader field="payee_remarks" label="Payee / Remarks" />
-                  {!detailedMode && <th className="p-4 uppercase tracking-wider text-[10px] font-semibold">Receipt</th>}
-                  {detailedMode && <SortableHeader field="encoded_by" label="Audit Trail" />}
-                  <SortableHeader field="amount" label="Amount (PHP)" align="right" />
-                  <th className="p-4 text-right uppercase tracking-wider text-[10px] font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]/50 bg-transparent">
-                {sortedTransactions.map((tx) => {
-                  const categoryName = tx.categories?.name?.toLowerCase() || '';
-                  const isAutoExempt = exemptKeywords.some(keyword => categoryName.includes(keyword));
-                  const isUnassigned = !tx.categories || tx.categories.export_code === '???';
-                  const pName = selectedPeriodFilter === 'ALL' ? periods.find(p => p.id === tx.financial_period_id)?.period_name || 'Unknown' : '';
-                  const duplicateCandidate = duplicateByTransactionId.get(tx.id);
+          <div className="ledger-table-scroll custom-scrollbar"><table className="ui-data-table ledger-table"><caption className="sr-only">Church transactions in Philippine pesos</caption><thead><tr><SortableHeader field="category" label="Transaction" /><SortableHeader field="remarks" label="Account" /><SortableHeader field="date" label="Date" /><th scope="col">Receipt</th><SortableHeader field="amount" label="Amount (₱)" align="right" /><th scope="col"><span className="sr-only">Actions</span></th></tr></thead><tbody key={`${activeTab}-${currentPage}-${sortField}-${sortDirection}`} className="ledger-results">{visibleTransactions.map(tx => {
+            const categoryName = tx.categories?.name?.toLowerCase() || '';
+            const isAutoExempt = exemptKeywords.some(keyword => categoryName.includes(keyword));
+            const duplicate = duplicateByTransactionId.get(tx.id);
+            const periodName = periods.find(period => period.id === tx.financial_period_id)?.period_name;
+            return <tr key={tx.id} data-tx-id={tx.id} data-tx-type={tx.type} className={`ledger-clickable-row ${duplicate ? 'possible-duplicate' : ''}`} tabIndex={0} aria-label={`View transaction ${tx.categories?.name || 'Unassigned account'}`} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); handleViewDetails(tx); } }} onClick={event => { if (!(event.target as HTMLElement).closest('button,a,input,textarea,select,[role=button],[role=combobox]')) handleViewDetails(tx); }}>
+              <td className="ledger-identity"><div className={`entry-mark ${tx.type === 'INCOME' ? 'entry-income' : 'entry-expense'}`}><StewardGlyph name="ledger" size={21} /></div><div className="ledger-record"><div><strong className="record-title">{tx.categories?.name || 'Unassigned / for review'}</strong><span className={`entry-type ${tx.type === 'INCOME' ? 'income' : 'expense'}`}>{tx.type === 'INCOME' ? 'Receipt' : 'Disbursement'}</span></div><p className="ledger-account-number">Account no. {tx.categories?.export_code || 'Not assigned'}</p>{duplicate && <span className="duplicate-badge" title={duplicate.reasons.join(' · ')}><AlertTriangle size={12} /> Possible duplicate</span>}{detailedMode && <span className="ledger-audit"><UserAvatar photoUrl={tx.profiles?.avatar_data_url} size={18}/> {tx.profiles?.full_name || 'Encoder unavailable'}{tx.updated_by_profile && ` · Edited by ${tx.updated_by_profile.full_name}`}</span>}</div></td>
+              <td className="ledger-account" data-label="Account"><p className="ledger-remarks">{tx.remarks || 'No remarks recorded'}</p>{selectedPeriodFilter === 'ALL' && <span>{periodName}</span>}</td>
+              <td className="ledger-date" data-label="Date"><strong>{new Date(`${tx.date}T12:00:00`).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' })}</strong>{detailedMode && <span>Logged {new Date(tx.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric'})}</span>}</td>
+              <td className="ledger-evidence" data-label="Receipt">{tx.receipt_url ? <span className="evidence-badge referenced"><Paperclip size={13} /> Receipt linked</span> : tx.receipt_no ? <span className="evidence-badge referenced"><FileText size={13} /> Reference</span> : tx.type === 'INCOME' ? <span className="evidence-badge neutral">Not required</span> : tx.receipt_exempt || isAutoExempt ? <span className="evidence-badge neutral"><CheckCircle2 size={13} /> Exempt</span> : <span className="evidence-badge missing"><AlertTriangle size={13} /> Missing</span>}{detailedMode && tx.receipt_no && <span className="evidence-reference">{tx.receipt_no}</span>}</td>
+              <td className={`ledger-amount tabular-nums ${tx.type === 'INCOME' ? 'income' : ''}`} data-label="Amount">{tx.type === 'INCOME' ? '+' : '−'}{new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'}).format(Number(tx.amount))}</td>
+              <td className="ledger-actions"><button type="button" className="icon-button" onClick={() => handleEdit(tx)} aria-label={`Edit ${tx.payee_name || 'transaction'}`} title="Edit record"><Edit2 size={15} /></button><button type="button" className="icon-button danger" onClick={() => handleDeletePrompt(tx.id, tx.remarks || tx.payee_name || 'Transaction')} aria-label={`Delete ${tx.payee_name || 'transaction'}`} title="Delete record"><Trash2 size={15} /></button></td>
+            </tr>;
+          })}</tbody></table></div>
 
-              return (
-                <tr
-                  key={tx.id}
-                  className={`group transition-colors hover:bg-slate-50 dark:hover:bg-[#121212] ${
-                    duplicateCandidate ? 'bg-amber-50/40 dark:bg-amber-950/10' : ''
-                  }`}
-                >
-                  <td className="p-4 text-slate-600 dark:text-slate-300 font-medium">
-                    {detailedMode ? (
-                      <div className="flex flex-col gap-1">
-                        <span className="font-bold text-slate-800 dark:text-slate-200">{tx.date}</span>
-                        <span className="text-[10px] text-slate-400">Log: {new Date(tx.created_at).toLocaleDateString()}</span>
-                      </div>
-                    ) : (
-                      <>
-                        {tx.date}
-                        {selectedPeriodFilter === 'ALL' && <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 uppercase tracking-wider">{pName}</div>}
-                      </>
-                    )}
-                  </td>
-                  <td className="p-4">
-                    <div className="flex flex-col items-start gap-1.5">
-                      <span className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-slate-700 dark:border-[#27272A] dark:bg-[#141414] dark:text-slate-300">
-                        <span className={`mr-1.5 h-1.5 w-1.5 rounded-full ${tx.type === 'INCOME' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                        {tx.type}
-                      </span>
-                      {duplicateCandidate && (
-                        <span
-                          title={duplicateCandidate.reasons.join(' · ')}
-                          className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-bold ${
-                            duplicateCandidate.confidence === 'HIGH'
-                              ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400'
-                              : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400'
-                          }`}
-                        >
-                          <AlertTriangle className="h-3 w-3" />
-                          Possible duplicate
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  
-                  {/* Restored Category Column */}
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      {isUnassigned ? (
-                        <span className="font-medium text-amber-600 dark:text-amber-400 font-bold">Unassigned</span>
-                      ) : (
-                        <>
-                          <span className="font-mono text-[10px] text-slate-400">[{tx.categories?.export_code}]</span>
-                          <span className="font-medium text-slate-700 dark:text-slate-200">{tx.categories?.name}</span>
-                        </>
-                      )}
-                    </div>
-                  </td>
-
-                  {/* Restored Payee / Remarks Column */}
-                  <td className="p-4">
-                    <div className="text-slate-900 dark:text-white font-medium">{tx.payee_name || '—'}</div>
-                    <div className="text-slate-500 text-[11px] mt-0.5 truncate max-w-[200px]" title={tx.remarks || ''}>{tx.remarks || '—'}</div>
-                  </td>
-                      
-                  {detailedMode && (
-                        <td className="p-4">
-                          <div className="flex flex-col text-[10px] font-medium text-slate-500 gap-1.5">
-                            <span className="text-slate-700 dark:text-slate-300 flex items-center gap-1.5" title="Original Encoder">
-                              <UserCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> Encoded by {tx.profiles?.full_name}
-                            </span>
-                            {tx.updated_by_profile && (
-                              <span className="text-sky-600 dark:text-sky-400 flex items-center gap-1.5" title="Last Updated By">
-                                <Clock className="h-3.5 w-3.5" /> Edited by {tx.updated_by_profile.full_name}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                      )}
-
-                      {!detailedMode && (
-                        <td className="p-4">
-                          {tx.type === 'INCOME' ? (
-                            <span className="text-slate-400 text-[10px] font-medium">—</span>
-                          ) : tx.receipt_no ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50">
-                              <Paperclip className="h-3 w-3" /> Attached
-                            </span>
-                          ) : (tx.receipt_exempt || isAutoExempt) ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#27272A]">
-                              <CheckCircle2 className="h-3 w-3 text-slate-400" /> Exempt
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50">
-                              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" /> Missing
-                            </span>
-                          )}
-                        </td>
-                      )}
-                      
-                      <td className="p-4 text-right font-mono text-xs font-medium">
-                         <span className={tx.type === 'INCOME' ? 'text-slate-900 dark:text-slate-100 font-bold' : 'text-slate-600 dark:text-slate-400'}>
-                           {tx.type === 'INCOME' ? '+' : '-'}₱{Number(tx.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-                         </span>
-                      </td>
-                      <td className="p-4 text-right space-x-0.5">
-                        <button onClick={() => handleViewDetails(tx)} className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors hover:bg-slate-100 dark:hover:bg-[#1A1A1A]" title="View Details"><Eye className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => handleEdit(tx)} className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors hover:bg-slate-100 dark:hover:bg-[#1A1A1A]" title="Edit Transaction"><Edit2 className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => handleDeletePrompt(tx.id, tx.remarks || tx.payee_name || 'Transaction')} className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg transition-colors hover:bg-rose-500/10" title="Delete Transaction"><Trash2 className="h-3.5 w-3.5" /></button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
         )}
       </div>
 
+      <div className="ledger-grid-footer"><span>{sortedTransactions.length ? (currentPage - 1) * 12 + 1 : 0}–{Math.min(currentPage * 12, sortedTransactions.length)} of {sortedTransactions.length} records</span><div className="ledger-order"><Select aria-label="Sort transactions" value={`${sortField}:${sortDirection}`} onChange={event => { const [field, direction] = event.target.value.split(':'); setSortField(field as SortField); setSortDirection(direction as SortDirection); setPage(1); }}><option value="date:desc">Newest first</option><option value="date:asc">Oldest first</option><option value="amount:desc">Highest amount</option><option value="amount:asc">Lowest amount</option><option value="type:asc">Type: A to Z</option><option value="encoded_by:asc">Encoder: A to Z</option></Select></div><div className="ledger-pagination"><button type="button" className="icon-button" aria-label="Previous page" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}><ArrowLeft size={16} /></button><span>{currentPage} / {pageCount}</span><button type="button" className="icon-button" aria-label="Next page" disabled={currentPage >= pageCount} onClick={() => setPage(currentPage + 1)}><ArrowRight size={16} /></button></div></div>
       <CategoryGuideModal isOpen={showCategoryGuide} onClose={() => setShowCategoryGuide(false)} />
       <TransactionLogsModal isOpen={showLogsModal} onClose={() => setShowLogsModal(false)} churchId={churchId} />
 
@@ -716,8 +430,8 @@ export default function Transactions() {
       )}
 
       {deleteTxParams && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#0A0A0A] rounded-2xl shadow-2xl border border-slate-200 dark:border-[#27272A] w-full max-w-md p-6 animate-in zoom-in-95 duration-300">
+        <DialogLayer label="Delete Transaction" className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="dialog-surface bg-white dark:bg-dark-surface rounded-2xl shadow-2xl border border-slate-200 dark:border-dark-border w-full max-w-md p-6 animate-in zoom-in-95 duration-300">
             <div className="flex items-start gap-4 mb-6">
               <div className="p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl text-rose-600 dark:text-rose-400 shrink-0">
                 <AlertTriangle className="h-6 w-6" />
@@ -729,34 +443,34 @@ export default function Transactions() {
                 </p>
               </div>
             </div>
-            <div className="flex justify-end gap-3 border-t border-slate-200 dark:border-[#27272A] pt-4">
-              <button onClick={() => setDeleteTxParams(null)} disabled={isDeleting} className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1A1A1A] transition-colors border border-slate-200 dark:border-[#27272A]">
+            <div className="dialog-footer flex justify-end gap-3 border-t border-slate-200 dark:border-dark-border pt-4">
+              <button onClick={() => setDeleteTxParams(null)} disabled={isDeleting} className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-floating transition-colors border border-slate-200 dark:border-dark-border">
                 Cancel
               </button>
-              <button onClick={confirmDeleteTransaction} disabled={isDeleting} className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md transition-colors flex items-center gap-2">
+              <button onClick={confirmDeleteTransaction} aria-busy={isDeleting} disabled={isDeleting} className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md transition-colors flex items-center gap-2">
                 {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isDeleting ? 'Deleting...' : 'Yes, Delete Record'}
               </button>
             </div>
           </div>
-        </div>
+        </DialogLayer>
       )}
 
       {/* World-Class Auto-Closing Delete Success Modal (1.5s, no button) */}
       {deletedSuccessInfo && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300 pointer-events-none">
-          <div className="bg-white dark:bg-[#0A0A0A] rounded-2xl shadow-2xl border border-slate-200 dark:border-[#27272A] w-full max-w-sm p-6 text-center space-y-4 animate-in zoom-in-95 duration-300 pointer-events-auto">
-            <div className="mx-auto w-14 h-14 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm animate-bounce">
+        <DialogLayer label="Transaction Deleted" className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300 pointer-events-none">
+          <div className="dialog-surface bg-white dark:bg-dark-surface rounded-2xl shadow-2xl border border-slate-200 dark:border-dark-border w-full max-w-sm p-6 text-center space-y-4 animate-in zoom-in-95 duration-300 pointer-events-auto">
+            <div className="mx-auto w-14 h-14 bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 rounded-2xl flex items-center justify-center editor-accent shadow-sm animate-bounce">
               <CheckCircle2 className="h-7 w-7" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Transaction Deleted</h3>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-normal">Transaction Deleted</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed truncate px-2">
                 "{deletedSuccessInfo.description}"
               </p>
             </div>
           </div>
-        </div>
+        </DialogLayer>
       )}
     </div>
   );

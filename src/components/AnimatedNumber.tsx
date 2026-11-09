@@ -1,31 +1,23 @@
 import { useState, useEffect } from 'react';
-
-export default function AnimatedNumber({ value, formatPHP }: { value: number, formatPHP?: boolean }) {
-  const [displayValue, setDisplayValue] = useState(0);
-
+import { useSyncExternalStore } from 'react';
+const media = '(prefers-reduced-motion: reduce)';
+const subscribe = (notify: () => void) => { const query = matchMedia(media); query.addEventListener('change', notify); return () => query.removeEventListener('change', notify); };
+export default function AnimatedNumber({ value, formatPHP }: { value: number; formatPHP?: boolean }) {
+  const reduced = useSyncExternalStore(subscribe, () => matchMedia(media).matches, () => false);
+  const [display, setDisplay] = useState({ target: value, amount: 0 });
   useEffect(() => {
-    let start = 0;
-    const end = value;
-    const duration = 1200; // Faster, sharper 1.2s animation
-    let startTime: number | null = null;
-
-    const step = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-      setDisplayValue(start + (end - start) * easeOutQuart);
-      
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      } else {
-        setDisplayValue(end); 
-      }
+    if (reduced) return;
+    let frame = 0; let start: number | undefined;
+    const step = (time: number) => {
+      start ??= time;
+      const progress = Math.min((time - start) / 1000, 1);
+      setDisplay({ target: value, amount: progress === 1 ? value : value * (1 - (1 - progress) ** 3) });
+      if (progress < 1) frame = requestAnimationFrame(step);
     };
-    window.requestAnimationFrame(step);
-  }, [value]);
-
-  if (formatPHP) {
-    return <>{new Intl.NumberFormat('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(displayValue)}</>;
-  }
-  return <>{Math.round(displayValue)}</>;
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [value, reduced]);
+  const amount = reduced ? value : display.target === value ? display.amount : 0;
+  const format = (number: number) => new Intl.NumberFormat('en-PH', { style: formatPHP ? 'currency' : 'decimal', currency: 'PHP', minimumFractionDigits: formatPHP ? 2 : 0, maximumFractionDigits: formatPHP ? 2 : 0 }).format(number);
+  return <span className="animated-number" aria-label={format(value)}><span aria-hidden="true">{format(amount)}</span></span>;
 }

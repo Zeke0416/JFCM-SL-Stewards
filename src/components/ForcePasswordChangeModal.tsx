@@ -1,3 +1,5 @@
+import DialogLayer from './ui/DialogLayer';
+import Input from './ui/Input';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Lock, ShieldAlert, Loader2, CheckCircle2 } from 'lucide-react';
@@ -56,12 +58,12 @@ export default function ForcePasswordChangeModal({ onSuccess }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 transition-opacity">
-      <div className="w-full max-w-md bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-3xl p-8 shadow-2xl relative flex flex-col justify-center min-h-[400px] animate-modal">
+    <DialogLayer label="Password Updated!" className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 transition-opacity">
+      <div className="dialog-surface w-full max-w-md bg-white dark:bg-dark-elevated border border-slate-200 dark:border-dark-border rounded-3xl p-8 shadow-2xl relative flex flex-col justify-center min-h-[400px] animate-modal">
         
         {successAnim ? (
           <div className="flex flex-col items-center justify-center space-y-4 text-center animate-in fade-in zoom-in duration-300 my-auto">
-            <div className="h-16 w-16 bg-emerald-100 dark:bg-emerald-950/60 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 animate-bounce">
+            <div className="h-16 w-16 bg-sky-100 dark:bg-sky-950/60 rounded-2xl flex items-center justify-center editor-accent animate-bounce">
               <CheckCircle2 className="h-8 w-8" />
             </div>
             <div className="space-y-1">
@@ -87,15 +89,15 @@ export default function ForcePasswordChangeModal({ onSuccess }: Props) {
 
             <form onSubmit={handleSubmit} className="space-y-4 mt-auto">
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">New Password</label>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 tracking-normal">New Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-                  <input
+                  <Input aria-label="New Password"
                     type="password"
                     required
                     autoFocus
                     placeholder="At least 6 characters..."
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs font-medium text-slate-900 dark:text-white focus:border-brand dark:focus:border-emerald-500 focus:ring-1 focus:ring-brand transition-colors"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs font-medium text-slate-900 dark:text-white focus:border-brand dark:focus:border-sky-500 focus:ring-1 focus:ring-brand transition-colors"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                   />
@@ -103,14 +105,14 @@ export default function ForcePasswordChangeModal({ onSuccess }: Props) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Confirm New Password</label>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 tracking-normal">Confirm New Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-                  <input
+                  <Input aria-label="Confirm New Password"
                     type="password"
                     required
                     placeholder="Re-enter new password..."
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs font-medium text-slate-900 dark:text-white focus:border-brand dark:focus:border-emerald-500 focus:ring-1 focus:ring-brand transition-colors"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs font-medium text-slate-900 dark:text-white focus:border-brand dark:focus:border-sky-500 focus:ring-1 focus:ring-brand transition-colors"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                   />
@@ -119,8 +121,8 @@ export default function ForcePasswordChangeModal({ onSuccess }: Props) {
 
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-xs font-bold text-white bg-brand dark:bg-emerald-700 hover:bg-brand-dark dark:hover:bg-emerald-800 shadow-md transition-all mt-4"
+                aria-busy={loading} disabled={loading}
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-xs font-bold text-white bg-brand dark:bg-brand hover:bg-brand-dark dark:hover:bg-sky-800 shadow-md transition-all mt-4"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                 <span>{loading ? 'Updating Password...' : 'Update Password & Continue'}</span>
@@ -130,6 +132,6 @@ export default function ForcePasswordChangeModal({ onSuccess }: Props) {
         )}
 
       </div>
-    </div>
+    </DialogLayer>
   );
 }

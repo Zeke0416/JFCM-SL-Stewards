@@ -1,17 +1,18 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import SavedLedgerUpload from '../components/SavedLedgerUpload';
+import { ReportIcon as FileSpreadsheet } from '../components/ui/StewardGlyph';
+import { useFeedback } from '../components/ui/useFeedback';
+import Select from '../components/ui/Select';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  UploadCloud, FileSpreadsheet, Database, CheckCircle2, AlertCircle, Plus, 
-  Loader2, Calendar, ChevronDown, Scale,  Trash2, ChevronRight, ArrowLeft 
-} from 'lucide-react';
+import { Database, CheckCircle2, AlertCircle, Plus, Loader2, Calendar, Scale, ChevronRight, ArrowLeft } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { Transaction, FinancialPeriod, Category } from '../types/database.types';
 import TransactionDetailModal from '../components/TransactionDetailModal';
 
 type EnrichedTransaction = Transaction & { 
   categories?: Category | null;
-  profiles?: { full_name: string } | null; 
+  profiles?: { full_name: string; avatar_data_url?: string | null } | null;
   updated_by_profile?: { full_name: string } | null;
 };
 
@@ -255,6 +256,7 @@ const isComBudRemark = (value: unknown): value is string => {
 };
 
 export default function Reconciliation() {
+  const { notify } = useFeedback();
   const { user } = useAuth();
   const [churchId, setChurchId] = useState<string>('');
   
@@ -263,14 +265,16 @@ export default function Reconciliation() {
   const [dbTransactions, setDbTransactions] = useState<EnrichedTransaction[]>([]);
   const [selectedPeriodFilter, setSelectedPeriodFilter] = useState<string>('');
   
-  const [isUploading, setIsUploading] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [workbook, setWorkbook] = useState<XLSX.WorkBook | null>(null);
   const [parsedData, setParsedData] = useState<Record<string, ExcelRecord[]>>({});
   
   const [selectedSummary, setSelectedSummary] = useState<SummaryRow | null>(null);
   const [isInserting, setIsInserting] = useState<string | null>(null); 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const savedYearId = periods.find(period => period.id === selectedPeriodFilter)?.financial_year_id || '';
+  const handleLedgerChange = useCallback((next: XLSX.WorkBook | null, name: string | null) => {
+    setWorkbook(next); setFileName(name); setParsedData({}); setSelectedSummary(null);
+  }, []);
 
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [viewingTx, setViewingTx] = useState<EnrichedTransaction | null>(null);
@@ -279,11 +283,9 @@ export default function Reconciliation() {
 
   useEffect(() => {
     if (selectedPeriodFilter && churchId) fetchDbTransactions();
-    if (selectedPeriodFilter && workbook) {
-      processWorkbookSheet(workbook, selectedPeriodFilter);
-      setSelectedSummary(null);
-    }
-  }, [selectedPeriodFilter, churchId]);
+    if (selectedPeriodFilter && workbook) processWorkbookSheet(workbook, selectedPeriodFilter);
+    setSelectedSummary(null);
+  }, [selectedPeriodFilter, churchId, workbook, categories, periods]);
 
   const fetchInitialData = async () => {
     const { data: profile } = await supabase.from('profiles').select('church_id').eq('id', user?.id).single();
@@ -326,7 +328,7 @@ export default function Reconciliation() {
       // entered_by stores the auth/profile UUID; resolve it to the real display name.
       supabase
         .from('profiles')
-        .select('id, full_name')
+        .select('id,full_name,avatar_data_url')
         .eq('church_id', churchId),
     ]);
 
@@ -339,6 +341,7 @@ export default function Reconciliation() {
     const fullNameByProfileId = new Map<string, string>(
       (profileResult.data ?? []).map(profile => [profile.id, String(profile.full_name ?? '').trim()]),
     );
+    const photoByProfileId = new Map((profileResult.data ?? []).map(profile => [profile.id, profile.avatar_data_url as string | null]));
 
     // Do not invent "System Administrator" when a profile lookup misses. Preserve a
     // visible diagnostic fallback so the actual entered_by identity can be investigated.
@@ -352,6 +355,7 @@ export default function Reconciliation() {
       return {
         ...tx,
         profiles: {
+          avatar_data_url: photoByProfileId.get(enteredById) || null,
           full_name: enteredByName || (enteredById ? `Name unavailable (${enteredById.slice(0, 8)})` : 'Unknown encoder'),
         },
         updated_by_profile: updatedById
@@ -365,29 +369,6 @@ export default function Reconciliation() {
     if (profileResult.error) {
       console.error('Could not resolve some encoder names from profiles:', profileResult.error);
     }
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploading(true);
-    setFileName(file.name);
-    try {
-      const data = await file.arrayBuffer();
-      const wb = XLSX.read(data, { type: 'array' });
-      setWorkbook(wb);
-      if (selectedPeriodFilter) processWorkbookSheet(wb, selectedPeriodFilter);
-    } catch (error) {
-      alert("Failed to read the Excel file.");
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const clearFile = () => {
-    setFileName(null); setWorkbook(null); setParsedData({}); setSelectedSummary(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   // ----------------------------------------------------------------------
@@ -1264,7 +1245,7 @@ export default function Reconciliation() {
       if (error) throw error;
       await fetchDbTransactions();
     } catch (err: any) {
-      alert("Failed to import transaction: " + err.message);
+      notify("Failed to import transaction: " + err.message);
     } finally {
       setIsInserting(null);
     }
@@ -1275,60 +1256,39 @@ export default function Reconciliation() {
       
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Reconciliation Center</h1>
+          <h1 className="system-page-title text-xl font-bold tracking-tight text-slate-900 dark:text-white">Reconciliation</h1>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Cross-reference internal records against external ComBud reports.</p>
         </div>
-        <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-xl px-3 py-2 w-full sm:w-auto shadow-sm min-w-[200px] relative">
+        <div className="flex items-center gap-2 bg-slate-50 dark:bg-dark-elevated border border-slate-200 dark:border-dark-border rounded-xl px-3 py-2 w-full sm:w-auto shadow-sm min-w-[200px] relative">
           <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
-          <select 
+          <Select
             className="w-full bg-transparent border-none text-xs font-bold text-slate-700 dark:text-slate-200 focus:ring-0 outline-none cursor-pointer pr-4 appearance-none"
-            value={selectedPeriodFilter} onChange={(e) => handlePeriodChange(e.target.value)}
+            aria-label="Reconciliation period" value={selectedPeriodFilter} onChange={(e) => handlePeriodChange(e.target.value)}
           >
-            {periods.map(p => <option key={p.id} value={p.id} className="bg-white dark:bg-[#121212] text-slate-900 dark:text-white">{p.period_name} {p.status === 'OPEN' ? '(OPEN)' : ''}</option>)}
-          </select>
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><ChevronDown className="h-4 w-4 text-slate-400" /></div>
+            {periods.map(p => <option key={p.id} value={p.id} className="bg-white dark:bg-dark-elevated text-slate-900 dark:text-white">{p.period_name} {p.status === 'OPEN' ? '(OPEN)' : ''}</option>)}
+          </Select>
+
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-xl p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
-        {!fileName ? (
-          <div className="flex-1 w-full flex items-center">
-            <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="flex-1 flex items-center justify-center gap-3 px-6 py-4 border-2 border-dashed border-slate-300 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] hover:bg-slate-100 dark:hover:bg-[#1A1A1A] rounded-xl transition-all text-slate-600 dark:text-slate-400">
-              {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <UploadCloud className="h-5 w-5" />}
-              <div className="flex flex-col items-start text-left">
-                <span className="text-sm font-bold leading-tight">Upload Excel Ledger</span>
-                <span className="text-[10px] font-medium opacity-80">Drop .xlsx file here to begin reconciliation</span>
-              </div>
-            </button>
-          </div>
-        ) : (
-          <div className="flex-1 w-full flex items-center justify-between px-5 py-3 border border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl">
-             <div className="flex items-center gap-3">
-               <FileSpreadsheet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-               <div className="flex flex-col text-left">
-                 <span className="text-xs font-bold text-emerald-800 dark:text-emerald-400 leading-tight">File Active & Parsed</span>
-                 <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-500">{fileName}</span>
-               </div>
-             </div>
-             <button onClick={clearFile} className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-rose-600 bg-white dark:bg-[#121212] border border-rose-200 dark:border-rose-900/50 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors shadow-sm">
-               <Trash2 className="h-3 w-3" /> Remove File
-             </button>
-          </div>
-        )}
-        <input type="file" accept=".xlsx, .xls" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
-      </div>
+      <ol className="reconciliation-steps" aria-label="Reconciliation progress">
+        <li aria-current={!fileName ? 'step' : undefined}><span>1</span><div><strong>Ledger source</strong><p>Saved workbook for this year</p></div></li>
+        <li aria-current={fileName && !selectedSummary ? 'step' : undefined}><span>2</span><div><strong>Compare accounts</strong><p>Review totals and variances</p></div></li>
+        <li aria-current={selectedSummary ? 'step' : undefined}><span>3</span><div><strong>Review records</strong><p>Inspect matches and differences</p></div></li>
+      </ol>
+      <SavedLedgerUpload key={`${churchId}:${savedYearId}`} churchId={churchId} financialYearId={savedYearId} onChange={handleLedgerChange}/>
 
       {/* VIEW A: MASTER OVERVIEW TABLE (Hides when a summary is clicked) */}
       {fileName && !selectedSummary && (
-        <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-xl overflow-hidden shadow-sm animate-in slide-in-from-bottom-4 duration-500">
-           <div className="px-5 py-3 border-b border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#111111] flex justify-between items-center">
+        <div className="bg-white dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl overflow-hidden shadow-sm animate-in slide-in-from-bottom-4 duration-500">
+           <div className="px-5 py-3 border-b border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-elevated flex justify-between items-center">
              <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">Account Reconciliation Overview</h3>
-             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{summaryData.length} Accounts Active</span>
+             <span className="text-xs font-bold tracking-normal text-slate-500">{summaryData.length} Accounts Active</span>
            </div>
            <div className="overflow-x-auto custom-scrollbar">
-             <table className="w-full text-left border-collapse text-xs whitespace-nowrap min-w-[900px]">
+             <table className="ui-data-table w-full text-left border-collapse text-xs whitespace-nowrap min-w-[900px]">
                <thead>
-                 <tr className="bg-transparent border-b border-slate-200 dark:border-[#27272A] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                 <tr className="bg-transparent border-b border-slate-200 dark:border-dark-border text-slate-500 dark:text-slate-400 font-semibold tracking-normal text-xs">
                    <th className="p-3 pl-5">Account Name</th>
                    <th className="p-3 text-center">System Records</th>
                    <th className="p-3 text-center">Excel Records</th>
@@ -1338,12 +1298,12 @@ export default function Reconciliation() {
                    <th className="p-3 text-right pr-5">Action</th>
                  </tr>
                </thead>
-               <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]/50 bg-transparent">
+               <tbody className="divide-y divide-slate-100 dark:divide-dark-border/50 bg-transparent">
                  {summaryData.map(row => (
-                   <tr key={row.id} onClick={() => setSelectedSummary(row)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-[#121212] transition-colors group">
+                   <tr key={row.id} onClick={() => setSelectedSummary(row)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-dark-elevated transition-colors group">
                      <td className="p-3 pl-5">
                        <div className="flex items-center gap-2.5">
-                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold tracking-widest border ${row.type === 'INCOME' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/50' : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/50'}`}>{row.type}</span>
+                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold tracking-widest border ${row.type === 'INCOME' ? 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-400 dark:border-sky-900/50' : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/50'}`}>{row.type}</span>
                          <span className="font-bold text-slate-800 dark:text-slate-200">{row.accountKey}</span>
                        </div>
                      </td>
@@ -1352,15 +1312,15 @@ export default function Reconciliation() {
                      <td className="p-3 text-right font-mono font-bold text-slate-900 dark:text-white">₱{row.sysTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
                      <td className="p-3 text-right font-mono font-bold text-slate-900 dark:text-white">₱{row.exTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
                      <td className="p-3 text-center">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest border shadow-sm ${
-                          row.variance === 0 ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-500 border-amber-200 dark:border-amber-900/50'
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold tracking-normal border shadow-sm ${
+                          row.variance === 0 ? 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-900/50' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-500 border-amber-200 dark:border-amber-900/50'
                         }`}>
                           {row.variance === 0 ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
                           {row.variance === 0 ? 'Balanced' : `₱${Math.abs(row.variance).toLocaleString('en-PH', {minimumFractionDigits: 2})}`}
                         </span>
                      </td>
                      <td className="p-3 text-right pr-5">
-                        <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 dark:bg-[#1A1A1A] text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold group-hover:bg-brand-dark group-hover:text-white dark:group-hover:bg-brand-soft dark:group-hover:text-brand-dark transition-all shadow-sm">
+                        <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 dark:bg-dark-floating text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold group-hover:bg-brand-dark group-hover:text-white dark:group-hover:bg-brand-soft dark:group-hover:text-brand-dark transition-all shadow-sm">
                           View Breakdown <ChevronRight className="h-3 w-3" />
                         </span>
                      </td>
@@ -1377,8 +1337,8 @@ export default function Reconciliation() {
       {selectedSummary && detailData && (
         <div className="space-y-4 animate-in slide-in-from-right-8 duration-300">
           
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSelectedSummary(null)} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-xl hover:bg-slate-50 dark:hover:bg-[#121212] transition-colors shadow-sm text-xs font-bold text-slate-600 dark:text-slate-400">
+          <div className="flex flex-wrap items-center gap-3">
+            <button onClick={() => setSelectedSummary(null)} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl hover:bg-slate-50 dark:hover:bg-dark-elevated transition-colors shadow-sm text-xs font-bold text-slate-600 dark:text-slate-400">
               <ArrowLeft className="h-4 w-4" /> Back to Overview
             </button>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -1386,55 +1346,55 @@ export default function Reconciliation() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 bg-white dark:bg-[#0A0A0A] rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-[#27272A]">
-            <div className="p-4 flex flex-col items-center justify-center border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-[#27272A]">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-1"><Database className="h-3.5 w-3.5" /> Internal System Total</span>
-              <span className="text-xl font-black text-slate-900 dark:text-white tabular-nums">₱{selectedSummary.sysTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 bg-white dark:bg-dark-surface rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-dark-border">
+            <div className="p-4 flex flex-col items-center justify-center border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-dark-border">
+              <span className="text-xs font-bold text-slate-500 tracking-normal flex items-center gap-1.5 mb-1"><Database className="h-3.5 w-3.5" /> Internal System Total</span>
+              <span className="text-xl font-semibold text-slate-900 dark:text-white tabular-nums">₱{selectedSummary.sysTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
             </div>
-            <div className={`p-4 flex flex-col items-center justify-center border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-[#27272A] ${selectedSummary.variance === 0 ? 'bg-emerald-50/50 dark:bg-emerald-950/10' : 'bg-amber-50/50 dark:bg-amber-950/10'}`}>
-               <span className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 mb-1 ${selectedSummary.variance === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-500'}`}>
+            <div className={`p-4 flex flex-col items-center justify-center border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-dark-border ${selectedSummary.variance === 0 ? 'bg-sky-50/50 dark:bg-sky-950/10' : 'bg-amber-50/50 dark:bg-amber-950/10'}`}>
+               <span className={`text-xs font-bold tracking-normal flex items-center gap-1.5 mb-1 ${selectedSummary.variance === 0 ? 'editor-accent' : 'text-amber-600 dark:text-amber-500'}`}>
                  {selectedSummary.variance === 0 ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />} Variance
                </span>
-               <span className={`text-xl font-black tabular-nums ${selectedSummary.variance === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-500'}`}>
+               <span className={`text-xl font-semibold tabular-nums ${selectedSummary.variance === 0 ? 'editor-accent' : 'text-amber-600 dark:text-amber-500'}`}>
                  {selectedSummary.variance > 0 ? '+' : ''}₱{selectedSummary.variance.toLocaleString('en-PH', {minimumFractionDigits: 2})}
                </span>
             </div>
             <div className="p-4 flex flex-col items-center justify-center">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-1"><FileSpreadsheet className="h-3.5 w-3.5" /> Excel Total</span>
-              <span className="text-xl font-black text-slate-900 dark:text-white tabular-nums">₱{selectedSummary.exTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
+              <span className="text-xs font-bold text-slate-500 tracking-normal flex items-center gap-1.5 mb-1"><FileSpreadsheet className="h-3.5 w-3.5" /> Excel Total</span>
+              <span className="text-xl font-semibold text-slate-900 dark:text-white tabular-nums">₱{selectedSummary.exTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
             </div>
           </div>
 
           <div className="space-y-4">
             {detailData.exactMatches.length > 0 && (
-              <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-xl overflow-hidden shadow-sm">
-                <div className="bg-slate-50 dark:bg-[#111111] px-4 py-2.5 border-b border-slate-200 dark:border-[#27272A] flex items-center justify-between">
-                   <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                     <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Exact Matches
+              <div className="bg-white dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl overflow-hidden shadow-sm">
+                <div className="bg-slate-50 dark:bg-dark-elevated px-4 py-2.5 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
+                   <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 tracking-normal">
+                     <CheckCircle2 className="h-4 w-4 text-sky-500" /> Exact Matches
                    </div>
-                   <span className="text-[10px] font-bold uppercase text-slate-400">({detailData.exactMatches.length} Records)</span>
+                   <span className="text-xs font-bold uppercase text-slate-400">({detailData.exactMatches.length} Records)</span>
                 </div>
-                <div className="divide-y divide-slate-100 dark:divide-[#27272A]/50">
+                <div className="divide-y divide-slate-100 dark:divide-dark-border/50">
                   {detailData.exactMatches.map((row, idx) => (
                     <div key={idx} className="grid grid-cols-[1fr_auto_1fr] items-stretch">
-                      <div onClick={() => handleViewDetails(row.dbTx)} className="p-3 pr-4 flex flex-col gap-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#141414] transition-colors group">
+                      <div onClick={() => handleViewDetails(row.dbTx)} className="p-3 pr-4 flex flex-col gap-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-dark-elevated transition-colors group">
                         <div className="flex justify-between items-center w-full">
-                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 transition-colors">{new Date(row.dbTx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand transition-colors">{new Date(row.dbTx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                             <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">₱{Number(row.dbTx.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
                         </div>
-                        <span className="text-[10px] text-slate-500 truncate max-w-[300px]">{row.dbTx.remarks || row.dbTx.categories?.name}</span>
-                        <span className="text-[9px] font-mono text-slate-400 mt-0.5">Encoded by: {row.dbTx.profiles?.full_name || (row.dbTx.entered_by ? `Name unavailable (${row.dbTx.entered_by.slice(0, 8)})` : 'Unknown encoder')}</span>
+                        <span className="text-xs text-slate-500 truncate max-w-[300px]">{row.dbTx.remarks || row.dbTx.categories?.name}</span>
+                        <span className="text-xs font-mono text-slate-400 mt-0.5">Encoded by: {row.dbTx.profiles?.full_name || (row.dbTx.entered_by ? `Name unavailable (${row.dbTx.entered_by.slice(0, 8)})` : 'Unknown encoder')}</span>
                       </div>
                       <div className="w-20 flex flex-col items-center justify-center relative">
-                        <div className="absolute left-0 right-0 h-[1px] top-1/2 bg-slate-200 dark:bg-[#27272A] -z-10"></div>
-                        <div className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest bg-white dark:bg-[#141414] text-emerald-600 dark:text-emerald-400 border border-slate-200 dark:border-[#333]">Balanced</div>
+                        <div className="absolute left-0 right-0 h-[1px] top-1/2 bg-slate-200 dark:bg-dark-border -z-10"></div>
+                        <div className="px-1.5 py-0.5 rounded text-xs font-bold tracking-normal bg-white dark:bg-dark-elevated editor-accent border border-slate-200 dark:border-dark-borderStrong">Balanced</div>
                       </div>
                       <div className="p-3 pl-4 flex flex-col gap-1 items-end text-right">
                         <div className="flex justify-between items-center w-full flex-row-reverse">
                             <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{row.excelTx.day !== '--' ? `Day ${row.excelTx.day}` : 'Excel Entry'}</span>
                             <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">₱{row.excelTx.amount.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
                         </div>
-                        <span className="text-[10px] text-slate-500 font-mono truncate max-w-[300px]">{row.excelTx.remarks !== '--' ? row.excelTx.remarks : ''}</span>
+                        <span className="text-xs text-slate-500 font-mono truncate max-w-[300px]">{row.excelTx.remarks !== '--' ? row.excelTx.remarks : ''}</span>
                       </div>
                     </div>
                   ))}
@@ -1445,36 +1405,36 @@ export default function Reconciliation() {
             {detailData.groupMatches.length > 0 && (
               <div className="space-y-3">
                 {detailData.groupMatches.map(group => (
-                  <div key={group.id} className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-xl overflow-hidden shadow-sm relative">
-                    <div className="bg-slate-50 dark:bg-[#111111] px-4 py-2.5 border-b border-slate-200 dark:border-[#27272A] flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                        <Scale className="h-4 w-4 text-emerald-500" /> {group.label}
+                  <div key={group.id} className="bg-white dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl overflow-hidden shadow-sm relative">
+                    <div className="bg-slate-50 dark:bg-dark-elevated px-4 py-2.5 border-b border-slate-200 dark:border-dark-border flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 tracking-normal">
+                        <Scale className="h-4 w-4 text-sky-500" /> {group.label}
                       </div>
-                      <span className="text-[10px] font-medium text-slate-500 normal-case">{group.reason}</span>
+                      <span className="text-xs font-medium text-slate-500 normal-case">{group.reason}</span>
                     </div>
-                    <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-[#27272A]">
-                      <div className="flex-1 p-3 space-y-2 bg-slate-50/30 dark:bg-[#111]">
-                        <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">System records ({group.dbTxs.length})</div>
+                    <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-dark-border">
+                      <div className="flex-1 p-3 space-y-2 bg-slate-50/30 dark:bg-dark-elevated">
+                        <div className="text-xs font-bold tracking-normal text-slate-400 mb-1">System records ({group.dbTxs.length})</div>
                         {group.dbTxs.map(tx => (
-                          <div key={tx.id} onClick={() => handleViewDetails(tx)} className="bg-white dark:bg-[#1A1A1A] p-2.5 rounded-xl border border-slate-200 dark:border-[#333] shadow-sm cursor-pointer hover:border-emerald-400 transition-colors">
+                          <div key={tx.id} onClick={() => handleViewDetails(tx)} className="bg-white dark:bg-dark-floating p-2.5 rounded-xl border border-slate-200 dark:border-dark-borderStrong shadow-sm cursor-pointer hover:border-sky-400 transition-colors">
                             <div className="flex justify-between text-xs font-bold text-slate-800 dark:text-slate-200 mb-1 gap-3">
                               <span>{tx.date}</span>
                               <span className="font-mono whitespace-nowrap">₱{Number(tx.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
                             </div>
-                            <div className="text-[10px] text-slate-500">{tx.remarks || tx.categories?.name}</div>
-                            <div className="text-[9px] font-mono text-slate-400 mt-0.5">Encoded by: {tx.profiles?.full_name || (tx.entered_by ? `Name unavailable (${tx.entered_by.slice(0, 8)})` : 'Unknown encoder')}</div>
+                            <div className="text-xs text-slate-500">{tx.remarks || tx.categories?.name}</div>
+                            <div className="text-xs font-mono text-slate-400 mt-0.5">Encoded by: {tx.profiles?.full_name || (tx.entered_by ? `Name unavailable (${tx.entered_by.slice(0, 8)})` : 'Unknown encoder')}</div>
                           </div>
                         ))}
                       </div>
                       <div className="flex-1 p-3 space-y-2">
-                        <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">ComBud rows ({group.excelTxs.length})</div>
+                        <div className="text-xs font-bold tracking-normal text-slate-400 mb-1">ComBud rows ({group.excelTxs.length})</div>
                         {group.excelTxs.map(ex => (
-                          <div key={ex.id} className="bg-white dark:bg-[#1A1A1A] p-2.5 rounded-xl border border-slate-200 dark:border-[#333] shadow-sm">
+                          <div key={ex.id} className="bg-white dark:bg-dark-floating p-2.5 rounded-xl border border-slate-200 dark:border-dark-borderStrong shadow-sm">
                             <div className="flex justify-between text-xs font-bold text-slate-800 dark:text-slate-200 mb-1 gap-3">
                               <span>{ex.day !== '--' ? `Day ${ex.day}` : 'Excel Entry'}</span>
                               <span className="font-mono whitespace-nowrap">₱{ex.amount.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
                             </div>
-                            <div className="text-[10px] font-mono text-slate-500">{ex.remarks !== '--' ? ex.remarks : ''}</div>
+                            <div className="text-xs font-mono text-slate-500">{ex.remarks !== '--' ? ex.remarks : ''}</div>
                           </div>
                         ))}
                       </div>
@@ -1484,52 +1444,52 @@ export default function Reconciliation() {
               </div>
             )}
             {(detailData.unmatchedDB.length > 0 || detailData.unmatchedExcel.length > 0) && (
-              <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-xl overflow-hidden shadow-sm">
-                <div className="bg-slate-50 dark:bg-[#111111] px-4 py-2.5 border-b border-slate-200 dark:border-[#27272A] flex items-center justify-between">
-                   <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+              <div className="bg-white dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl overflow-hidden shadow-sm">
+                <div className="bg-slate-50 dark:bg-dark-elevated px-4 py-2.5 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
+                   <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 tracking-normal">
                      <AlertCircle className="h-4 w-4 text-amber-500" /> Discrepancies (Unmatched Records)
                    </div>
                 </div>
                 
-                <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-[#27272A]">
-                  <div className="flex-1 bg-slate-50/50 dark:bg-[#111]">
-                    <div className="bg-amber-50/90 dark:bg-amber-950/40 px-4 py-2 border-b border-amber-200 dark:border-amber-900/50 text-[10px] font-bold text-amber-800 dark:text-amber-500 uppercase tracking-wider flex justify-between">
+                <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-dark-border">
+                  <div className="flex-1 bg-slate-50/50 dark:bg-dark-elevated">
+                    <div className="bg-amber-50/90 dark:bg-amber-950/40 px-4 py-2 border-b border-amber-200 dark:border-amber-900/50 text-xs font-bold text-amber-800 dark:text-amber-500 tracking-normal flex justify-between">
                        <span>Recorded Only in System</span>
                        <span>({detailData.unmatchedDB.length} Records)</span>
                     </div>
                     <div className="p-3 space-y-2">
                       {detailData.unmatchedDB.length === 0 && <div className="text-xs text-slate-400 italic">No isolated system records.</div>}
                       {detailData.unmatchedDB.map(tx => (
-                        <div key={tx.id} onClick={() => handleViewDetails(tx)} className="bg-white dark:bg-[#1A1A1A] p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/30 shadow-sm relative overflow-hidden group cursor-pointer hover:border-amber-400 transition-colors">
+                        <div key={tx.id} onClick={() => handleViewDetails(tx)} className="bg-white dark:bg-dark-floating p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/30 shadow-sm relative overflow-hidden group cursor-pointer hover:border-amber-400 transition-colors">
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400"></div>
                           <div className="flex justify-between items-center mb-1 pl-2">
                             <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{new Date(tx.date).toLocaleDateString()}</span>
                             <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">₱{Number(tx.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
                           </div>
-                          <p className="text-[10px] text-slate-500 pl-2">{tx.remarks || tx.categories?.name}</p>
-                          <p className="text-[9px] font-mono text-slate-400 pl-2 mt-0.5">Encoded by: {tx.profiles?.full_name || (tx.entered_by ? `Name unavailable (${tx.entered_by.slice(0, 8)})` : 'Unknown encoder')}</p>
+                          <p className="text-xs text-slate-500 pl-2">{tx.remarks || tx.categories?.name}</p>
+                          <p className="text-xs font-mono text-slate-400 pl-2 mt-0.5">Encoded by: {tx.profiles?.full_name || (tx.entered_by ? `Name unavailable (${tx.entered_by.slice(0, 8)})` : 'Unknown encoder')}</p>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   <div className="flex-1">
-                    <div className="bg-rose-50/90 dark:bg-rose-950/40 px-4 py-2 border-b border-rose-200 dark:border-rose-900/50 text-[10px] font-bold text-rose-800 dark:text-rose-500 uppercase tracking-wider flex justify-between">
+                    <div className="bg-rose-50/90 dark:bg-rose-950/40 px-4 py-2 border-b border-rose-200 dark:border-rose-900/50 text-xs font-bold text-rose-800 dark:text-rose-500 tracking-normal flex justify-between">
                        <span>Not in System (Needs Entry)</span>
                        <span>({detailData.unmatchedExcel.length} Records)</span>
                     </div>
                     <div className="p-3 space-y-2">
                       {detailData.unmatchedExcel.length === 0 && <div className="text-xs text-slate-400 italic">No isolated external records.</div>}
                       {detailData.unmatchedExcel.map(ex => (
-                        <div key={ex.id} className="bg-white dark:bg-[#1A1A1A] p-3 rounded-xl border border-rose-200 dark:border-rose-900/30 shadow-sm relative overflow-hidden group">
+                        <div key={ex.id} className="bg-white dark:bg-dark-floating p-3 rounded-xl border border-rose-200 dark:border-rose-900/30 shadow-sm relative overflow-hidden group">
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-400"></div>
                           <div className="flex justify-between items-center mb-1 pl-1.5">
                             <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{ex.day !== '--' ? `Day ${ex.day}` : 'Excel Entry'}</span>
                             <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">₱{ex.amount.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
                           </div>
-                          <p className="text-[10px] text-slate-500 font-mono pl-1.5 mb-2.5">{ex.remarks !== '--' ? ex.remarks : ''}</p>
+                          <p className="text-xs text-slate-500 font-mono pl-1.5 mb-2.5">{ex.remarks !== '--' ? ex.remarks : ''}</p>
                           <div className="pl-1.5">
-                            <button onClick={() => handleImportToSystem(ex, ex.id)} disabled={isInserting === ex.id} className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#333] rounded-lg text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 dark:hover:bg-emerald-950/30 transition-all shadow-sm">
+                            <button onClick={() => handleImportToSystem(ex, ex.id)} disabled={isInserting === ex.id} className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-dark-elevated border border-slate-200 dark:border-dark-borderStrong rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-sky-50 hover:text-sky-700 hover:border-sky-200 dark:hover:bg-sky-950/30 transition-all shadow-sm">
                               {isInserting === ex.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />} Import Record
                             </button>
                           </div>

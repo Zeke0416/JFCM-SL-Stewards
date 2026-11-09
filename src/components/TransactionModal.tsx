@@ -1,7 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import SuggestInput from './ui/SuggestInput';
+import { useFeedback } from './ui/useFeedback';
+import DialogLayer from './ui/DialogLayer';
+import Select from './ui/Select';
+import Input from './ui/Input';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
-import { X, AlertCircle, Search, Check, ChevronDown, ToggleLeft, ToggleRight, ListPlus, Trash2, Calculator, CheckCircle2, AlertTriangle, Tag } from 'lucide-react';
+import { X, AlertCircle, ToggleLeft, ToggleRight, ListPlus, Trash2, Calculator, CheckCircle2, AlertTriangle, Tag } from 'lucide-react';
 import type { Category, TransactionType, FinancialPeriod, Transaction } from '../types/database.types';
 import TransactionReviewModal, { type ReviewData } from './TransactionReviewModal';
 
@@ -19,12 +24,12 @@ interface TransactionModalProps {
 }
 
 export default function TransactionModal({ isOpen, onClose, onSuccess, churchId, userId, initialData, defaultPeriodId, existingTransactions }: TransactionModalProps) {
+  const { notify } = useFeedback();
   const [type, setType] = useState<TransactionType>('INCOME');
   const [categories, setCategories] = useState<Category[]>([]);
   const [periods, setPeriods] = useState<FinancialPeriod[]>([]);
   
   const [tithers, setTithers] = useState<{id: string, full_name: string}[]>([]);
-  const [focusedItemIndex, setFocusedItemIndex] = useState<number | null>(null);
 
   const [selectedPeriodId, setSelectedPeriodId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -33,9 +38,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
   const [remarks, setRemarks] = useState('');
   
   const [categoryId, setCategoryId] = useState('');
-  const [categorySearch, setCategorySearch] = useState('');
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   
   const [strictMode, setStrictMode] = useState(false);
   const [wholeAmount, setWholeAmount] = useState('');
@@ -117,14 +119,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
     setCategories([unassignedCategory, ...(catData || [])]);
   };
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsCategoryOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const fetchMetadata = async () => {
     const { data: catData } = await supabase.from('categories').select('*').eq('church_id', churchId).eq('type', initialData ? initialData.type : type).order('sort_order');
     const unassignedCategory: Category = { id: 'unassigned', church_id: churchId, type: type, export_code: '???', name: 'Unassigned', sort_order: 0, created_at: new Date().toISOString() };
@@ -132,11 +126,10 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
     setCategories(combinedCategories);
 
     if (!initialData) {
-      setCategoryId('unassigned'); setCategorySearch('Unassigned');
-    } else {
+      setCategoryId('unassigned'); } else {
       const found = combinedCategories.find(c => c.id === (initialData.category_id || 'unassigned'));
-      if (found) { setCategorySearch(found.id === 'unassigned' ? 'Unassigned' : `[${found.export_code}] ${found.name}`); setCategoryId(found.id); }
-      else { setCategorySearch('Unassigned'); setCategoryId('unassigned'); }
+      if (found) { setCategoryId(found.id); }
+      else { setCategoryId('unassigned'); }
     }
 
     const [periodData, tithersData] = await Promise.all([
@@ -161,13 +154,12 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
   const handleTypeChange = (newType: TransactionType) => {
     setType(newType);
     setCategoryId('unassigned');
-    setCategorySearch('Unassigned');
     setBreakdownItems([]);
     setRemarks('');
   };
 
   const handleCategorySelect = (c: Category) => {
-    setCategoryId(c.id); setCategorySearch(c.id === 'unassigned' ? 'Unassigned' : `[${c.export_code}] ${c.name}`); setIsCategoryOpen(false);
+    setCategoryId(c.id);
   };
 
   const handleAmountChange = (val: string, setter: (v: string) => void) => {
@@ -178,7 +170,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
     setter(parts.join('.'));
   };
 
-  const filteredCategories = categories.filter(c => c.name.toLowerCase().includes(categorySearch.toLowerCase()) || c.export_code.includes(categorySearch));
   const selectedCategory = categories.find(c => c.id === categoryId);
   const breakdownTotal = breakdownItems.reduce((sum, item) => sum + (parseFloat(item.amount.replace(/,/g, '')) || 0), 0);
 
@@ -256,7 +247,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
         setTimeout(() => { onSuccess(); onClose(); }, 1000);
       }
     } catch (error: any) {
-      alert("Error saving transaction: " + error.message);
+      notify("Error saving transaction: " + error.message);
       setShowReview(false);
     } finally {
       setLoading(false);
@@ -267,7 +258,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
     onSuccess();
     setType('INCOME');
     setCategoryId('unassigned');
-    setCategorySearch('Unassigned');
     setShowConvertPrompt(false);
   };
 
@@ -293,35 +283,35 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
 
   return createPortal(
     <>
-      <div className="fixed -inset-10 z-[99998] bg-slate-950/75 dark:bg-black/85 backdrop-blur-md transition-opacity duration-300" aria-hidden="true" />
 
-      <div className="fixed inset-0 z-[99998] flex items-center justify-center p-0 sm:p-4 pointer-events-none">
         
-        <div className={`pointer-events-auto w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] max-w-2xl bg-white dark:bg-[#0A0A0A] rounded-none sm:rounded-2xl shadow-none sm:shadow-2xl relative flex flex-col p-0 overflow-hidden border-0 sm:border border-slate-200 dark:border-[#27272A] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${showReview ? 'scale-[0.95] -translate-x-12 opacity-0 blur-[2px] pointer-events-none' : 'scale-100 translate-x-0 opacity-100 blur-0'}`}>
+      <DialogLayer onDismiss={loading ? undefined : onClose} active={!showReview} label="Record or edit transaction" className="fixed inset-0 z-[99998] flex items-center justify-center p-0 sm:p-4 pointer-events-none">
           
+        <div className={`dialog-surface transaction-editor ${showConvertPrompt || successAnim || duplicateWarning ? 'message-state' : ''} ${showReview ? 'review-covered' : ''}`}>
+
           {showConvertPrompt ? (
             <div className="p-8 sm:p-12 flex flex-col items-center justify-center space-y-6 text-center my-auto">
-              <div className="h-16 w-16 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm animate-bounce">
+              <div className="h-16 w-16 bg-slate-100 dark:bg-dark-floating border border-slate-200 dark:border-dark-border rounded-2xl flex items-center justify-center editor-accent shadow-sm animate-bounce">
                 <CheckCircle2 className="h-8 w-8" />
               </div>
               <div className="space-y-2 max-w-md">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Expense Saved Successfully!</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Do you want to convert or record this transaction as <strong className="text-emerald-600 dark:text-emerald-400">Income</strong>? All recently saved details will be preserved so you can quickly select an income account and save it.
+                  Do you want to convert or record this transaction as <strong className="editor-accent">Income</strong>? All recently saved details will be preserved so you can quickly select an income account and save it.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row w-full max-w-sm gap-3 pt-2">
                 <button
                   type="button"
                   onClick={handleSkipConversion}
-                  className="flex-1 py-3 px-4 bg-slate-100 dark:bg-[#1A1A1A] hover:bg-slate-200 dark:hover:bg-[#262626] text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-[#27272A]"
+                  className="flex-1 py-3 px-4 bg-slate-100 dark:bg-dark-floating hover:bg-slate-200 dark:hover:bg-dark-elevated text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-dark-border"
                 >
                   No, Close
                 </button>
                 <button
                   type="button"
                   onClick={handleConvertToIncome}
-                  className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2"
+                  className="flex-1 py-3 px-4 bg-brand hover:bg-brand-dark text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2"
                 >
                   <span>Yes, Convert to Income</span>
                 </button>
@@ -329,17 +319,17 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
             </div>
           ) : successAnim ? (
             <div className="p-16 flex flex-col items-center justify-center space-y-4 text-center my-auto">
-              <div className="h-16 w-16 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 animate-bounce"><CheckCircle2 className="h-8 w-8" /></div>
+              <div className="h-16 w-16 bg-slate-100 dark:bg-dark-floating border border-slate-200 dark:border-dark-border rounded-2xl flex items-center justify-center editor-accent animate-bounce"><CheckCircle2 className="h-8 w-8" /></div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Transaction Saved Successfully!</h3>
             </div>
           ) : duplicateWarning ? (
-            <div className="p-8 flex flex-col items-center justify-center space-y-6 text-center h-full overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-[#0A0A0A]">
+            <div className="dialog-body p-8 flex flex-col items-center justify-center space-y-6 text-center h-full overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-dark-surface">
               <div className="h-16 w-16 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 animate-pulse shrink-0"><AlertTriangle className="h-8 w-8" /></div>
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Possible Duplicate Detected</h3>
                 <p className="text-xs text-slate-500">A transaction with the exact same amount and category already exists on this date.</p>
               </div>
-              <div className="bg-white dark:bg-[#121212] p-4 rounded-xl border border-slate-200 dark:border-[#27272A] text-left text-xs w-full font-mono">
+              <div className="bg-white dark:bg-dark-elevated p-4 rounded-xl border border-slate-200 dark:border-dark-border text-left text-xs w-full font-mono">
                 <p className="text-slate-400 mb-1">Existing Record Details:</p>
                 <p><strong>Date:</strong> {duplicateWarning.date}</p>
                 <p><strong>Amount:</strong> ₱{Number(duplicateWarning.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</p>
@@ -347,80 +337,62 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
                 <p className="truncate"><strong>Remarks:</strong> {duplicateWarning.remarks || 'N/A'}</p>
               </div>
               <div className="flex flex-col sm:flex-row w-full gap-3 mt-4">
-                <button onClick={() => setDuplicateWarning(null)} className="flex-1 py-3 bg-white dark:bg-[#121212] text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-[#1A1A1A] transition-all border border-slate-200 dark:border-[#27272A]">Go Back & Edit</button>
+                <button onClick={() => setDuplicateWarning(null)} className="flex-1 py-3 bg-white dark:bg-dark-elevated text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-dark-floating transition-all border border-slate-200 dark:border-dark-border">Go Back & Edit</button>
                 <button onClick={(e) => handleReviewIntercept(e, true)} className="flex-1 py-3 bg-amber-600 text-white rounded-xl text-xs font-bold hover:bg-amber-700 transition-all shadow-md">Yes, Save as Duplicate</button>
               </div>
             </div>
           ) : (
-            <>
+            <div className="transaction-editor-content">
               {/* Modal Header */}
-              <div className="flex items-center justify-between p-4 sm:p-6 bg-slate-50 dark:bg-[#111111] border-b border-slate-200 dark:border-[#27272A] rounded-t-2xl shrink-0">
+              <div className="dialog-header flex items-center justify-between p-4 sm:p-6 bg-slate-50 dark:bg-dark-elevated border-b border-slate-200 dark:border-dark-border rounded-t-2xl shrink-0">
                 <div>
                   <h2 className="text-sm font-bold tracking-wide uppercase text-slate-900 dark:text-white flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${type === 'INCOME' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${type === 'INCOME' ? 'bg-brand' : 'bg-amber-500'}`}></span>
                     {initialData ? 'Edit' : 'Record'} {type === 'INCOME' ? 'Receipt' : 'Disbursement'}
                   </h2>
-                  <p className="text-[10px] text-slate-500 font-mono mt-0.5 hidden sm:block">Ensure details match physical vouchers exactly.</p>
+                  <p className="text-xs text-slate-500 font-mono mt-0.5 hidden sm:block">Keep an honest record. Verify the details against supporting documents.</p>
                 </div>
-                <button onClick={onClose} className="text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1A1A1A] p-2 rounded-xl transition-colors hidden sm:flex"><X className="h-4 w-4" /></button>
+                <button type="button" aria-label="Close dialog" onClick={onClose} className="icon-button text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-floating p-2 rounded-xl transition-colors flex"><X className="h-4 w-4" /></button>
               </div>
 
               {/* Modal Body */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-4 bg-slate-50/50 dark:bg-[#0A0A0A]">
+              <div className="dialog-body flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-4 bg-slate-50/50 dark:bg-dark-surface">
                 {error && (
                   <div className="bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 p-4 rounded-xl text-xs font-medium flex items-center gap-2.5 border border-rose-200 dark:border-rose-900/50"><AlertCircle className="h-4 w-4 shrink-0" /><span>{error}</span></div>
                 )}
 
                 {!initialData && (
-                  <div className="flex gap-1.5 p-1.5 bg-slate-200 dark:bg-[#121212] rounded-xl border border-slate-300 dark:border-[#27272A] shadow-inner">
-                    <button type="button" onClick={() => handleTypeChange('INCOME')} className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all shadow-sm ${type === 'INCOME' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Income / Receipt</button>
-                    <button type="button" onClick={() => handleTypeChange('EXPENSE')} className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all shadow-sm ${type === 'EXPENSE' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Expense / Disbursement</button>
+                  <div className="switch-tabs entry-type-tabs">
+                    <button type="button" aria-pressed={type === 'INCOME'} onClick={() => handleTypeChange('INCOME')} className="switch-tab">Income / Receipt</button>
+                    <button type="button" aria-pressed={type === 'EXPENSE'} onClick={() => handleTypeChange('EXPENSE')} className="switch-tab">Expense / Disbursement</button>
                   </div>
                 )}
 
-                <form id="tx-form" onSubmit={(e) => handleReviewIntercept(e, false)} className="space-y-4">
+                <form key={type} id="tx-form" onSubmit={(e) => handleReviewIntercept(e, false)} className="entry-form tab-panel">
+<div className="entry-details-column"><section className="entry-field-group"><div className="field-section-heading"><span>Record details</span><span>Date and financial period</span></div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Fixed Financial Period Dropdown Padding & Right Alignment */}
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Financial Period</label>
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-normal">Financial Period</label>
                       <div className="relative">
-                        <select required className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] px-4 py-3 pr-10 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none appearance-none cursor-pointer" value={selectedPeriodId} onChange={(e) => setSelectedPeriodId(e.target.value)}>
+                        <Select aria-label="Financial Period" required className="w-full rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-elevated px-4 py-3 pr-10 text-xs font-bold text-slate-900 dark:text-white focus:border-brand outline-none appearance-none cursor-pointer" value={selectedPeriodId} onChange={(e) => setSelectedPeriodId(e.target.value)}>
                           {periods.map((p) => <option key={p.id} value={p.id}>{p.period_name} {p.status !== 'OPEN' ? `(${p.status})` : ''}</option>)}
-                        </select>
-                        <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none"><ChevronDown className="h-4 w-4 text-slate-400" /></div>
+                        </Select>
+
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Transaction Date</label>
-                      <input type="date" required className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] px-4 py-3 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none" value={date} onChange={(e) => setDate(e.target.value)} />
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-normal">Transaction Date</label>
+                      <Input aria-label="Transaction Date" type="date" required className="w-full rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-elevated px-4 py-3 text-xs font-bold text-slate-900 dark:text-white focus:border-brand outline-none" value={date} onChange={(e) => setDate(e.target.value)} />
                     </div>
                   </div>
 
+                  </section><section className="entry-field-group"><div className="field-section-heading"><span>Account & reference</span><span>Classify the entry</span></div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative">
-                    <div ref={dropdownRef} className="relative space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Account No. & Name</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"><Search className="h-4 w-4 text-slate-400" /></div>
-                        <input type="text" className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] pl-10 pr-10 py-3 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none" placeholder="Search ComBud Account..." value={categorySearch} onClick={() => { setIsCategoryOpen(true); setCategorySearch(''); }} onChange={(e) => { setCategorySearch(e.target.value); setIsCategoryOpen(true); }} />
-                        <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none"><ChevronDown className="h-4 w-4 text-slate-400" /></div>
-                      </div>
-                      {isCategoryOpen && (
-                        <div className="absolute z-20 mt-1 w-full bg-white dark:bg-[#121212] shadow-2xl max-h-60 rounded-xl py-1 text-xs overflow-auto border border-slate-200 dark:border-[#27272A] custom-scrollbar">
-                          {filteredCategories.map((c) => (
-                            <div key={c.id} className={`px-4 py-3 cursor-pointer flex items-center justify-between hover:bg-slate-50 dark:hover:bg-[#1A1A1A] ${categoryId === c.id ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold' : 'text-slate-700 dark:text-slate-300'}`} onClick={() => handleCategorySelect(c)}>
-                              <div className="flex gap-2 items-center">
-                                {c.id !== 'unassigned' && <span className="font-mono text-[10px] text-slate-400">[{c.export_code}]</span>}
-                                <span>{c.name}</span>
-                              </div>
-                              {categoryId === c.id && <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <div className="space-y-1.5"><label htmlFor="tx-account">Account number & name</label><Select id="tx-account" aria-label="Account number & name" value={categoryId} onChange={event => { const category = categories.find(item => item.id === event.target.value); if (category) handleCategorySelect(category); }}>{categories.map(category => <option key={category.id} value={category.id}>{category.id === 'unassigned' ? 'Unassigned — review required' : `${category.export_code} · ${category.name}`}</option>)}</Select></div>
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Receipt / Ref No.</label>
-                      <input type="text" placeholder="e.g. 1024" className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] px-4 py-3 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none" value={receiptNo} onChange={(e) => setReceiptNo(e.target.value)} />
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-normal">Receipt / Ref No.</label>
+                      <Input aria-label="Receipt / Ref No." type="text" placeholder="e.g. 1024" className="w-full rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-elevated px-4 py-3 text-xs font-bold text-slate-900 dark:text-white focus:border-brand outline-none" value={receiptNo} onChange={(e) => setReceiptNo(e.target.value)} />
                     </div>
                   </div>
 
@@ -429,10 +401,10 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
                       <div className="flex items-center gap-2 text-sky-700 dark:text-sky-400 text-xs font-bold">
                         <Tag className="h-4 w-4" /> Special Category Export Matcher
                       </div>
-                      <p className="text-[11px] text-sky-600 dark:text-sky-300">Click a tag below to set the exact remark needed for the ComBud export:</p>
+                      <p className="text-sm text-sky-600 dark:text-sky-300">Click a tag below to set the exact remark needed for the ComBud export:</p>
                       <div className="flex flex-wrap gap-2 pt-1">
                         {SPECIAL_EVENT_TAGS[selectedCategory.export_code].map(tag => (
-                          <button key={tag} type="button" onClick={() => setRemarks(tag)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${remarks === tag ? 'bg-sky-600 text-white border-sky-600' : 'bg-white dark:bg-[#121212] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#27272A] hover:border-sky-400'}`}>
+                          <button key={tag} type="button" onClick={() => setRemarks(tag)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${remarks === tag ? 'bg-sky-600 text-white border-sky-600' : 'bg-white dark:bg-dark-elevated text-slate-600 dark:text-slate-300 border-slate-200 dark:border-dark-border hover:border-sky-400'}`}>
                             {tag}
                           </button>
                         ))}
@@ -440,117 +412,93 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, churchId,
                     </div>
                   )}
 
+                  </section><section className="entry-field-group"><div className="field-section-heading"><span>People & purpose</span><span>Supporting context</span></div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Payee / Source</label>
-                      <input type="text" placeholder={getPayeePlaceholder()} className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] px-4 py-3 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none" value={payeeName} onChange={(e) => setPayeeName(e.target.value)} />
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-normal">Payee / Source</label>
+                      <Input aria-label="Payee / Source" type="text" placeholder={getPayeePlaceholder()} className="w-full rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-elevated px-4 py-3 text-xs font-bold text-slate-900 dark:text-white focus:border-brand outline-none" value={payeeName} onChange={(e) => setPayeeName(e.target.value)} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Remarks {categoryId === 'unassigned' && <span className="text-red-500">*</span>}</label>
-                      <input type="text" placeholder="Additional details..." required={categoryId === 'unassigned'} className={`w-full rounded-xl border bg-white dark:bg-[#121212] px-4 py-3 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none ${categoryId === 'unassigned' ? 'border-amber-400 dark:border-amber-600' : 'border-slate-200 dark:border-[#27272A]'}`} value={remarks} onChange={(e) => setRemarks(e.target.value)} />
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-normal">Remarks {categoryId === 'unassigned' && <span className="text-red-500">*</span>}</label>
+                      <Input aria-label="Remarks" type="text" placeholder="Additional details..." required={categoryId === 'unassigned'} className={`w-full rounded-xl border bg-white dark:bg-dark-elevated px-4 py-3 text-xs font-bold text-slate-900 dark:text-white focus:border-brand outline-none ${categoryId === 'unassigned' ? 'border-amber-400 dark:border-amber-600' : 'border-slate-200 dark:border-dark-border'}`} value={remarks} onChange={(e) => setRemarks(e.target.value)} />
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-[#121212] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-[#27272A] space-y-4">
-                    <div className="flex justify-between items-center border-b border-slate-200 dark:border-[#27272A] pb-3">
+                  </section></div><section className="entry-amounts-column"><div className="bg-white dark:bg-dark-elevated p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-dark-border space-y-4">
+                    <div className="flex justify-between items-center border-b border-slate-200 dark:border-dark-border pb-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="p-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400 hidden sm:block"><Calculator className="h-4 w-4" /></div>
+                        <div className="entry-amount-icon"><Calculator className="h-4 w-4" /></div>
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Itemized Breakdown</h4>
-                          <p className="text-[10px] text-slate-500 hidden sm:block">Break down sub-items before posting total.</p>
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-white tracking-normal">Amount & itemized allocation</h4>
+                          <p className="text-xs text-slate-500 hidden sm:block">Enter a total or allocate it to individual items.</p>
                         </div>
                       </div>
-                      <button type="button" onClick={() => { setUseBreakdown(!useBreakdown); if (!useBreakdown && breakdownItems.length === 0) setBreakdownItems([{name: '', amount: ''}]); }} className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 ${useBreakdown ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-[#1A1A1A] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#27272A]'}`}>
+                      <button type="button" onClick={() => { setUseBreakdown(!useBreakdown); if (!useBreakdown && breakdownItems.length === 0) setBreakdownItems([{name: '', amount: ''}]); }} className={`px-3 py-1.5 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 ${useBreakdown ? 'bg-brand text-white shadow-sm' : 'bg-slate-100 dark:bg-dark-floating text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-border'}`}>
                         <ListPlus className="h-3.5 w-3.5" /> {useBreakdown ? 'Itemized Active' : 'Enable Itemized'}
                       </button>
                     </div>
 
                     {useBreakdown ? (
-                      <div className="space-y-3 bg-slate-50 dark:bg-[#0A0A0A] p-4 rounded-xl border border-slate-200 dark:border-[#27272A]">
+                      <div className="space-y-3 bg-slate-50 dark:bg-dark-surface p-4 rounded-xl border border-slate-200 dark:border-dark-border">
                         {breakdownItems.map((item, index) => {
-                          // Optimized to show top 5 matches instantly without scrollbar rendering / lagging
-                          const matchedTithers = item.name.trim() ? tithers.filter(t => t.full_name.toLowerCase().includes(item.name.toLowerCase())).slice(0, 5) : [];
-
                           return (
                             <div key={index} className="flex flex-col sm:flex-row gap-2 items-center w-full">
                               <div className="relative w-full sm:flex-1 min-w-0">
-                                 <input 
-                                   type="text" 
-                                   placeholder={isTitheOrOffering ? "Search Tither name..." : "Item name"} 
-                                   required 
-                                   className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none" 
-                                   value={item.name} 
-                                   onChange={e => { const newItems = [...breakdownItems]; newItems[index].name = e.target.value; setBreakdownItems(newItems); }} 
-                                   onFocus={() => setFocusedItemIndex(index)} 
-                                   onBlur={() => setTimeout(() => setFocusedItemIndex(null), 200)}
-                                 />
-                                 {focusedItemIndex === index && isTitheOrOffering && matchedTithers.length > 0 && (
-                                   <div className="absolute z-50 mt-1 w-full bg-white dark:bg-[#1A1A1A] shadow-xl rounded-xl py-1 text-xs border border-slate-200 dark:border-[#27272A]">
-                                      {matchedTithers.map(t => (
-                                        <div 
-                                          key={t.id} 
-                                          className="px-3 py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#262626] text-slate-700 dark:text-slate-300 font-medium transition-colors" 
-                                          onMouseDown={() => { const newItems = [...breakdownItems]; newItems[index].name = t.full_name; setBreakdownItems(newItems); setFocusedItemIndex(null); }}
-                                        >
-                                          {t.full_name}
-                                        </div>
-                                      ))}
-                                   </div>
-                                 )}
+                                 <SuggestInput label="Tither or item name" value={item.name} placeholder={isTitheOrOffering ? 'Find a member or enter a name' : 'Item name'} suggestions={isTitheOrOffering ? tithers.map(tither => tither.full_name) : []} onValueChange={name => { const updated = [...breakdownItems]; updated[index].name = name; setBreakdownItems(updated); }} />
                               </div>
 
                               <div className="flex gap-2 w-full sm:w-auto">
-                                <input type="text" placeholder="₱ 0.00" required className="flex-1 sm:w-32 rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none text-right" value={item.amount} onChange={e => { const newItems = [...breakdownItems]; handleAmountChange(e.target.value, (masked) => { newItems[index].amount = masked; }); setBreakdownItems(newItems); }} />
-                                <button type="button" onClick={() => setBreakdownItems(breakdownItems.filter((_, i) => i !== index))} className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-500/10 rounded-xl bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] flex items-center justify-center shrink-0"><Trash2 className="h-4 w-4" /></button>
+                                <Input aria-label="Item amount in pesos" type="text" placeholder="₱ 0.00" required className="flex-1 sm:w-32 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-elevated px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-brand outline-none text-right" value={item.amount} onChange={e => { const newItems = [...breakdownItems]; handleAmountChange(e.target.value, (masked) => { newItems[index].amount = masked; }); setBreakdownItems(newItems); }} />
+                                <button type="button" onClick={() => setBreakdownItems(breakdownItems.filter((_, i) => i !== index))} className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-500/10 rounded-xl bg-white dark:bg-dark-elevated border border-slate-200 dark:border-dark-border flex items-center justify-center shrink-0"><Trash2 className="h-4 w-4" /></button>
                               </div>
                             </div>
                           );
                         })}
-                        <button type="button" onClick={() => setBreakdownItems([...breakdownItems, {name: '', amount: ''}])} className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">+ Add Another Item</button>
-                        <div className="border-t border-slate-200 dark:border-[#27272A] pt-3 mt-3 flex justify-between items-center text-xs">
-                          <span className="font-bold text-slate-500">Auto-Computed Total:</span>
-                          <span className="font-black text-lg text-emerald-600 dark:text-emerald-400">₱{breakdownTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
+                        <button type="button" onClick={() => setBreakdownItems([...breakdownItems, {name: '', amount: ''}])} className="text-xs font-bold editor-accent hover:underline">+ Add Another Item</button>
+                        <div className="border-t border-slate-200 dark:border-dark-border pt-3 mt-3 flex justify-between items-center text-xs">
+                          <span className="font-bold text-slate-500">Itemized total:</span>
+                          <span className="font-semibold text-lg editor-accent">₱{breakdownTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
                         </div>
                       </div>
                     ) : (
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Amount (PHP ₱)</label>
-                          <button type="button" onClick={() => setStrictMode(!strictMode)} className="text-[10px] font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5">
-                            Strict Format {strictMode ? <ToggleRight className="h-4 w-4 text-emerald-500" /> : <ToggleLeft className="h-4 w-4 text-slate-400" />}
+                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-normal">Total amount</label>
+                          <button type="button" onClick={() => setStrictMode(!strictMode)} className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5">
+                            Strict Format {strictMode ? <ToggleRight className="h-4 w-4 text-brand" /> : <ToggleLeft className="h-4 w-4 text-slate-400" />}
                           </button>
                         </div>
                         {strictMode ? (
                           <div className="grid grid-cols-3 gap-3">
                             <div className="col-span-2 relative">
-                              <span className="absolute -top-2 left-3 bg-white dark:bg-[#121212] px-1 text-[9px] font-bold text-slate-400 uppercase">Whole Number</span>
-                              <input type="text" required placeholder="5,000" className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none" value={wholeAmount} onChange={(e) => handleAmountChange(e.target.value.replace(/[^0-9]/g, ''), setWholeAmount)} />
+                              <span className="absolute -top-2 left-3 bg-white dark:bg-dark-elevated px-1 text-xs font-bold text-slate-400 uppercase">Whole Number</span>
+                              <Input aria-label="Whole peso amount" type="text" required placeholder="5,000" className="w-full rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-elevated px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:border-brand outline-none" value={wholeAmount} onChange={(e) => handleAmountChange(e.target.value.replace(/[^0-9]/g, ''), setWholeAmount)} />
                             </div>
                             <div className="relative">
-                              <span className="absolute -top-2 left-3 bg-white dark:bg-[#121212] px-1 text-[9px] font-bold text-slate-400 uppercase">Decimal</span>
-                              <input type="text" maxLength={2} placeholder="00" className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] px-4 py-3 text-sm font-bold text-slate-900 dark:text-white text-center focus:border-emerald-500 outline-none" value={decimalAmount} onChange={(e) => setDecimalAmount(e.target.value.replace(/[^0-9]/g, ''))} />
+                              <span className="absolute -top-2 left-3 bg-white dark:bg-dark-elevated px-1 text-xs font-bold text-slate-400 uppercase">Decimal</span>
+                              <Input aria-label="Centavos" type="text" maxLength={2} placeholder="00" className="w-full rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-elevated px-4 py-3 text-sm font-bold text-slate-900 dark:text-white text-center focus:border-brand outline-none" value={decimalAmount} onChange={(e) => setDecimalAmount(e.target.value.replace(/[^0-9]/g, ''))} />
                             </div>
                           </div>
                         ) : (
-                          <input type="text" required placeholder="0.00" className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none" value={standardAmount} onChange={(e) => handleAmountChange(e.target.value, setStandardAmount)} />
+                          <Input aria-label="Transaction amount in pesos" inputMode="decimal" type="text" required placeholder="0.00" className="w-full rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-elevated px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:border-brand outline-none" value={standardAmount} onChange={(e) => handleAmountChange(e.target.value, setStandardAmount)} />
                         )}
                       </div>
                     )}
-                  </div>
-                </form>
+                  </div><p className="entry-responsibility">Record only what is supported. Review carefully before saving.</p></section>
+</form>
               </div>
 
               {/* Modal Footer */}
-              <div className="p-4 sm:p-6 bg-slate-50 dark:bg-[#111111] border-t border-slate-200 dark:border-[#27272A] flex justify-end gap-3 shrink-0 rounded-b-2xl">
-                <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1A1A1A] transition-colors border border-slate-200 dark:border-[#27272A]">Cancel</button>
-                <button form="tx-form" type="submit" className="px-7 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2">
+              <div className="dialog-footer p-4 sm:p-6 bg-slate-50 dark:bg-dark-elevated border-t border-slate-200 dark:border-dark-border flex justify-end gap-3 shrink-0 rounded-b-2xl">
+                <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-floating transition-colors border border-slate-200 dark:border-dark-border">Cancel</button>
+                <button form="tx-form" type="submit" className="px-7 py-2.5 bg-brand hover:bg-brand-dark text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2">
                   <span>Continue to Review</span>
                 </button>
               </div>
-            </>
+            </div>
           )}
         </div>
-      </div>
+      </DialogLayer>
 
       <TransactionReviewModal 
         isOpen={showReview} 

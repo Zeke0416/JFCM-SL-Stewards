@@ -1,8 +1,10 @@
+import DialogLayer from '../components/ui/DialogLayer';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { X, Calendar as CalendarIcon, FileText, CheckCircle2, Search, ChevronDown, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowUpRight, X, Calendar as CalendarIcon, FileText, CheckCircle2, Search, ChevronDown, ChevronRight } from 'lucide-react';
 import MetricsCards from '../components/dashboard/MetricsCards';
 import ActionAlerts from '../components/dashboard/ActionAlerts';
 import TrendChart from '../components/dashboard/TrendChart';
@@ -217,19 +219,21 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse max-w-7xl mx-auto pb-12">
-        <div className="h-[220px] bg-slate-200 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#222] rounded-xl w-full"></div>
+        <div className="h-[220px] bg-slate-200 dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl w-full"></div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-           <div className="h-[300px] bg-slate-200 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#222] rounded-xl lg:col-span-6"></div>
-           <div className="h-[300px] bg-slate-200 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#222] rounded-xl lg:col-span-6"></div>
+           <div className="h-[300px] bg-slate-200 dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl lg:col-span-6"></div>
+           <div className="h-[300px] bg-slate-200 dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl lg:col-span-6"></div>
         </div>
-        <div className="h-[360px] bg-slate-200 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#222] rounded-xl"></div>
+        <div className="h-[360px] bg-slate-200 dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300 max-w-7xl mx-auto pb-12">
+    <div className="stewards-dashboard space-y-6 max-w-7xl mx-auto pb-12">
       
+      <div className="overview-heading"><div><h1>Church financial overview</h1><p>Honest records. Faithful stewardship.</p></div><Link className="primary-link" to="/transactions">Open transactions <ArrowUpRight size={17} /></Link></div>
+      <div className="overview-scope"><span className="scope-dot" /><span>{periods.length ? `Latest financial year · ${periods[0].period_name} – ${periods[periods.length - 1].period_name}` : 'Latest financial year'}</span></div>
       {/* 1. Core Financials Section */}
       <section>
         <MetricsCards metrics={metrics} chartData={chartData} />
@@ -261,47 +265,47 @@ export default function Dashboard() {
 
       {/* Futuristic Terminal-Style Budget Breakdown Modal with Portal Blur */}
       {selectedBudgetCode && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/70 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-2xl bg-white dark:bg-[#0A0A0A] shadow-2xl relative flex flex-col overflow-hidden border border-slate-200 dark:border-[#27272A] rounded-2xl max-h-[85vh]">
+        <DialogLayer onDismiss={() => { setSelectedBudgetCode(null); setExpandedMonthId(null); }} label="[ ]" className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/70 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="dialog-surface w-full max-w-2xl bg-white dark:bg-dark-surface shadow-2xl relative flex flex-col overflow-hidden border border-slate-200 dark:border-dark-border rounded-2xl max-h-[85vh]">
             
             {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#111111] flex items-center justify-between shrink-0">
+            <div className="dialog-header px-6 py-5 border-b border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-elevated flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                <div className="p-2 bg-sky-50 dark:bg-sky-500/10 rounded-xl border border-sky-200 dark:border-sky-500/20 editor-accent">
                   <FileText className="h-4 w-4" />
                 </div>
                 <div>
                   <h2 className="text-sm font-bold tracking-wider uppercase text-slate-900 dark:text-white truncate max-w-[220px] sm:max-w-[400px]">[{selectedBudgetCode}] {selectedBudgetName}</h2>
-                  <p className="text-[10px] text-slate-500 font-mono mt-0.5">DATA MODULE :: MONTHLY CHRONOLOGY</p>
+                  <p className="text-xs text-slate-500 font-mono mt-0.5">Monthly transactions and running totals</p>
                 </div>
               </div>
-              <button onClick={() => { setSelectedBudgetCode(null); setExpandedMonthId(null); }} className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl transition-colors hover:bg-slate-100 dark:hover:bg-[#1A1A1A] shrink-0">
+              <button type="button" aria-label="Close dialog" onClick={() => { setSelectedBudgetCode(null); setExpandedMonthId(null); }} className="icon-button text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl transition-colors hover:bg-slate-100 dark:hover:bg-dark-floating shrink-0">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50/50 dark:bg-[#0A0A0A]">
+            <div className="dialog-body flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50/50 dark:bg-dark-surface">
               {monthlyGroups.length > 0 ? (
                 <div className="space-y-3">
                   {monthlyGroups.map((group) => {
                     const isExpanded = expandedMonthId === group.period.id;
                     return (
-                      <div key={group.period.id} className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#27272A] rounded-xl overflow-hidden shadow-sm transition-all">
+                      <div key={group.period.id} className="bg-white dark:bg-dark-elevated border border-slate-200 dark:border-dark-border rounded-xl overflow-hidden shadow-sm transition-all">
                          
                          {/* Collapsed Header */}
                          <div 
                            onClick={() => setExpandedMonthId(isExpanded ? null : group.period.id)}
-                           className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 dark:hover:bg-[#1A1A1A] transition-colors relative"
+                           className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 dark:hover:bg-dark-floating transition-colors relative"
                          >
-                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-slate-300 dark:bg-[#333] transition-colors"></div>
+                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-slate-300 dark:bg-dark-borderStrong transition-colors"></div>
 
                            <div className="flex flex-col gap-1 pl-2">
-                             <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                             <h4 className="text-xs font-bold text-slate-900 dark:text-white tracking-normal flex items-center gap-2">
                                <CalendarIcon className="h-3.5 w-3.5 text-slate-400" /> {group.period.period_name}
                              </h4>
                              {group.isBreachPoint && selectedBudgetTarget > 0 && !isExpanded && (
-                                <span className={`text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 mt-0.5 ${isSelectedBudgetIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                                <span className={`text-xs font-bold tracking-normal flex items-center gap-1.5 mt-0.5 ${isSelectedBudgetIncome ? 'editor-accent' : 'text-amber-600 dark:text-amber-400'}`}>
                                   <CheckCircle2 className="h-3 w-3" /> Target Threshold Reached
                                 </span>
                              )}
@@ -309,31 +313,31 @@ export default function Dashboard() {
                            <div className="flex items-center gap-6">
                              <div className="text-right">
                                <span className="font-mono font-bold text-slate-900 dark:text-white text-xs block">₱{group.monthTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
-                               <span className="text-[9px] text-slate-400 uppercase tracking-widest font-mono mt-0.5 inline-block">Run: ₱{group.runningTotal.toLocaleString(undefined, {minimumFractionDigits:0})}</span>
+                               <span className="text-xs text-slate-400 tracking-normal font-mono mt-0.5 inline-block">Running total: ₱{group.runningTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                              </div>
-                             {isExpanded ? <ChevronDown className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}
+                             {isExpanded ? <ChevronDown className="h-4 w-4 editor-accent" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}
                            </div>
                          </div>
                          
                          {/* Expanded Data Area */}
                          {isExpanded && (
-                           <div className="animate-in slide-in-from-top-2 duration-200 border-t border-slate-200 dark:border-[#27272A] bg-slate-50/50 dark:bg-[#0A0A0A]">
+                           <div className="animate-in slide-in-from-top-2 duration-200 border-t border-slate-200 dark:border-dark-border bg-slate-50/50 dark:bg-dark-surface">
                              {group.isBreachPoint && selectedBudgetTarget > 0 && (
-                                <div className={`px-4 py-2.5 text-center text-[9px] font-bold uppercase tracking-widest flex justify-center items-center gap-2 border-b border-slate-200 dark:border-[#27272A] ${isSelectedBudgetIncome ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'}`}>
+                                <div className={`px-4 py-2.5 text-center text-xs font-bold tracking-normal flex justify-center items-center gap-2 border-b border-slate-200 dark:border-dark-border ${isSelectedBudgetIncome ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400' : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'}`}>
                                   <CheckCircle2 className="h-3 w-3" /> 
                                   {isSelectedBudgetIncome ? 'Income Target Reached During This Period' : 'Expense Target Exceeded During This Period'}
                                 </div>
                              )}
-                             <div className="p-0 divide-y divide-slate-100 dark:divide-[#27272A]/50">
+                             <div className="p-0 divide-y divide-slate-100 dark:divide-dark-border/50">
                                 {group.txs.map(tx => {
                                   const encoderName = profMap.get(tx.entered_by) || 'System Auditor';
                                   return (
-                                    <div key={tx.id} className="px-5 py-3.5 flex justify-between items-center hover:bg-slate-100/50 dark:hover:bg-[#141414] transition-colors">
+                                    <div key={tx.id} className="px-5 py-3.5 flex justify-between items-center hover:bg-slate-100/50 dark:hover:bg-dark-elevated transition-colors">
                                       <div className="min-w-0 pr-6 space-y-1">
                                         <div className="flex items-center gap-2">
-                                          <p className="text-[9px] font-mono text-slate-400">{tx.date}</p>
+                                          <p className="text-xs font-mono text-slate-400">{tx.date}</p>
                                           {tx.receipt_no && (
-                                            <span className="text-[9px] font-mono bg-slate-200 dark:bg-[#222] px-1.5 py-0.2 rounded text-slate-600 dark:text-slate-300">
+                                            <span className="text-xs font-mono bg-slate-200 dark:bg-dark-floating px-1.5 py-0.2 rounded text-slate-600 dark:text-slate-300">
                                               Ref: #{tx.receipt_no}
                                             </span>
                                           )}
@@ -342,11 +346,11 @@ export default function Dashboard() {
                                           {tx.payee_name || tx.remarks || 'General Transaction'}
                                         </p>
                                         <div className="flex items-center gap-2 pt-0.5">
-                                          <span className="text-[9px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-900/50">
+                                          <span className="text-xs font-mono text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 px-2 py-0.5 rounded border border-sky-200 dark:border-sky-900/50">
                                             Encoder: {encoderName}
                                           </span>
                                           {tx.remarks && tx.payee_name && (
-                                            <span className="text-[10px] font-mono text-slate-400 truncate">{tx.remarks}</span>
+                                            <span className="text-xs font-mono text-slate-400 truncate">{tx.remarks}</span>
                                           )}
                                         </div>
                                       </div>
@@ -366,20 +370,20 @@ export default function Dashboard() {
               ) : (
                 <div className="p-20 text-center space-y-3 opacity-40">
                   <Search className="mx-auto h-8 w-8 text-slate-400" />
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 dark:text-white">No Data In Matrix</p>
+                  <p className="text-xs font-mono tracking-normal text-slate-500 dark:text-white">No Data In Matrix</p>
                 </div>
               )}
             </div>
             
             {/* Modal Footer */}
-            <div className="px-6 py-4 bg-slate-50 dark:bg-[#111111] border-t border-slate-200 dark:border-[#27272A] flex justify-between items-center shrink-0">
-               <span className="font-bold text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-wider">Total Extracted Output</span>
-               <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-base">
+            <div className="px-6 py-4 bg-slate-50 dark:bg-dark-elevated border-t border-slate-200 dark:border-dark-border flex justify-between items-center shrink-0">
+               <span className="font-bold text-slate-500 dark:text-slate-400 text-xs tracking-normal">Total recorded</span>
+               <span className="font-mono font-bold editor-accent text-base">
                  ₱{selectedBudgetTxs.reduce((sum, t) => sum + Number(t.amount), 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}
                </span>
             </div>
           </div>
-        </div>,
+        </DialogLayer>,
         document.body
       )}
 

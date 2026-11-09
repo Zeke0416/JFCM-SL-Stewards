@@ -1,6 +1,8 @@
+import DialogLayer from './ui/DialogLayer';
+import Input from './ui/Input';
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpen, Search, X, Tag } from 'lucide-react';
+import { BookOpen, Search, X } from 'lucide-react';
 
 interface CategoryGuideModalProps {
   isOpen: boolean;
@@ -127,63 +129,10 @@ export default function CategoryGuideModal({ isOpen, onClose }: CategoryGuideMod
 
   if (!isOpen) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
-      <div className="w-full max-w-3xl bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-300">
-        
-        {/* Modal Header */}
-        <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-[#27272A] flex justify-between items-center bg-slate-50 dark:bg-[#111111] rounded-t-2xl shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400">
-              <BookOpen className="h-4 w-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold tracking-wide uppercase text-slate-900 dark:text-white">ComBud Category Guide</h3>
-              <p className="text-[10px] text-slate-500 font-mono mt-0.5">Reference directory from standard Chart of Accounts.</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-[#1A1A1A] transition-colors"><X className="h-4 w-4" /></button>
-        </div>
-
-        {/* Modal Controls */}
-        <div className="p-4 border-b border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] space-y-3">
-          <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-[#0A0A0A] rounded-xl w-fit border border-slate-200 dark:border-[#27272A]">
-            <button onClick={() => setGuideTab('INCOME')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${guideTab === 'INCOME' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Receipts (Income)</button>
-            <button onClick={() => setGuideTab('EXPENSE')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${guideTab === 'EXPENSE' ? 'bg-amber-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Operating Expenses</button>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-            <input type="text" placeholder="Search by code or description..." className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#0A0A0A] text-xs font-medium text-slate-900 dark:text-white focus:border-emerald-500 outline-none" value={guideSearchQuery} onChange={(e) => setGuideSearchQuery(e.target.value)} />
-          </div>
-        </div>
-
-        {/* Modal List */}
-        <div className="p-4 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-[#0A0A0A]">
-          <div className="space-y-3">
-            {filteredGuideData.length > 0 ? (
-              filteredGuideData.map(item => (
-                <div key={item.code} className="p-4 bg-white dark:bg-[#121212] rounded-xl border border-slate-200 dark:border-[#27272A] shadow-sm flex flex-col sm:flex-row gap-4">
-                  <div className="sm:w-32 shrink-0">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold font-mono tracking-wide ${guideTab === 'INCOME' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/50' : 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/50'}`}>
-                      <Tag className="h-3 w-3 mr-1.5" /> Account: {item.code}
-                    </span>
-                  </div>
-                  <div className="space-y-1.5 flex-1">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">{item.name}</h4>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{item.desc}</p>
-                    <div className="mt-2 text-[11px] font-medium text-slate-500 bg-slate-50 dark:bg-[#0A0A0A] p-2.5 rounded-xl border border-slate-200 dark:border-[#27272A]">
-                      <strong className="text-slate-700 dark:text-slate-300 uppercase tracking-wider">Remarks Example:</strong> {item.example}
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-10 text-slate-500 text-xs">No matching categories found in the guide.</div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
+  return createPortal(<DialogLayer onDismiss={onClose} label="ComBud Category Guide"><div className="dialog-surface category-guide">
+    <header className="dialog-header reference-header"><span className="reference-icon"><BookOpen size={20}/></span><div><h3>ComBud category guide</h3><p>Choose an account that matches the purpose of the entry.</p></div><button className="icon-button" aria-label="Close dialog" onClick={onClose}><X size={19}/></button></header>
+    <div className="guide-controls"><div className="segmented-control">{(['INCOME','EXPENSE'] as const).map(tab=><button key={tab} aria-pressed={guideTab===tab} onClick={()=>setGuideTab(tab)}>{tab==='INCOME'?'Receipts':'Operating expenses'}</button>)}</div><div className="ledger-search"><Search size={16}/><Input aria-label="Search by code or description" placeholder="Search account code or description…" value={guideSearchQuery} onChange={e=>setGuideSearchQuery(e.target.value)}/></div></div>
+    <div className="dialog-body guide-directory" key={guideTab}>{filteredGuideData.length ? filteredGuideData.map(item=><article className="guide-account" key={item.code}><span className="guide-code">{item.code}</span><div><h4>{item.name}</h4><p>{item.desc}</p><p className="guide-example"><span>Example</span>{item.example}</p></div></article>):<div className="empty-panel">No matching accounts. Try a code or a shorter search.</div>}</div>
+    <footer className="dialog-footer reference-footer">{filteredGuideData.length} accounts · ComBud chart of accounts</footer>
+  </div></DialogLayer>,document.body);
 }

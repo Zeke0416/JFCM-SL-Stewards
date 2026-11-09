@@ -1,8 +1,12 @@
+import { SetupIcon as Target, MissionIcon as ShieldCheck } from '../components/ui/StewardGlyph';
+import DialogLayer from '../components/ui/DialogLayer';
+import Input from '../components/ui/Input';
+import Select from '../components/ui/Select';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Calendar, Trash2, Target, ShieldCheck, Plus, CheckCircle2, AlertTriangle, Loader2, Edit2, Check, X, Search } from 'lucide-react';
+import { Calendar, Trash2, Plus, CheckCircle2, AlertTriangle, Loader2, Edit2, Check, X, Search } from 'lucide-react';
 import type { FinancialYear, FinancialPeriod, Category } from '../types/database.types';
 
 type NotificationState = { isOpen: boolean; type: 'SUCCESS' | 'ERROR' | 'WARNING'; title: string; message: string; } | null;
@@ -156,100 +160,100 @@ export default function FinancialSetup() {
     <div className="space-y-8 animate-in fade-in duration-300 relative">
       
       {notification?.isOpen && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl p-8 shadow-2xl space-y-6 text-center animate-in zoom-in-95 duration-300">
-            {notification.type === 'SUCCESS' && <div className="mx-auto h-16 w-16 bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 animate-bounce"><CheckCircle2 className="h-8 w-8" /></div>}
+        <DialogLayer label="Financial Setup" className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="dialog-surface w-full max-w-md bg-white dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-2xl p-8 shadow-2xl space-y-6 text-center animate-in zoom-in-95 duration-300">
+            {notification.type === 'SUCCESS' && <div className="mx-auto h-16 w-16 bg-sky-50 dark:bg-sky-500/15 border border-sky-200 dark:border-sky-500/20 rounded-2xl flex items-center justify-center editor-accent animate-bounce"><CheckCircle2 className="h-8 w-8" /></div>}
             {notification.type === 'ERROR' && <div className="mx-auto h-16 w-16 bg-rose-50 dark:bg-rose-500/15 border border-rose-200 dark:border-rose-500/20 rounded-2xl flex items-center justify-center text-rose-600 dark:text-rose-400 animate-bounce"><X className="h-8 w-8" /></div>}
             {notification.type === 'WARNING' && <div className="mx-auto h-16 w-16 bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 animate-bounce"><AlertTriangle className="h-8 w-8" /></div>}
             
             <div className="space-y-1">
-              <h3 className="text-base font-bold uppercase tracking-wider text-slate-900 dark:text-white">{notification.title}</h3>
+              <h3 className="text-base font-bold tracking-normal text-slate-900 dark:text-white">{notification.title}</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">{notification.message}</p>
             </div>
             
-            <button onClick={() => setNotification(null)} className={`w-full py-3 text-white rounded-xl text-xs font-bold shadow-md transition-all ${notification.type === 'SUCCESS' ? 'bg-emerald-600 hover:bg-emerald-700' : notification.type === 'ERROR' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-amber-600 hover:bg-amber-700'}`}>Acknowledge</button>
+            <button onClick={() => setNotification(null)} className={`w-full py-3 text-white rounded-xl text-xs font-bold shadow-md transition-all ${notification.type === 'SUCCESS' ? 'bg-brand hover:bg-brand-dark' : notification.type === 'ERROR' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-amber-600 hover:bg-amber-700'}`}>Acknowledge</button>
           </div>
-        </div>, document.body
+        </DialogLayer>, document.body
       )}
 
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
-          <ShieldCheck className="h-7 w-7 text-emerald-600 dark:text-emerald-400" /> Financial Setup
+        <h1 className="system-page-title text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+          <ShieldCheck className="h-7 w-7 editor-accent" /> Financial Setup
         </h1>
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Configure years, category target tracking, base budgets, and data maintenance.</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-slate-100 dark:bg-[#121212] rounded-xl w-full max-w-lg border border-slate-200 dark:border-[#27272A] shadow-inner">
-        <button onClick={() => setActiveTab('YEARS')} className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all truncate ${activeTab === 'YEARS' ? 'bg-white dark:bg-[#262626] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}><Calendar className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">System Years</span></button>
-        <button onClick={() => setActiveTab('BUDGET')} className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all truncate ${activeTab === 'BUDGET' ? 'bg-white dark:bg-[#262626] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}><Target className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Budget Targets</span></button>
-        <button onClick={() => setActiveTab('RESET')} className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all truncate ${activeTab === 'RESET' ? 'bg-white dark:bg-[#262626] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}><Trash2 className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Data Reset</span></button>
+      <div className="switch-tabs system-switch-tabs">
+        <button aria-pressed={activeTab === 'YEARS'} onClick={() => setActiveTab('YEARS')} className="switch-tab"><Calendar className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Financial years</span></button>
+        <button aria-pressed={activeTab === 'BUDGET'} onClick={() => setActiveTab('BUDGET')} className="switch-tab"><Target className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Budget Targets</span></button>
+        <button aria-pressed={activeTab === 'RESET'} onClick={() => setActiveTab('RESET')} className="switch-tab"><Trash2 className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Data Reset</span></button>
       </div>
 
       {activeTab === 'YEARS' && (
-        <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl p-6 shadow-sm space-y-6">
-          <div className="flex justify-between items-center">
+        <div className="tab-panel setup-panel">
+          <div className="setup-panel-heading">
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">Financial Years Configuration</h3>
+              <h3 className="text-sm font-bold tracking-normal text-slate-900 dark:text-white">Financial years</h3>
               <p className="text-xs text-slate-500 mt-0.5">Initializing a new year automatically provisions its 12 monthly reporting periods.</p>
             </div>
             {!isAddingYear && (
-              <button onClick={() => setIsAddingYear(true)} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all"><Plus className="h-4 w-4" /> Initialize New Year</button>
+              <button onClick={() => setIsAddingYear(true)} className="flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all"><Plus className="h-4 w-4" /> Initialize New Year</button>
             )}
           </div>
 
           {isAddingYear && (
-            <form onSubmit={handleAddYear} className="bg-slate-50 dark:bg-[#121212] p-4 rounded-xl border border-slate-200 dark:border-[#27272A] flex flex-wrap items-end gap-4 animate-in fade-in">
+            <form onSubmit={handleAddYear} className="bg-slate-50 dark:bg-dark-elevated p-4 rounded-xl border border-slate-200 dark:border-dark-border flex flex-wrap items-end gap-4 animate-in fade-in">
               <div className="space-y-1.5 flex-1 min-w-[150px]">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Year</label>
-                <input type="number" required className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#0A0A0A] px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none" value={newYear.year} onChange={e => setNewYear({...newYear, year: parseInt(e.target.value)})} />
+                <label className="block text-xs font-bold text-slate-500 tracking-normal">Year</label>
+                <Input aria-label="Year" type="number" required className="w-full rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-sky-500 outline-none" value={newYear.year} onChange={e => setNewYear({...newYear, year: parseInt(e.target.value)})} />
               </div>
               <div className="space-y-1.5 flex-1 min-w-[150px]">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Approved Base Budget</label>
-                <input type="number" step="0.01" required className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#0A0A0A] px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none" value={newYear.budget} onChange={e => setNewYear({...newYear, budget: e.target.value})} />
+                <label className="block text-xs font-bold text-slate-500 tracking-normal">Approved Base Budget</label>
+                <Input aria-label="Approved Base Budget" type="number" step="0.01" required className="w-full rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-sky-500 outline-none" value={newYear.budget} onChange={e => setNewYear({...newYear, budget: e.target.value})} />
               </div>
               <div className="flex gap-2 w-full sm:w-auto">
-                <button type="button" onClick={() => setIsAddingYear(false)} className="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-xl">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition-colors">Save Year</button>
+                <button type="button" onClick={() => setIsAddingYear(false)} className="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 text-xs font-bold text-white bg-brand hover:bg-brand-dark rounded-xl shadow-sm transition-colors">Save Year</button>
               </div>
             </form>
           )}
 
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#27272A] custom-scrollbar">
-            <table className="w-full text-left text-xs border-collapse min-w-[600px]">
-              <thead>
-                <tr className="bg-transparent border-b border-slate-200 dark:border-[#27272A] text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+          <div className="setup-table-scroll custom-scrollbar">
+            <table className="ui-data-table setup-years-table">
+              <caption className="sr-only">Financial years and approved base budgets</caption><thead>
+                <tr className="bg-transparent border-b border-slate-200 dark:border-dark-border text-slate-500 font-semibold tracking-normal text-xs">
                   <th className="p-4">Financial Year</th>
                   <th className="p-4">Base Approved Budget</th>
                   <th className="p-4">Status</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]/50 bg-transparent">
+              <tbody className="divide-y divide-slate-100 dark:divide-dark-border/50 bg-transparent">
                 {years.map(y => (
-                  <tr key={y.id} className="hover:bg-slate-50 dark:hover:bg-[#121212] transition-colors">
-                    <td className="p-4 font-semibold text-slate-900 dark:text-white">{y.year}</td>
-                    <td className="p-4 font-mono font-medium text-slate-700 dark:text-slate-300">
+                  <tr key={y.id} className="hover:bg-slate-50 dark:hover:bg-dark-elevated transition-colors">
+                    <td data-label="Financial year" className="setup-year"><Calendar size={18}/><strong>{y.year}</strong></td>
+                    <td data-label="Approved base budget" className="setup-base-budget">
                       {editingYearId === y.id ? (
-                        <input type="number" step="0.01" autoFocus className="w-full max-w-[150px] rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#0A0A0A] px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none" value={editBudgetAmount} onChange={(e) => setEditBudgetAmount(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveYearBudget(y.id)} />
+                        <Input aria-label="Enter value" type="number" step="0.01" autoFocus className="w-full max-w-[150px] rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white focus:border-sky-500 outline-none" value={editBudgetAmount} onChange={(e) => setEditBudgetAmount(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveYearBudget(y.id)} />
                       ) : (
-                        `₱${Number(y.approved_budget).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                        y.approved_budget != null && Number.isFinite(Number(y.approved_budget)) ? new Intl.NumberFormat('en-PH', {style:'currency',currency:'PHP'}).format(Number(y.approved_budget)) : 'Not set'
                       )}
                     </td>
-                    <td className="p-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#141414] text-slate-700 dark:text-slate-300 uppercase">
-                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${y.is_closed ? 'bg-slate-400' : 'bg-emerald-500'}`}></span>
+                    <td data-label="Status">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-elevated text-slate-700 dark:text-slate-300 uppercase">
+                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${y.is_closed ? 'bg-slate-400' : 'bg-sky-500'}`}></span>
                         {y.is_closed ? 'Closed' : 'Active'}
                       </span>
                     </td>
-                    <td className="p-4 text-right">
+                    <td className="setup-year-actions" data-label="Actions">
                       {editingYearId === y.id ? (
                         <div className="inline-flex items-center justify-end gap-1">
-                          <button onClick={() => setEditingYearId(null)} className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-[#1A1A1A] rounded-lg border border-slate-200 dark:border-[#333]"><X className="h-4 w-4" /></button>
-                          <button onClick={() => handleSaveYearBudget(y.id)} className="p-1.5 text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg"><Check className="h-4 w-4" /></button>
+                          <button type="button" aria-label="Cancel budget edit" onClick={() => setEditingYearId(null)} className="icon-button p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-dark-floating rounded-lg border border-slate-200 dark:border-dark-borderStrong"><X className="h-4 w-4" /></button>
+                          <button aria-label="Save base budget" onClick={() => handleSaveYearBudget(y.id)} className="p-1.5 text-white bg-brand hover:bg-brand-dark rounded-lg"><Check className="h-4 w-4" /></button>
                         </div>
                       ) : (
-                        <button onClick={() => { setEditingYearId(y.id); setEditBudgetAmount(y.approved_budget.toString()); }} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1A1A1A] hover:text-slate-900 dark:hover:text-white transition-colors" title="Edit Budget">
-                          <Edit2 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Edit Budget</span>
+                        <button onClick={() => { setEditingYearId(y.id); setEditBudgetAmount((y.approved_budget ?? '').toString()); }} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold tracking-normal text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-floating hover:text-slate-900 dark:hover:text-white transition-colors" aria-label={`Edit budget for ${y.year}`} title="Edit Budget">
+                          <Edit2 className="h-3.5 w-3.5" /> <span>Edit budget</span>
                         </button>
                       )}
                     </td>
@@ -262,15 +266,15 @@ export default function FinancialSetup() {
       )}
 
       {activeTab === 'BUDGET' && (
-        <div className="bg-white dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#27272A] rounded-2xl p-6 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-[#27272A] pb-4">
+        <div className="tab-panel setup-panel">
+          <div className="setup-panel-heading">
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">Category Budget Tracking</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Assign target amounts to categories. Tracked live on the Dashboard.</p>
+              <h3 className="text-sm font-bold tracking-normal text-slate-900 dark:text-white">Category budget targets</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Set annual targets by account. Progress appears on the dashboard.</p>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              <select 
-                className="w-full sm:w-auto rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] px-4 py-2.5 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:border-emerald-500 outline-none"
+              <Select aria-label="Financial year"
+                className="w-full sm:w-auto rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-elevated px-4 py-2.5 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:border-sky-500 outline-none"
                 value={selectedBudgetYear}
                 onChange={(e) => {
                   setSelectedBudgetYear(e.target.value);
@@ -283,42 +287,42 @@ export default function FinancialSetup() {
                 }}
               >
                 {years.map(y => <option key={y.id} value={y.id}>Year {y.year}</option>)}
-              </select>
-              <button onClick={handleSaveBudgetTargets} disabled={savingTargets || !selectedBudgetYear} className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-sm shrink-0 transition-colors">
+              </Select>
+              <button onClick={handleSaveBudgetTargets} aria-busy={savingTargets} disabled={savingTargets || !selectedBudgetYear} className="flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-sm shrink-0 transition-colors">
                 {savingTargets ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Save Targets
               </button>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-[#121212] rounded-xl w-full sm:w-fit border border-slate-200 dark:border-[#27272A]">
-              <button onClick={() => setBudgetTab('INCOME')} className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-[10px] uppercase tracking-wider font-bold transition-all ${budgetTab === 'INCOME' ? 'bg-white dark:bg-[#262626] shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Income</button>
-              <button onClick={() => setBudgetTab('EXPENSE')} className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-[10px] uppercase tracking-wider font-bold transition-all ${budgetTab === 'EXPENSE' ? 'bg-white dark:bg-[#262626] shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Expense</button>
+          <div className="setup-budget-toolbar">
+            <div className="switch-tabs setup-type-tabs">
+              <button aria-pressed={budgetTab === 'INCOME'} onClick={() => setBudgetTab('INCOME')} className="switch-tab">Income</button>
+              <button aria-pressed={budgetTab === 'EXPENSE'} onClick={() => setBudgetTab('EXPENSE')} className="switch-tab">Expense</button>
             </div>
             <div className="relative w-full">
               <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-              <input type="text" placeholder="Search categories..." className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-[#27272A] bg-slate-50 dark:bg-[#121212] text-xs font-medium text-slate-900 dark:text-white focus:border-emerald-500 outline-none" value={budgetSearch} onChange={(e) => setBudgetSearch(e.target.value)} />
+              <Input aria-label="Search categories..." type="text" placeholder="Search categories..." className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-elevated text-xs font-medium text-slate-900 dark:text-white focus:border-sky-500 outline-none" value={budgetSearch} onChange={(e) => setBudgetSearch(e.target.value)} />
             </div>
           </div>
 
-          <div className="max-h-[400px] overflow-y-auto custom-scrollbar rounded-xl border border-slate-200 dark:border-[#27272A]">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead className="sticky top-0 bg-white dark:bg-[#121212] z-10 border-b border-slate-200 dark:border-[#27272A] text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+          <div className="setup-targets-scroll setup-table-scroll custom-scrollbar">
+            <table className="ui-data-table setup-targets-table">
+              <thead className="sticky top-0 bg-white dark:bg-dark-elevated z-10 border-b border-slate-200 dark:border-dark-border text-slate-500 font-semibold tracking-normal text-xs">
                 <tr>
-                  <th className="p-4 w-32">Account Code</th>
-                  <th className="p-4">Category Name</th>
-                  <th className="p-4 w-48 text-right">Target Amount (₱)</th>
+                  <th>Account number</th>
+                  <th>Account name</th>
+                  <th className="text-right">Annual target (PHP)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]/50">
+              <tbody key={budgetTab} className="tab-panel">
                 {categories.filter(c => c.type === budgetTab && (c.name.toLowerCase().includes(budgetSearch.toLowerCase()) || c.export_code.includes(budgetSearch))).map(c => (
-                  <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-[#121212] transition-colors">
-                    <td className="p-4 font-mono font-medium text-slate-700 dark:text-slate-300">{c.export_code}</td>
-                    <td className="p-4 font-semibold text-slate-900 dark:text-white">{c.name}</td>
-                    <td className="p-4 text-right">
-                      <input 
+                  <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-dark-elevated transition-colors">
+                    <td data-label="Account number"><span className="setup-account-code">{c.export_code}</span></td>
+                    <td data-label="Account name" className="setup-account-name">{c.name}</td>
+                    <td data-label="Annual target" className="setup-target-amount">
+                      <Input aria-label={`Annual target for ${c.name}`}
                         type="text" placeholder="0.00"
-                        className="w-full text-right rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#0A0A0A] px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none"
+                        className="w-full text-right rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-sky-500 outline-none"
                         value={displayTargets[c.id] || ''}
                         onChange={(e) => handleTargetChange(c.id, e.target.value)}
                       />
@@ -332,31 +336,31 @@ export default function FinancialSetup() {
       )}
 
       {activeTab === 'RESET' && (
-        <div className="bg-white dark:bg-[#0A0A0A] border border-rose-500/40 rounded-2xl p-6 shadow-sm space-y-4 relative overflow-hidden">
-          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.6)]"></div>
-          <div className="flex items-center gap-3">
+        <div className="tab-panel setup-panel setup-reset-panel">
+
+          <div className="setup-reset-heading">
             <div className="p-2.5 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl text-rose-600 dark:text-rose-400">
               <AlertTriangle className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">Test Data Maintenance (Reset Period)</h3>
+              <h3 className="text-sm font-bold tracking-normal text-slate-900 dark:text-white">Reset period transactions</h3>
               <p className="text-xs text-slate-500 mt-0.5">Permanently wipe transactions and reconciliation records for a specific month/year.</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+          <div className="setup-reset-fields">
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Select Period to Reset</label>
-              <select className="w-full rounded-xl border border-slate-200 dark:border-[#27272A] bg-white dark:bg-[#121212] px-4 py-3 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:border-rose-500 outline-none" value={selectedResetPeriod} onChange={(e) => setSelectedResetPeriod(e.target.value)}>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-normal">Select Period to Reset</label>
+              <Select aria-label="Select Period to Reset" className="w-full rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-elevated px-4 py-3 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:border-rose-500 outline-none" value={selectedResetPeriod} onChange={(e) => setSelectedResetPeriod(e.target.value)}>
                 {periods.map(p => <option key={p.id} value={p.id}>{p.period_name}</option>)}
-              </select>
+              </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Type "RESET" to Confirm</label>
-              <input type="text" placeholder="Type RESET here" className="w-full rounded-xl border border-rose-200 dark:border-rose-900/50 bg-white dark:bg-[#121212] px-4 py-3 text-xs font-bold text-rose-900 dark:text-rose-300 shadow-sm focus:border-rose-500 outline-none" value={resetConfirmation} onChange={(e) => setResetConfirmation(e.target.value)} />
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-normal">Type "RESET" to Confirm</label>
+              <Input aria-label={'Type "RESET" to confirm'} type="text" placeholder="Type RESET here" className="w-full rounded-xl border border-rose-200 dark:border-rose-900/50 bg-white dark:bg-dark-elevated px-4 py-3 text-xs font-bold text-rose-900 dark:text-rose-300 shadow-sm focus:border-rose-500 outline-none" value={resetConfirmation} onChange={(e) => setResetConfirmation(e.target.value)} />
             </div>
             <div className="flex items-end">
-              <button onClick={handleResetPeriod} disabled={resetting || resetConfirmation !== 'RESET'} className="w-full flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 disabled:bg-slate-100 dark:disabled:bg-[#121212] disabled:text-slate-400 text-white px-4 py-3 rounded-xl text-xs font-bold shadow-sm transition-all border border-transparent dark:border-[#27272A]">
+              <button onClick={handleResetPeriod} disabled={resetting || resetConfirmation !== 'RESET'} className="w-full flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 disabled:bg-slate-100 dark:disabled:bg-dark-elevated disabled:text-slate-400 text-white px-4 py-3 rounded-xl text-xs font-bold shadow-sm transition-all border border-transparent dark:border-dark-border">
                 <Trash2 className="h-4 w-4" /> {resetting ? 'Wiping Data...' : 'Reset Period Data'}
               </button>
             </div>

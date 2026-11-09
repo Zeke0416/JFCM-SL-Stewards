@@ -1,0 +1,4154 @@
+{
+  "nodes": [
+    {
+      "id": "g0",
+      "type": "group",
+      "label": "Community 0",
+      "x": 0,
+      "y": 0,
+      "width": 1760,
+      "height": 820,
+      "color": "1"
+    },
+    {
+      "id": "n_src_pages_admin_admin",
+      "type": "file",
+      "file": "Admin().md",
+      "x": 20,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_admin",
+      "type": "file",
+      "file": "Admin.tsx.md",
+      "x": 220,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_app_app",
+      "type": "file",
+      "file": "App().md",
+      "x": 420,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_app",
+      "type": "file",
+      "file": "App.tsx.md",
+      "x": 620,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_app_approutes",
+      "type": "file",
+      "file": "AppRoutes().md",
+      "x": 820,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_contexts_authcontext_authcontext",
+      "type": "file",
+      "file": "AuthContext.md",
+      "x": 1020,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_contexts_authcontext",
+      "type": "file",
+      "file": "AuthContext.tsx.md",
+      "x": 1220,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_contexts_authcontext_authcontexttype",
+      "type": "file",
+      "file": "AuthContextType.md",
+      "x": 1420,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_contexts_authcontext_authprovider",
+      "type": "file",
+      "file": "AuthProvider().md",
+      "x": 20,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_coopledger_coopledger",
+      "type": "file",
+      "file": "CoopLedger().md",
+      "x": 220,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_coopledger",
+      "type": "file",
+      "file": "CoopLedger.tsx.md",
+      "x": 420,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_exportcenter_exportcenter",
+      "type": "file",
+      "file": "ExportCenter().md",
+      "x": 620,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_exportcenter",
+      "type": "file",
+      "file": "ExportCenter.tsx.md",
+      "x": 820,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_financialperiod",
+      "type": "file",
+      "file": "FinancialPeriod.md",
+      "x": 1020,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_financialsetup_financialsetup",
+      "type": "file",
+      "file": "FinancialSetup().md",
+      "x": 1220,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_financialsetup",
+      "type": "file",
+      "file": "FinancialSetup.tsx.md",
+      "x": 1420,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_financialyear",
+      "type": "file",
+      "file": "FinancialYear.md",
+      "x": 20,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_forcepasswordchangemodal_forcepasswordchangemodal",
+      "type": "file",
+      "file": "ForcePasswordChangeModal().md",
+      "x": 220,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_forcepasswordchangemodal",
+      "type": "file",
+      "file": "ForcePasswordChangeModal.tsx.md",
+      "x": 420,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_layout_layout",
+      "type": "file",
+      "file": "Layout().md",
+      "x": 620,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_layout",
+      "type": "file",
+      "file": "Layout.tsx.md",
+      "x": 820,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_login_login",
+      "type": "file",
+      "file": "Login().md",
+      "x": 1020,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_login",
+      "type": "file",
+      "file": "Login.tsx.md",
+      "x": 1220,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_missionreadiness_missionreadiness",
+      "type": "file",
+      "file": "MissionReadiness().md",
+      "x": 1420,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_missionreadiness",
+      "type": "file",
+      "file": "MissionReadiness.tsx.md",
+      "x": 20,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_missionaryreport_missionaryreport",
+      "type": "file",
+      "file": "MissionaryReport().md",
+      "x": 220,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_missionaryreport",
+      "type": "file",
+      "file": "MissionaryReport.tsx.md",
+      "x": 420,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_financialsetup_notificationstate",
+      "type": "file",
+      "file": "NotificationState.md",
+      "x": 620,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_forcepasswordchangemodal_props",
+      "type": "file",
+      "file": "Props.md",
+      "x": 820,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_app_protectedroute",
+      "type": "file",
+      "file": "ProtectedRoute().md",
+      "x": 1020,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_missionreadiness_reconstate",
+      "type": "file",
+      "file": "ReconState.md",
+      "x": 1220,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_login_savedaccount",
+      "type": "file",
+      "file": "SavedAccount.md",
+      "x": 1420,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_smartdiagnosismodal_smartdiagnosismodal",
+      "type": "file",
+      "file": "SmartDiagnosisModal().md",
+      "x": 20,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_smartdiagnosismodal",
+      "type": "file",
+      "file": "SmartDiagnosisModal.tsx.md",
+      "x": 220,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_smartdiagnosismodal_smartdiagnosismodalprops",
+      "type": "file",
+      "file": "SmartDiagnosisModalProps.md",
+      "x": 420,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_contexts_themecontext_themecontext",
+      "type": "file",
+      "file": "ThemeContext.md",
+      "x": 620,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_contexts_themecontext",
+      "type": "file",
+      "file": "ThemeContext.tsx.md",
+      "x": 820,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_contexts_themecontext_themecontexttype",
+      "type": "file",
+      "file": "ThemeContextType.md",
+      "x": 1020,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_contexts_themecontext_themeprovider",
+      "type": "file",
+      "file": "ThemeProvider().md",
+      "x": 1220,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_tithers_tithers",
+      "type": "file",
+      "file": "Tithers().md",
+      "x": 1420,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_tithers",
+      "type": "file",
+      "file": "Tithers.tsx.md",
+      "x": 20,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_main",
+      "type": "file",
+      "file": "main.tsx.md",
+      "x": 220,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_react",
+      "type": "file",
+      "file": "react.md",
+      "x": 420,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_react_dom",
+      "type": "file",
+      "file": "react-dom.md",
+      "x": 620,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_assets_favicon",
+      "type": "file",
+      "file": "src_assets_favicon.md",
+      "x": 820,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_assets_jfcm_sl_logo",
+      "type": "file",
+      "file": "src_assets_jfcm_sl_logo.md",
+      "x": 1020,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_index",
+      "type": "file",
+      "file": "src_index.md",
+      "x": 1220,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_lib_supabase_supabase",
+      "type": "file",
+      "file": "supabase.md",
+      "x": 1420,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_lib_supabase",
+      "type": "file",
+      "file": "supabase.ts.md",
+      "x": 20,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_contexts_authcontext_useauth",
+      "type": "file",
+      "file": "useAuth().md",
+      "x": 220,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_contexts_themecontext_usetheme",
+      "type": "file",
+      "file": "useTheme().md",
+      "x": 420,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g1",
+      "type": "group",
+      "label": "Community 1",
+      "x": 1840,
+      "y": 0,
+      "width": 1320,
+      "height": 720,
+      "color": "2"
+    },
+    {
+      "id": "n_github_workflows_deploy_env_vite_supabase_anon_key",
+      "type": "file",
+      "file": "VITE_SUPABASE_ANON_KEY.md",
+      "x": 1860,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_env_vite_supabase_url",
+      "type": "file",
+      "file": "VITE_SUPABASE_URL.md",
+      "x": 2060,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_push_branches",
+      "type": "file",
+      "file": "branches.md",
+      "x": 2260,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_jobs_build",
+      "type": "file",
+      "file": "build.md",
+      "x": 2460,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_with_cache",
+      "type": "file",
+      "file": "cache.md",
+      "x": 2660,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_permissions_contents",
+      "type": "file",
+      "file": "contents.md",
+      "x": 2860,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_jobs_deploy",
+      "type": "file",
+      "file": "deploy.md",
+      "x": 1860,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy",
+      "type": "file",
+      "file": "deploy.yml.md",
+      "x": 2060,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_steps_env",
+      "type": "file",
+      "file": "env.md",
+      "x": 2260,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_deploy_environment",
+      "type": "file",
+      "file": "environment.md",
+      "x": 2460,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_steps_id",
+      "type": "file",
+      "file": "id.md",
+      "x": 2660,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_permissions_id_token",
+      "type": "file",
+      "file": "id-token.md",
+      "x": 2860,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_jobs",
+      "type": "file",
+      "file": "jobs.md",
+      "x": 1860,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_environment_name",
+      "type": "file",
+      "file": "name.md",
+      "x": 2060,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_name",
+      "type": "file",
+      "file": "name_1.md",
+      "x": 2260,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_steps_name",
+      "type": "file",
+      "file": "name_2.md",
+      "x": 2460,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_deploy_needs",
+      "type": "file",
+      "file": "needs.md",
+      "x": 2660,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_with_node_version",
+      "type": "file",
+      "file": "node-version.md",
+      "x": 2860,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_on",
+      "type": "file",
+      "file": "on.md",
+      "x": 1860,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_permissions_pages",
+      "type": "file",
+      "file": "pages.md",
+      "x": 2060,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_with_path",
+      "type": "file",
+      "file": "path.md",
+      "x": 2260,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_permissions",
+      "type": "file",
+      "file": "permissions.md",
+      "x": 2460,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_on_push",
+      "type": "file",
+      "file": "push.md",
+      "x": 2660,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_steps_run",
+      "type": "file",
+      "file": "run.md",
+      "x": 2860,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_build_runs_on",
+      "type": "file",
+      "file": "runs-on.md",
+      "x": 1860,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_deploy_runs_on",
+      "type": "file",
+      "file": "runs-on_1.md",
+      "x": 2060,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_build_steps",
+      "type": "file",
+      "file": "steps.md",
+      "x": 2260,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_deploy_steps",
+      "type": "file",
+      "file": "steps_1.md",
+      "x": 2460,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_environment_url",
+      "type": "file",
+      "file": "url.md",
+      "x": 2660,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_steps_uses",
+      "type": "file",
+      "file": "uses.md",
+      "x": 2860,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_github_workflows_deploy_steps_with",
+      "type": "file",
+      "file": "with.md",
+      "x": 1860,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g2",
+      "type": "group",
+      "label": "Community 2",
+      "x": 3240,
+      "y": 0,
+      "width": 1320,
+      "height": 620,
+      "color": "3"
+    },
+    {
+      "id": "n_src_types_database_types_category",
+      "type": "file",
+      "file": "Category.md",
+      "x": 3260,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_categoryguidemodal_categoryguidemodal",
+      "type": "file",
+      "file": "CategoryGuideModal().md",
+      "x": 3460,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_categoryguidemodal",
+      "type": "file",
+      "file": "CategoryGuideModal.tsx.md",
+      "x": 3660,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_categoryguidemodal_categoryguidemodalprops",
+      "type": "file",
+      "file": "CategoryGuideModalProps.md",
+      "x": 3860,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_duplicatecandidate",
+      "type": "file",
+      "file": "DuplicateCandidate.md",
+      "x": 4060,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_duplicateconfidence",
+      "type": "file",
+      "file": "DuplicateConfidence.md",
+      "x": 4260,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_duplicatescantransaction",
+      "type": "file",
+      "file": "DuplicateScanTransaction.md",
+      "x": 3260,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactiondetailmodal_enrichedtransaction",
+      "type": "file",
+      "file": "EnrichedTransaction.md",
+      "x": 3460,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_transactions_enrichedtransaction",
+      "type": "file",
+      "file": "EnrichedTransaction_1.md",
+      "x": 3660,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_generic_words",
+      "type": "file",
+      "file": "GENERIC_WORDS.md",
+      "x": 3860,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_transactions_sortdirection",
+      "type": "file",
+      "file": "SortDirection.md",
+      "x": 4060,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_transactions_sortfield",
+      "type": "file",
+      "file": "SortField.md",
+      "x": 4260,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactiondetailmodal_transactiondetailmodal",
+      "type": "file",
+      "file": "TransactionDetailModal().md",
+      "x": 3260,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactiondetailmodal",
+      "type": "file",
+      "file": "TransactionDetailModal.tsx.md",
+      "x": 3460,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactiondetailmodal_transactiondetailmodalprops",
+      "type": "file",
+      "file": "TransactionDetailModalProps.md",
+      "x": 3660,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_transactionduplicatescanner",
+      "type": "file",
+      "file": "TransactionDuplicateScanner().md",
+      "x": 3860,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner",
+      "type": "file",
+      "file": "TransactionDuplicateScanner.tsx.md",
+      "x": 4060,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_transactionduplicatescannerprops",
+      "type": "file",
+      "file": "TransactionDuplicateScannerProps.md",
+      "x": 4260,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_transactions_transactions",
+      "type": "file",
+      "file": "Transactions().md",
+      "x": 3260,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_transactions",
+      "type": "file",
+      "file": "Transactions.tsx.md",
+      "x": 3460,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_amountincents",
+      "type": "file",
+      "file": "amountInCents().md",
+      "x": 3660,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_buildduplicatecandidate",
+      "type": "file",
+      "file": "buildDuplicateCandidate().md",
+      "x": 3860,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_datedistanceindays",
+      "type": "file",
+      "file": "dateDistanceInDays().md",
+      "x": 4060,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_findduplicatecandidates",
+      "type": "file",
+      "file": "findDuplicateCandidates().md",
+      "x": 4260,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_formatphp",
+      "type": "file",
+      "file": "formatPHP().md",
+      "x": 3260,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_meaningfultokens",
+      "type": "file",
+      "file": "meaningfulTokens().md",
+      "x": 3460,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_normalizetext",
+      "type": "file",
+      "file": "normalizeText().md",
+      "x": 3660,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_normalizedreceipt",
+      "type": "file",
+      "file": "normalizedReceipt().md",
+      "x": 3860,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionduplicatescanner_tokencomparison",
+      "type": "file",
+      "file": "tokenComparison().md",
+      "x": 4060,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g3",
+      "type": "group",
+      "label": "Community 3",
+      "x": 4640,
+      "y": 0,
+      "width": 1320,
+      "height": 620,
+      "color": "4"
+    },
+    {
+      "id": "n_src_types_database_types_auditlog",
+      "type": "file",
+      "file": "AuditLog.md",
+      "x": 4660,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_church",
+      "type": "file",
+      "file": "Church.md",
+      "x": 4860,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_coopmonthlylog",
+      "type": "file",
+      "file": "CoopMonthlyLog.md",
+      "x": 5060,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_coopweeklylog",
+      "type": "file",
+      "file": "CoopWeeklyLog.md",
+      "x": 5260,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_duplicatereceiptrule",
+      "type": "file",
+      "file": "DuplicateReceiptRule.md",
+      "x": 5460,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionmodal_enrichedtransaction",
+      "type": "file",
+      "file": "EnrichedTransaction_2.md",
+      "x": 5660,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_exporthistory",
+      "type": "file",
+      "file": "ExportHistory.md",
+      "x": 4660,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_exporttemplate",
+      "type": "file",
+      "file": "ExportTemplate.md",
+      "x": 4860,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_mprreport",
+      "type": "file",
+      "file": "MPRReport.md",
+      "x": 5060,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_periodstatus",
+      "type": "file",
+      "file": "PeriodStatus.md",
+      "x": 5260,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_profile",
+      "type": "file",
+      "file": "Profile.md",
+      "x": 5460,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_projectlog",
+      "type": "file",
+      "file": "ProjectLog.md",
+      "x": 5660,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionreviewmodal_reviewdata",
+      "type": "file",
+      "file": "ReviewData.md",
+      "x": 4660,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_systemsettings",
+      "type": "file",
+      "file": "SystemSettings.md",
+      "x": 4860,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_tither",
+      "type": "file",
+      "file": "Tither.md",
+      "x": 5060,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_transaction",
+      "type": "file",
+      "file": "Transaction.md",
+      "x": 5260,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_transactionlog",
+      "type": "file",
+      "file": "TransactionLog.md",
+      "x": 5460,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionmodal_transactionmodal",
+      "type": "file",
+      "file": "TransactionModal().md",
+      "x": 5660,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionmodal",
+      "type": "file",
+      "file": "TransactionModal.tsx.md",
+      "x": 4660,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionmodal_transactionmodalprops",
+      "type": "file",
+      "file": "TransactionModalProps.md",
+      "x": 4860,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionreviewmodal_transactionreviewmodal",
+      "type": "file",
+      "file": "TransactionReviewModal().md",
+      "x": 5060,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionreviewmodal",
+      "type": "file",
+      "file": "TransactionReviewModal.tsx.md",
+      "x": 5260,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionreviewmodal_transactionreviewmodalprops",
+      "type": "file",
+      "file": "TransactionReviewModalProps.md",
+      "x": 5460,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_transactiontype",
+      "type": "file",
+      "file": "TransactionType.md",
+      "x": 5660,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_userrole",
+      "type": "file",
+      "file": "UserRole.md",
+      "x": 4660,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types_worshipservicelog",
+      "type": "file",
+      "file": "WorshipServiceLog.md",
+      "x": 4860,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_types_database_types",
+      "type": "file",
+      "file": "database.types.ts.md",
+      "x": 5060,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionmodal_transactionmodal_handleclickoutside",
+      "type": "file",
+      "file": "handleClickOutside().md",
+      "x": 5260,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g4",
+      "type": "group",
+      "label": "Community 4",
+      "x": 6040,
+      "y": 0,
+      "width": 1100,
+      "height": 620,
+      "color": "5"
+    },
+    {
+      "id": "n_src_pages_reconciliation_breakdownitem",
+      "type": "file",
+      "file": "BreakdownItem.md",
+      "x": 6060,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_combud_expected_type_by_label",
+      "type": "file",
+      "file": "COMBUD_EXPECTED_TYPE_BY_LABEL.md",
+      "x": 6260,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_combud_export_code_by_label",
+      "type": "file",
+      "file": "COMBUD_EXPORT_CODE_BY_LABEL.md",
+      "x": 6460,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_combud_header_aliases",
+      "type": "file",
+      "file": "COMBUD_HEADER_ALIASES.md",
+      "x": 6660,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_combud_known_alias_codes",
+      "type": "file",
+      "file": "COMBUD_KNOWN_ALIAS_CODES.md",
+      "x": 6860,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_enrichedtransaction",
+      "type": "file",
+      "file": "EnrichedTransaction_3.md",
+      "x": 6060,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_eventdateclue",
+      "type": "file",
+      "file": "EventDateClue.md",
+      "x": 6260,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_excelrecord",
+      "type": "file",
+      "file": "ExcelRecord.md",
+      "x": 6460,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_month_number_by_alias",
+      "type": "file",
+      "file": "MONTH_NUMBER_BY_ALIAS.md",
+      "x": 6660,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_reconciliation",
+      "type": "file",
+      "file": "Reconciliation().md",
+      "x": 6860,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation",
+      "type": "file",
+      "file": "Reconciliation.tsx.md",
+      "x": 6060,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_sheet_month_map",
+      "type": "file",
+      "file": "SHEET_MONTH_MAP.md",
+      "x": 6260,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_summaryrow",
+      "type": "file",
+      "file": "SummaryRow.md",
+      "x": 6460,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_extracteventdateclues",
+      "type": "file",
+      "file": "extractEventDateClues().md",
+      "x": 6660,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_extracteventdaysformonth",
+      "type": "file",
+      "file": "extractEventDaysForMonth().md",
+      "x": 6860,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_formatcentsasamount",
+      "type": "file",
+      "file": "formatCentsAsAmount().md",
+      "x": 6060,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_getcombudaccountcode",
+      "type": "file",
+      "file": "getComBudAccountCode().md",
+      "x": 6260,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_iscombudfooterlabel",
+      "type": "file",
+      "file": "isComBudFooterLabel().md",
+      "x": 6460,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_iscombudremark",
+      "type": "file",
+      "file": "isComBudRemark().md",
+      "x": 6660,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_normalizecombudlabel",
+      "type": "file",
+      "file": "normalizeComBudLabel().md",
+      "x": 6860,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_normalizestructuraltoken",
+      "type": "file",
+      "file": "normalizeStructuralToken().md",
+      "x": 6060,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_parsecombudmoney",
+      "type": "file",
+      "file": "parseComBudMoney().md",
+      "x": 6260,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_parsetransactionbreakdown",
+      "type": "file",
+      "file": "parseTransactionBreakdown().md",
+      "x": 6460,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_reconciliation_tocents",
+      "type": "file",
+      "file": "toCents().md",
+      "x": 6660,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g5",
+      "type": "group",
+      "label": "Community 5",
+      "x": 0,
+      "y": 900,
+      "width": 1100,
+      "height": 620,
+      "color": "6"
+    },
+    {
+      "id": "n_src_components_dashboard_actionalerts_actionalerts",
+      "type": "file",
+      "file": "ActionAlerts().md",
+      "x": 20,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_dashboard_actionalerts",
+      "type": "file",
+      "file": "ActionAlerts.tsx.md",
+      "x": 220,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_dashboard_actionalerts_actionalertsprops",
+      "type": "file",
+      "file": "ActionAlertsProps.md",
+      "x": 420,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_animatednumber_animatednumber",
+      "type": "file",
+      "file": "AnimatedNumber().md",
+      "x": 620,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_animatednumber",
+      "type": "file",
+      "file": "AnimatedNumber.tsx.md",
+      "x": 820,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_dashboard_budgettracker_budgettracker",
+      "type": "file",
+      "file": "BudgetTracker().md",
+      "x": 20,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_dashboard_budgettracker",
+      "type": "file",
+      "file": "BudgetTracker.tsx.md",
+      "x": 220,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_dashboard_dashboard",
+      "type": "file",
+      "file": "Dashboard().md",
+      "x": 420,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_pages_dashboard",
+      "type": "file",
+      "file": "Dashboard.tsx.md",
+      "x": 620,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_dashboard_metricscards_metricscards",
+      "type": "file",
+      "file": "MetricsCards().md",
+      "x": 820,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_dashboard_metricscards",
+      "type": "file",
+      "file": "MetricsCards.tsx.md",
+      "x": 20,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_dashboard_actionalerts_reminderinfo",
+      "type": "file",
+      "file": "ReminderInfo.md",
+      "x": 220,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_dashboard_targetmonitor_targetmonitor",
+      "type": "file",
+      "file": "TargetMonitor().md",
+      "x": 420,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_dashboard_targetmonitor",
+      "type": "file",
+      "file": "TargetMonitor.tsx.md",
+      "x": 620,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionlogsmodal_transactionlogsmodal",
+      "type": "file",
+      "file": "TransactionLogsModal().md",
+      "x": 820,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionlogsmodal",
+      "type": "file",
+      "file": "TransactionLogsModal.tsx.md",
+      "x": 20,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_transactionlogsmodal_transactionlogsmodalprops",
+      "type": "file",
+      "file": "TransactionLogsModalProps.md",
+      "x": 220,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_dashboard_trendchart_trendchart",
+      "type": "file",
+      "file": "TrendChart().md",
+      "x": 420,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_dashboard_trendchart",
+      "type": "file",
+      "file": "TrendChart.tsx.md",
+      "x": 620,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_components_dashboard_trendchart_visibleline",
+      "type": "file",
+      "file": "VisibleLine.md",
+      "x": 820,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_utils_exportlogstoexcel_exportlogstoexcel",
+      "type": "file",
+      "file": "exportLogsToExcel().md",
+      "x": 20,
+      "y": 1300,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_src_utils_exportlogstoexcel",
+      "type": "file",
+      "file": "exportLogsToExcel.ts.md",
+      "x": 220,
+      "y": 1300,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_lucide_react",
+      "type": "file",
+      "file": "lucide-react.md",
+      "x": 420,
+      "y": 1300,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g6",
+      "type": "group",
+      "label": "Community 6",
+      "x": 1840,
+      "y": 900,
+      "width": 1100,
+      "height": 520,
+      "color": "1"
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_allowarbitraryextensions",
+      "type": "file",
+      "file": "allowArbitraryExtensions.md",
+      "x": 1860,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_allowimportingtsextensions",
+      "type": "file",
+      "file": "allowImportingTsExtensions.md",
+      "x": 2060,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions",
+      "type": "file",
+      "file": "compilerOptions.md",
+      "x": 2260,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_erasablesyntaxonly",
+      "type": "file",
+      "file": "erasableSyntaxOnly.md",
+      "x": 2460,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_include",
+      "type": "file",
+      "file": "include.md",
+      "x": 2660,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_jsx",
+      "type": "file",
+      "file": "jsx.md",
+      "x": 1860,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_lib",
+      "type": "file",
+      "file": "lib.md",
+      "x": 2060,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_module",
+      "type": "file",
+      "file": "module.md",
+      "x": 2260,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_moduledetection",
+      "type": "file",
+      "file": "moduleDetection.md",
+      "x": 2460,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_moduleresolution",
+      "type": "file",
+      "file": "moduleResolution.md",
+      "x": 2660,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_noemit",
+      "type": "file",
+      "file": "noEmit.md",
+      "x": 1860,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_nofallthroughcasesinswitch",
+      "type": "file",
+      "file": "noFallthroughCasesInSwitch.md",
+      "x": 2060,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_nounusedlocals",
+      "type": "file",
+      "file": "noUnusedLocals.md",
+      "x": 2260,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_nounusedparameters",
+      "type": "file",
+      "file": "noUnusedParameters.md",
+      "x": 2460,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_skiplibcheck",
+      "type": "file",
+      "file": "skipLibCheck.md",
+      "x": 2660,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_target",
+      "type": "file",
+      "file": "target.md",
+      "x": 1860,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_tsbuildinfofile",
+      "type": "file",
+      "file": "tsBuildInfoFile.md",
+      "x": 2060,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app",
+      "type": "file",
+      "file": "tsconfig.app.json.md",
+      "x": 2260,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_types",
+      "type": "file",
+      "file": "types.md",
+      "x": 2460,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_app_compileroptions_verbatimmodulesyntax",
+      "type": "file",
+      "file": "verbatimModuleSyntax.md",
+      "x": 2660,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g7",
+      "type": "group",
+      "label": "Community 7",
+      "x": 3240,
+      "y": 900,
+      "width": 1100,
+      "height": 520,
+      "color": "2"
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_allowimportingtsextensions",
+      "type": "file",
+      "file": "allowImportingTsExtensions_1.md",
+      "x": 3260,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions",
+      "type": "file",
+      "file": "compilerOptions_1.md",
+      "x": 3460,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_erasablesyntaxonly",
+      "type": "file",
+      "file": "erasableSyntaxOnly_1.md",
+      "x": 3660,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_include",
+      "type": "file",
+      "file": "include_1.md",
+      "x": 3860,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_lib",
+      "type": "file",
+      "file": "lib_1.md",
+      "x": 4060,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_module",
+      "type": "file",
+      "file": "module_1.md",
+      "x": 3260,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_moduledetection",
+      "type": "file",
+      "file": "moduleDetection_1.md",
+      "x": 3460,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_noemit",
+      "type": "file",
+      "file": "noEmit_1.md",
+      "x": 3660,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_nofallthroughcasesinswitch",
+      "type": "file",
+      "file": "noFallthroughCasesInSwitch_1.md",
+      "x": 3860,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_nounusedlocals",
+      "type": "file",
+      "file": "noUnusedLocals_1.md",
+      "x": 4060,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_nounusedparameters",
+      "type": "file",
+      "file": "noUnusedParameters_1.md",
+      "x": 3260,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_skiplibcheck",
+      "type": "file",
+      "file": "skipLibCheck_1.md",
+      "x": 3460,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_target",
+      "type": "file",
+      "file": "target_1.md",
+      "x": 3660,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_tsbuildinfofile",
+      "type": "file",
+      "file": "tsBuildInfoFile_1.md",
+      "x": 3860,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node",
+      "type": "file",
+      "file": "tsconfig.node.json.md",
+      "x": 4060,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_types",
+      "type": "file",
+      "file": "types_1.md",
+      "x": 3260,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_node_compileroptions_verbatimmodulesyntax",
+      "type": "file",
+      "file": "verbatimModuleSyntax_1.md",
+      "x": 3460,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g8",
+      "type": "group",
+      "label": "Community 8",
+      "x": 4640,
+      "y": 900,
+      "width": 880,
+      "height": 520,
+      "color": "3"
+    },
+    {
+      "id": "n_ref_supabase_supabase_js",
+      "type": "file",
+      "file": "@supabasesupabase-js.md",
+      "x": 4660,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_supabase_supabase_js",
+      "type": "file",
+      "file": "@supabasesupabase-js@2.115.0.md",
+      "x": 4860,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_clsx",
+      "type": "file",
+      "file": "clsx.md",
+      "x": 5060,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_clsx",
+      "type": "file",
+      "file": "clsx@2.1.1.md",
+      "x": 5260,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_date_fns",
+      "type": "file",
+      "file": "date-fns.md",
+      "x": 4660,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_date_fns",
+      "type": "file",
+      "file": "date-fns@4.4.0.md",
+      "x": 4860,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies",
+      "type": "file",
+      "file": "dependencies.md",
+      "x": 5060,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_lucide_react",
+      "type": "file",
+      "file": "lucide-react@1.42.0.md",
+      "x": 5260,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_react_dom",
+      "type": "file",
+      "file": "react-dom@19.2.8.md",
+      "x": 4660,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_react_router_dom",
+      "type": "file",
+      "file": "react-router-dom.md",
+      "x": 4860,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_react_router_dom",
+      "type": "file",
+      "file": "react-router-dom@7.18.3.md",
+      "x": 5060,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_react",
+      "type": "file",
+      "file": "react@19.2.8.md",
+      "x": 5260,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_xlsx",
+      "type": "file",
+      "file": "xlsx.md",
+      "x": 4660,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_xlsx",
+      "type": "file",
+      "file": "xlsx@0.18.5.md",
+      "x": 4860,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_zod",
+      "type": "file",
+      "file": "zod.md",
+      "x": 5060,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_zod",
+      "type": "file",
+      "file": "zod@4.5.4.md",
+      "x": 5260,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g9",
+      "type": "group",
+      "label": "Community 9",
+      "x": 6040,
+      "y": 900,
+      "width": 880,
+      "height": 520,
+      "color": "4"
+    },
+    {
+      "id": "n_ref_types_file_saver",
+      "type": "file",
+      "file": "@typesfile-saver.md",
+      "x": 6060,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_devdependencies_types_file_saver",
+      "type": "file",
+      "file": "@typesfile-saver@2.0.7.md",
+      "x": 6260,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_types_react_dom",
+      "type": "file",
+      "file": "@typesreact-dom.md",
+      "x": 6460,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_devdependencies_types_react_dom",
+      "type": "file",
+      "file": "@typesreact-dom@19.2.4.md",
+      "x": 6660,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_autoprefixer",
+      "type": "file",
+      "file": "autoprefixer.md",
+      "x": 6060,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_devdependencies_autoprefixer",
+      "type": "file",
+      "file": "autoprefixer@10.5.5.md",
+      "x": 6260,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_devdependencies",
+      "type": "file",
+      "file": "devDependencies.md",
+      "x": 6460,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_oxlint",
+      "type": "file",
+      "file": "oxlint.md",
+      "x": 6660,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_devdependencies_oxlint",
+      "type": "file",
+      "file": "oxlint@1.79.0.md",
+      "x": 6060,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_postcss",
+      "type": "file",
+      "file": "postcss.md",
+      "x": 6260,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_devdependencies_postcss",
+      "type": "file",
+      "file": "postcss@8.5.28.md",
+      "x": 6460,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_tailwindcss",
+      "type": "file",
+      "file": "tailwindcss_1.md",
+      "x": 6660,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_devdependencies_tailwindcss",
+      "type": "file",
+      "file": "tailwindcss@3.4.19.md",
+      "x": 6060,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_typescript",
+      "type": "file",
+      "file": "typescript.md",
+      "x": 6260,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_devdependencies_typescript",
+      "type": "file",
+      "file": "typescript@~6.0.2.md",
+      "x": 6460,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g10",
+      "type": "group",
+      "label": "Community 10",
+      "x": 0,
+      "y": 1600,
+      "width": 660,
+      "height": 420,
+      "color": "5"
+    },
+    {
+      "id": "n_ref_exceljs",
+      "type": "file",
+      "file": "exceljs.md",
+      "x": 20,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_exceljs",
+      "type": "file",
+      "file": "exceljs@4.4.0.md",
+      "x": 220,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_file_saver",
+      "type": "file",
+      "file": "file-saver.md",
+      "x": 420,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_file_saver",
+      "type": "file",
+      "file": "file-saver@2.0.5.md",
+      "x": 20,
+      "y": 1760,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_name",
+      "type": "file",
+      "file": "name_3.md",
+      "x": 220,
+      "y": 1760,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package",
+      "type": "file",
+      "file": "package.json.md",
+      "x": 420,
+      "y": 1760,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_private",
+      "type": "file",
+      "file": "private.md",
+      "x": 20,
+      "y": 1840,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_type",
+      "type": "file",
+      "file": "type.md",
+      "x": 220,
+      "y": 1840,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_version",
+      "type": "file",
+      "file": "version.md",
+      "x": 420,
+      "y": 1840,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g11",
+      "type": "group",
+      "label": "Community 11",
+      "x": 1840,
+      "y": 1600,
+      "width": 660,
+      "height": 420,
+      "color": "6"
+    },
+    {
+      "id": "n_public_manifest_background_color",
+      "type": "file",
+      "file": "background_color.md",
+      "x": 1860,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_public_manifest_display",
+      "type": "file",
+      "file": "display.md",
+      "x": 2060,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_public_manifest_icons",
+      "type": "file",
+      "file": "icons.md",
+      "x": 2260,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_public_manifest",
+      "type": "file",
+      "file": "manifest.json.md",
+      "x": 1860,
+      "y": 1760,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_public_manifest_name",
+      "type": "file",
+      "file": "name_4.md",
+      "x": 2060,
+      "y": 1760,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_public_manifest_short_name",
+      "type": "file",
+      "file": "short_name.md",
+      "x": 2260,
+      "y": 1760,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_public_manifest_start_url",
+      "type": "file",
+      "file": "start_url.md",
+      "x": 1860,
+      "y": 1840,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_public_manifest_theme_color",
+      "type": "file",
+      "file": "theme_color.md",
+      "x": 2060,
+      "y": 1840,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g12",
+      "type": "group",
+      "label": "Community 12",
+      "x": 3240,
+      "y": 1600,
+      "width": 660,
+      "height": 400,
+      "color": "1"
+    },
+    {
+      "id": "n_oxlintrc_schema",
+      "type": "file",
+      "file": "$schema.md",
+      "x": 3260,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_oxlintrc",
+      "type": "file",
+      "file": "dot-oxlintrc.json.md",
+      "x": 3460,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_oxlintrc_plugins",
+      "type": "file",
+      "file": "plugins.md",
+      "x": 3660,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_oxlintrc_rules_react_only_export_components",
+      "type": "file",
+      "file": "reactonly-export-components.md",
+      "x": 3260,
+      "y": 1760,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_oxlintrc_rules_react_rules_of_hooks",
+      "type": "file",
+      "file": "reactrules-of-hooks.md",
+      "x": 3460,
+      "y": 1760,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_oxlintrc_rules",
+      "type": "file",
+      "file": "rules.md",
+      "x": 3660,
+      "y": 1760,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g13",
+      "type": "group",
+      "label": "Community 13",
+      "x": 4640,
+      "y": 1600,
+      "width": 660,
+      "height": 400,
+      "color": "2"
+    },
+    {
+      "id": "n_ref_vitejs_plugin_react",
+      "type": "file",
+      "file": "@vitejsplugin-react.md",
+      "x": 4660,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_devdependencies_vitejs_plugin_react",
+      "type": "file",
+      "file": "@vitejsplugin-react@6.1.0.md",
+      "x": 4860,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_vite",
+      "type": "file",
+      "file": "vite.md",
+      "x": 5060,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_vite_config",
+      "type": "file",
+      "file": "vite.config.ts.md",
+      "x": 4660,
+      "y": 1760,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_devdependencies_vite",
+      "type": "file",
+      "file": "vite@8.2.2.md",
+      "x": 4860,
+      "y": 1760,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g14",
+      "type": "group",
+      "label": "Community 14",
+      "x": 6040,
+      "y": 1600,
+      "width": 660,
+      "height": 400,
+      "color": "3"
+    },
+    {
+      "id": "n_package_scripts_build",
+      "type": "file",
+      "file": "build_1.md",
+      "x": 6060,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_scripts_dev",
+      "type": "file",
+      "file": "dev.md",
+      "x": 6260,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_scripts_lint",
+      "type": "file",
+      "file": "lint.md",
+      "x": 6460,
+      "y": 1680,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_scripts_preview",
+      "type": "file",
+      "file": "preview.md",
+      "x": 6060,
+      "y": 1760,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_scripts",
+      "type": "file",
+      "file": "scripts.md",
+      "x": 6260,
+      "y": 1760,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g15",
+      "type": "group",
+      "label": "Community 15",
+      "x": 0,
+      "y": 2100,
+      "width": 600,
+      "height": 400,
+      "color": "4"
+    },
+    {
+      "id": "n_tsconfig_files",
+      "type": "file",
+      "file": "files.md",
+      "x": 20,
+      "y": 2180,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig_references",
+      "type": "file",
+      "file": "references.md",
+      "x": 220,
+      "y": 2180,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tsconfig",
+      "type": "file",
+      "file": "tsconfig.json.md",
+      "x": 20,
+      "y": 2260,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g16",
+      "type": "group",
+      "label": "Community 16",
+      "x": 1840,
+      "y": 2100,
+      "width": 600,
+      "height": 400,
+      "color": "5"
+    },
+    {
+      "id": "n_ref_recharts",
+      "type": "file",
+      "file": "recharts.md",
+      "x": 1860,
+      "y": 2180,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_recharts",
+      "type": "file",
+      "file": "recharts@3.10.1.md",
+      "x": 2060,
+      "y": 2180,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g17",
+      "type": "group",
+      "label": "Community 17",
+      "x": 3240,
+      "y": 2100,
+      "width": 600,
+      "height": 400,
+      "color": "6"
+    },
+    {
+      "id": "n_ref_tailwind_merge",
+      "type": "file",
+      "file": "tailwind-merge.md",
+      "x": 3260,
+      "y": 2180,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_tailwind_merge",
+      "type": "file",
+      "file": "tailwind-merge@3.6.0.md",
+      "x": 3460,
+      "y": 2180,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g18",
+      "type": "group",
+      "label": "Community 18",
+      "x": 4640,
+      "y": 2100,
+      "width": 600,
+      "height": 400,
+      "color": "1"
+    },
+    {
+      "id": "n_ref_types_node",
+      "type": "file",
+      "file": "@typesnode.md",
+      "x": 4660,
+      "y": 2180,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_devdependencies_types_node",
+      "type": "file",
+      "file": "@typesnode@24.13.3.md",
+      "x": 4860,
+      "y": 2180,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g19",
+      "type": "group",
+      "label": "Community 19",
+      "x": 6040,
+      "y": 2100,
+      "width": 600,
+      "height": 400,
+      "color": "2"
+    },
+    {
+      "id": "n_ref_types_react",
+      "type": "file",
+      "file": "@typesreact.md",
+      "x": 6060,
+      "y": 2180,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_devdependencies_types_react",
+      "type": "file",
+      "file": "@typesreact@19.2.18.md",
+      "x": 6260,
+      "y": 2180,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g20",
+      "type": "group",
+      "label": "Community 20",
+      "x": 0,
+      "y": 2580,
+      "width": 600,
+      "height": 400,
+      "color": "3"
+    },
+    {
+      "id": "n_tailwind_config",
+      "type": "file",
+      "file": "tailwind.config.js.md",
+      "x": 20,
+      "y": 2660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tailwindcss",
+      "type": "file",
+      "file": "tailwindcss.md",
+      "x": 220,
+      "y": 2660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g21",
+      "type": "group",
+      "label": "Community 21",
+      "x": 1840,
+      "y": 2580,
+      "width": 600,
+      "height": 400,
+      "color": "4"
+    },
+    {
+      "id": "n_postcss_config",
+      "type": "file",
+      "file": "postcss.config.js.md",
+      "x": 1860,
+      "y": 2660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g22",
+      "type": "group",
+      "label": "Community 22",
+      "x": 3240,
+      "y": 2580,
+      "width": 600,
+      "height": 400,
+      "color": "5"
+    },
+    {
+      "id": "n_src_vite_env",
+      "type": "file",
+      "file": "vite-env.ts.md",
+      "x": 3260,
+      "y": 2660,
+      "width": 180,
+      "height": 60
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_src_components_forcepasswordchangemodal_src_components_forcepasswordchangemodal_props",
+      "fromNode": "n_src_components_forcepasswordchangemodal",
+      "toNode": "n_src_components_forcepasswordchangemodal_props",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_smartdiagnosismodal_src_components_smartdiagnosismodal_smartdiagnosismodalprops",
+      "fromNode": "n_src_components_smartdiagnosismodal",
+      "toNode": "n_src_components_smartdiagnosismodal_smartdiagnosismodalprops",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_contexts_authcontext_src_contexts_authcontext_authcontexttype",
+      "fromNode": "n_src_contexts_authcontext",
+      "toNode": "n_src_contexts_authcontext_authcontexttype",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_contexts_themecontext_src_contexts_themecontext_themecontexttype",
+      "fromNode": "n_src_contexts_themecontext",
+      "toNode": "n_src_contexts_themecontext_themecontexttype",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_financialsetup_src_pages_financialsetup_notificationstate",
+      "fromNode": "n_src_pages_financialsetup",
+      "toNode": "n_src_pages_financialsetup_notificationstate",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_login_src_pages_login_savedaccount",
+      "fromNode": "n_src_pages_login",
+      "toNode": "n_src_pages_login_savedaccount",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_missionreadiness_src_pages_missionreadiness_reconstate",
+      "fromNode": "n_src_pages_missionreadiness",
+      "toNode": "n_src_pages_missionreadiness_reconstate",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_types_database_types_financialperiod",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_types_database_types_financialperiod",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionmodal_src_types_database_types_financialperiod",
+      "fromNode": "n_src_components_transactionmodal",
+      "toNode": "n_src_types_database_types_financialperiod",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_admin_src_types_database_types_financialperiod",
+      "fromNode": "n_src_pages_admin",
+      "toNode": "n_src_types_database_types_financialperiod",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_coopledger_src_types_database_types_financialperiod",
+      "fromNode": "n_src_pages_coopledger",
+      "toNode": "n_src_types_database_types_financialperiod",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_exportcenter_src_types_database_types_financialperiod",
+      "fromNode": "n_src_pages_exportcenter",
+      "toNode": "n_src_types_database_types_financialperiod",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_financialsetup_src_types_database_types_financialperiod",
+      "fromNode": "n_src_pages_financialsetup",
+      "toNode": "n_src_types_database_types_financialperiod",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_missionaryreport_src_types_database_types_financialperiod",
+      "fromNode": "n_src_pages_missionaryreport",
+      "toNode": "n_src_types_database_types_financialperiod",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_reconciliation_src_types_database_types_financialperiod",
+      "fromNode": "n_src_pages_reconciliation",
+      "toNode": "n_src_types_database_types_financialperiod",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_tithers_src_types_database_types_financialperiod",
+      "fromNode": "n_src_pages_tithers",
+      "toNode": "n_src_types_database_types_financialperiod",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_src_types_database_types_financialperiod",
+      "fromNode": "n_src_pages_transactions",
+      "toNode": "n_src_types_database_types_financialperiod",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_financialperiod",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_financialperiod",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_admin_src_types_database_types_financialyear",
+      "fromNode": "n_src_pages_admin",
+      "toNode": "n_src_types_database_types_financialyear",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_coopledger_src_types_database_types_financialyear",
+      "fromNode": "n_src_pages_coopledger",
+      "toNode": "n_src_types_database_types_financialyear",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_financialsetup_src_types_database_types_financialyear",
+      "fromNode": "n_src_pages_financialsetup",
+      "toNode": "n_src_types_database_types_financialyear",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_financialyear",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_financialyear",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_categoryguidemodal_src_components_categoryguidemodal_categoryguidemodalprops",
+      "fromNode": "n_src_components_categoryguidemodal",
+      "toNode": "n_src_components_categoryguidemodal_categoryguidemodalprops",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactiondetailmodal_src_components_transactiondetailmodal_enrichedtransaction",
+      "fromNode": "n_src_components_transactiondetailmodal",
+      "toNode": "n_src_components_transactiondetailmodal_enrichedtransaction",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactiondetailmodal_src_components_transactiondetailmodal_transactiondetailmodalprops",
+      "fromNode": "n_src_components_transactiondetailmodal",
+      "toNode": "n_src_components_transactiondetailmodal_transactiondetailmodalprops",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_src_components_transactionduplicatescanner_duplicatecandidate",
+      "fromNode": "n_src_pages_transactions",
+      "toNode": "n_src_components_transactionduplicatescanner_duplicatecandidate",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_duplicatecandidate",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_duplicatecandidate",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_duplicateconfidence",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_duplicateconfidence",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_duplicatescantransaction",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_duplicatescantransaction",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_transactionduplicatescannerprops",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_transactionduplicatescannerprops",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_src_pages_transactions_enrichedtransaction",
+      "fromNode": "n_src_pages_transactions",
+      "toNode": "n_src_pages_transactions_enrichedtransaction",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_src_pages_transactions_sortdirection",
+      "fromNode": "n_src_pages_transactions",
+      "toNode": "n_src_pages_transactions_sortdirection",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_src_pages_transactions_sortfield",
+      "fromNode": "n_src_pages_transactions",
+      "toNode": "n_src_pages_transactions_sortfield",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactiondetailmodal_src_types_database_types_category",
+      "fromNode": "n_src_components_transactiondetailmodal",
+      "toNode": "n_src_types_database_types_category",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_types_database_types_category",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_types_database_types_category",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionmodal_src_types_database_types_category",
+      "fromNode": "n_src_components_transactionmodal",
+      "toNode": "n_src_types_database_types_category",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_admin_src_types_database_types_category",
+      "fromNode": "n_src_pages_admin",
+      "toNode": "n_src_types_database_types_category",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_financialsetup_src_types_database_types_category",
+      "fromNode": "n_src_pages_financialsetup",
+      "toNode": "n_src_types_database_types_category",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_reconciliation_src_types_database_types_category",
+      "fromNode": "n_src_pages_reconciliation",
+      "toNode": "n_src_types_database_types_category",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_src_types_database_types_category",
+      "fromNode": "n_src_pages_transactions",
+      "toNode": "n_src_types_database_types_category",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_category",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_category",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionmodal_src_components_transactionmodal_enrichedtransaction",
+      "fromNode": "n_src_components_transactionmodal",
+      "toNode": "n_src_components_transactionmodal_enrichedtransaction",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionmodal_transactionmodalprops_src_types_database_types_transaction",
+      "fromNode": "n_src_components_transactionmodal_transactionmodalprops",
+      "toNode": "n_src_types_database_types_transaction",
+      "label": "references [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionmodal_src_components_transactionmodal_transactionmodalprops",
+      "fromNode": "n_src_components_transactionmodal",
+      "toNode": "n_src_components_transactionmodal_transactionmodalprops",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionmodal_src_components_transactionreviewmodal_reviewdata",
+      "fromNode": "n_src_components_transactionmodal",
+      "toNode": "n_src_components_transactionreviewmodal_reviewdata",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionreviewmodal_src_components_transactionreviewmodal_reviewdata",
+      "fromNode": "n_src_components_transactionreviewmodal",
+      "toNode": "n_src_components_transactionreviewmodal_reviewdata",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionreviewmodal_src_components_transactionreviewmodal_transactionreviewmodalprops",
+      "fromNode": "n_src_components_transactionreviewmodal",
+      "toNode": "n_src_components_transactionreviewmodal_transactionreviewmodalprops",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_auditlog",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_auditlog",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_church",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_church",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_coopledger_src_types_database_types_coopmonthlylog",
+      "fromNode": "n_src_pages_coopledger",
+      "toNode": "n_src_types_database_types_coopmonthlylog",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_coopmonthlylog",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_coopmonthlylog",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_coopledger_src_types_database_types_coopweeklylog",
+      "fromNode": "n_src_pages_coopledger",
+      "toNode": "n_src_types_database_types_coopweeklylog",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_coopweeklylog",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_coopweeklylog",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_duplicatereceiptrule",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_duplicatereceiptrule",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_exporthistory",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_exporthistory",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_exporttemplate",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_exporttemplate",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_exportcenter_src_types_database_types_mprreport",
+      "fromNode": "n_src_pages_exportcenter",
+      "toNode": "n_src_types_database_types_mprreport",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_mprreport",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_mprreport",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_periodstatus",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_periodstatus",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_admin_src_types_database_types_profile",
+      "fromNode": "n_src_pages_admin",
+      "toNode": "n_src_types_database_types_profile",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_profile",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_profile",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_missionaryreport_src_types_database_types_projectlog",
+      "fromNode": "n_src_pages_missionaryreport",
+      "toNode": "n_src_types_database_types_projectlog",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_projectlog",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_projectlog",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_systemsettings",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_systemsettings",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_tithers_src_types_database_types_tither",
+      "fromNode": "n_src_pages_tithers",
+      "toNode": "n_src_types_database_types_tither",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_tither",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_tither",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactiondetailmodal_src_types_database_types_transaction",
+      "fromNode": "n_src_components_transactiondetailmodal",
+      "toNode": "n_src_types_database_types_transaction",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_types_database_types_transaction",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_types_database_types_transaction",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionmodal_src_types_database_types_transaction",
+      "fromNode": "n_src_components_transactionmodal",
+      "toNode": "n_src_types_database_types_transaction",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_reconciliation_src_types_database_types_transaction",
+      "fromNode": "n_src_pages_reconciliation",
+      "toNode": "n_src_types_database_types_transaction",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_src_types_database_types_transaction",
+      "fromNode": "n_src_pages_transactions",
+      "toNode": "n_src_types_database_types_transaction",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_transaction",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_transaction",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_transactionlog",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_transactionlog",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionmodal_src_types_database_types_transactiontype",
+      "fromNode": "n_src_components_transactionmodal",
+      "toNode": "n_src_types_database_types_transactiontype",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_transactiontype",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_transactiontype",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_userrole",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_userrole",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_missionaryreport_src_types_database_types_worshipservicelog",
+      "fromNode": "n_src_pages_missionaryreport",
+      "toNode": "n_src_types_database_types_worshipservicelog",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_types_database_types_src_types_database_types_worshipservicelog",
+      "fromNode": "n_src_types_database_types",
+      "toNode": "n_src_types_database_types_worshipservicelog",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_reconciliation_src_pages_reconciliation_breakdownitem",
+      "fromNode": "n_src_pages_reconciliation",
+      "toNode": "n_src_pages_reconciliation_breakdownitem",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_reconciliation_src_pages_reconciliation_enrichedtransaction",
+      "fromNode": "n_src_pages_reconciliation",
+      "toNode": "n_src_pages_reconciliation_enrichedtransaction",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_reconciliation_src_pages_reconciliation_eventdateclue",
+      "fromNode": "n_src_pages_reconciliation",
+      "toNode": "n_src_pages_reconciliation_eventdateclue",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_reconciliation_src_pages_reconciliation_excelrecord",
+      "fromNode": "n_src_pages_reconciliation",
+      "toNode": "n_src_pages_reconciliation_excelrecord",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_reconciliation_src_pages_reconciliation_summaryrow",
+      "fromNode": "n_src_pages_reconciliation",
+      "toNode": "n_src_pages_reconciliation_summaryrow",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_dashboard_actionalerts_src_components_dashboard_actionalerts_actionalertsprops",
+      "fromNode": "n_src_components_dashboard_actionalerts",
+      "toNode": "n_src_components_dashboard_actionalerts_actionalertsprops",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_dashboard_actionalerts_src_components_dashboard_actionalerts_reminderinfo",
+      "fromNode": "n_src_components_dashboard_actionalerts",
+      "toNode": "n_src_components_dashboard_actionalerts_reminderinfo",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_dashboard_trendchart_src_components_dashboard_trendchart_visibleline",
+      "fromNode": "n_src_components_dashboard_trendchart",
+      "toNode": "n_src_components_dashboard_trendchart_visibleline",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionlogsmodal_src_components_transactionlogsmodal_transactionlogsmodalprops",
+      "fromNode": "n_src_components_transactionlogsmodal",
+      "toNode": "n_src_components_transactionlogsmodal_transactionlogsmodalprops",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_app_src_contexts_authcontext_authprovider",
+      "fromNode": "n_src_app_app",
+      "toNode": "n_src_contexts_authcontext_authprovider",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_app_src_contexts_themecontext_themeprovider",
+      "fromNode": "n_src_app_app",
+      "toNode": "n_src_contexts_themecontext_themeprovider",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_app_src_app_approutes",
+      "fromNode": "n_src_app_app",
+      "toNode": "n_src_app_approutes",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_main_src_app_app",
+      "fromNode": "n_src_main",
+      "toNode": "n_src_app_app",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_app_app",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_app_app",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_approutes_src_pages_login_login",
+      "fromNode": "n_src_app_approutes",
+      "toNode": "n_src_pages_login_login",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_approutes_src_app_protectedroute",
+      "fromNode": "n_src_app_approutes",
+      "toNode": "n_src_app_protectedroute",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_approutes_src_components_layout_layout",
+      "fromNode": "n_src_app_approutes",
+      "toNode": "n_src_components_layout_layout",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_approutes_src_pages_dashboard_dashboard",
+      "fromNode": "n_src_app_approutes",
+      "toNode": "n_src_pages_dashboard_dashboard",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_approutes_src_pages_transactions_transactions",
+      "fromNode": "n_src_app_approutes",
+      "toNode": "n_src_pages_transactions_transactions",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_approutes_src_pages_reconciliation_reconciliation",
+      "fromNode": "n_src_app_approutes",
+      "toNode": "n_src_pages_reconciliation_reconciliation",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_approutes_src_pages_missionreadiness_missionreadiness",
+      "fromNode": "n_src_app_approutes",
+      "toNode": "n_src_pages_missionreadiness_missionreadiness",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_approutes_src_pages_coopledger_coopledger",
+      "fromNode": "n_src_app_approutes",
+      "toNode": "n_src_pages_coopledger_coopledger",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_approutes_src_pages_exportcenter_exportcenter",
+      "fromNode": "n_src_app_approutes",
+      "toNode": "n_src_pages_exportcenter_exportcenter",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_approutes_src_pages_tithers_tithers",
+      "fromNode": "n_src_app_approutes",
+      "toNode": "n_src_pages_tithers_tithers",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_approutes_src_pages_missionaryreport_missionaryreport",
+      "fromNode": "n_src_app_approutes",
+      "toNode": "n_src_pages_missionaryreport_missionaryreport",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_approutes_src_pages_financialsetup_financialsetup",
+      "fromNode": "n_src_app_approutes",
+      "toNode": "n_src_pages_financialsetup_financialsetup",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_approutes_src_pages_admin_admin",
+      "fromNode": "n_src_app_approutes",
+      "toNode": "n_src_pages_admin_admin",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_app_approutes",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_app_approutes",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_protectedroute_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_app_protectedroute",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_app_protectedroute",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_app_protectedroute",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_layout_layout_src_components_forcepasswordchangemodal_forcepasswordchangemodal",
+      "fromNode": "n_src_components_layout_layout",
+      "toNode": "n_src_components_forcepasswordchangemodal_forcepasswordchangemodal",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_layout_src_components_forcepasswordchangemodal_forcepasswordchangemodal",
+      "fromNode": "n_src_components_layout",
+      "toNode": "n_src_components_forcepasswordchangemodal_forcepasswordchangemodal",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_forcepasswordchangemodal_src_components_forcepasswordchangemodal_forcepasswordchangemodal",
+      "fromNode": "n_src_components_forcepasswordchangemodal",
+      "toNode": "n_src_components_forcepasswordchangemodal_forcepasswordchangemodal",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_layout_layout_src_contexts_themecontext_usetheme",
+      "fromNode": "n_src_components_layout_layout",
+      "toNode": "n_src_contexts_themecontext_usetheme",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_layout_layout_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_components_layout_layout",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_components_layout_layout",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_components_layout_layout",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_layout_src_components_layout_layout",
+      "fromNode": "n_src_components_layout",
+      "toNode": "n_src_components_layout_layout",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_missionreadiness_missionreadiness_src_components_smartdiagnosismodal_smartdiagnosismodal",
+      "fromNode": "n_src_pages_missionreadiness_missionreadiness",
+      "toNode": "n_src_components_smartdiagnosismodal_smartdiagnosismodal",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_missionreadiness_src_components_smartdiagnosismodal_smartdiagnosismodal",
+      "fromNode": "n_src_pages_missionreadiness",
+      "toNode": "n_src_components_smartdiagnosismodal_smartdiagnosismodal",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_smartdiagnosismodal_src_components_smartdiagnosismodal_smartdiagnosismodal",
+      "fromNode": "n_src_components_smartdiagnosismodal",
+      "toNode": "n_src_components_smartdiagnosismodal_smartdiagnosismodal",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_contexts_authcontext_authprovider",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_contexts_authcontext_authprovider",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_contexts_authcontext_src_contexts_authcontext_authprovider",
+      "fromNode": "n_src_contexts_authcontext",
+      "toNode": "n_src_contexts_authcontext_authprovider",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_admin_admin_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_admin_admin",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_coopledger_coopledger_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_coopledger_coopledger",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_dashboard_dashboard_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_dashboard_dashboard",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_exportcenter_exportcenter_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_exportcenter_exportcenter",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_financialsetup_financialsetup_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_financialsetup_financialsetup",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_missionaryreport_missionaryreport_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_missionaryreport_missionaryreport",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_missionreadiness_missionreadiness_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_missionreadiness_missionreadiness",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_reconciliation_reconciliation_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_reconciliation_reconciliation",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_tithers_tithers_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_tithers_tithers",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_transactions_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_transactions_transactions",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_layout_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_components_layout",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_admin_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_admin",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_coopledger_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_coopledger",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_dashboard_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_dashboard",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_exportcenter_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_exportcenter",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_financialsetup_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_financialsetup",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_missionaryreport_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_missionaryreport",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_missionreadiness_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_missionreadiness",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_reconciliation_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_reconciliation",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_tithers_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_tithers",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_pages_transactions",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_contexts_authcontext_src_contexts_authcontext_useauth",
+      "fromNode": "n_src_contexts_authcontext",
+      "toNode": "n_src_contexts_authcontext_useauth",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_contexts_themecontext_themeprovider",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_contexts_themecontext_themeprovider",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_contexts_themecontext_src_contexts_themecontext_themeprovider",
+      "fromNode": "n_src_contexts_themecontext",
+      "toNode": "n_src_contexts_themecontext_themeprovider",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_layout_src_contexts_themecontext_usetheme",
+      "fromNode": "n_src_components_layout",
+      "toNode": "n_src_contexts_themecontext_usetheme",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_contexts_themecontext_src_contexts_themecontext_usetheme",
+      "fromNode": "n_src_contexts_themecontext",
+      "toNode": "n_src_contexts_themecontext_usetheme",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_pages_admin_admin",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_pages_admin_admin",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_admin_src_pages_admin_admin",
+      "fromNode": "n_src_pages_admin",
+      "toNode": "n_src_pages_admin_admin",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_pages_coopledger_coopledger",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_pages_coopledger_coopledger",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_coopledger_src_pages_coopledger_coopledger",
+      "fromNode": "n_src_pages_coopledger",
+      "toNode": "n_src_pages_coopledger_coopledger",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_pages_exportcenter_exportcenter",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_pages_exportcenter_exportcenter",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_exportcenter_src_pages_exportcenter_exportcenter",
+      "fromNode": "n_src_pages_exportcenter",
+      "toNode": "n_src_pages_exportcenter_exportcenter",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_pages_financialsetup_financialsetup",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_pages_financialsetup_financialsetup",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_financialsetup_src_pages_financialsetup_financialsetup",
+      "fromNode": "n_src_pages_financialsetup",
+      "toNode": "n_src_pages_financialsetup_financialsetup",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_pages_login_login",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_pages_login_login",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_login_src_pages_login_login",
+      "fromNode": "n_src_pages_login",
+      "toNode": "n_src_pages_login_login",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_pages_missionaryreport_missionaryreport",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_pages_missionaryreport_missionaryreport",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_missionaryreport_src_pages_missionaryreport_missionaryreport",
+      "fromNode": "n_src_pages_missionaryreport",
+      "toNode": "n_src_pages_missionaryreport_missionaryreport",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_pages_missionreadiness_missionreadiness",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_pages_missionreadiness_missionreadiness",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_missionreadiness_src_pages_missionreadiness_missionreadiness",
+      "fromNode": "n_src_pages_missionreadiness",
+      "toNode": "n_src_pages_missionreadiness_missionreadiness",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_pages_tithers_tithers",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_pages_tithers_tithers",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_tithers_src_pages_tithers_tithers",
+      "fromNode": "n_src_pages_tithers",
+      "toNode": "n_src_pages_tithers_tithers",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_transactions_src_components_categoryguidemodal_categoryguidemodal",
+      "fromNode": "n_src_pages_transactions_transactions",
+      "toNode": "n_src_components_categoryguidemodal_categoryguidemodal",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_src_components_categoryguidemodal_categoryguidemodal",
+      "fromNode": "n_src_pages_transactions",
+      "toNode": "n_src_components_categoryguidemodal_categoryguidemodal",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_categoryguidemodal_src_components_categoryguidemodal_categoryguidemodal",
+      "fromNode": "n_src_components_categoryguidemodal",
+      "toNode": "n_src_components_categoryguidemodal_categoryguidemodal",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_reconciliation_reconciliation_src_components_transactiondetailmodal_transactiondetailmodal",
+      "fromNode": "n_src_pages_reconciliation_reconciliation",
+      "toNode": "n_src_components_transactiondetailmodal_transactiondetailmodal",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_transactions_src_components_transactiondetailmodal_transactiondetailmodal",
+      "fromNode": "n_src_pages_transactions_transactions",
+      "toNode": "n_src_components_transactiondetailmodal_transactiondetailmodal",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_reconciliation_src_components_transactiondetailmodal_transactiondetailmodal",
+      "fromNode": "n_src_pages_reconciliation",
+      "toNode": "n_src_components_transactiondetailmodal_transactiondetailmodal",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_src_components_transactiondetailmodal_transactiondetailmodal",
+      "fromNode": "n_src_pages_transactions",
+      "toNode": "n_src_components_transactiondetailmodal_transactiondetailmodal",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactiondetailmodal_src_components_transactiondetailmodal_transactiondetailmodal",
+      "fromNode": "n_src_components_transactiondetailmodal",
+      "toNode": "n_src_components_transactiondetailmodal_transactiondetailmodal",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_buildduplicatecandidate_src_components_transactionduplicatescanner_amountincents",
+      "fromNode": "n_src_components_transactionduplicatescanner_buildduplicatecandidate",
+      "toNode": "n_src_components_transactionduplicatescanner_amountincents",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_findduplicatecandidates_src_components_transactionduplicatescanner_amountincents",
+      "fromNode": "n_src_components_transactionduplicatescanner_findduplicatecandidates",
+      "toNode": "n_src_components_transactionduplicatescanner_amountincents",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_amountincents",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_amountincents",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_buildduplicatecandidate_src_components_transactionduplicatescanner_datedistanceindays",
+      "fromNode": "n_src_components_transactionduplicatescanner_buildduplicatecandidate",
+      "toNode": "n_src_components_transactionduplicatescanner_datedistanceindays",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_buildduplicatecandidate_src_components_transactionduplicatescanner_normalizedreceipt",
+      "fromNode": "n_src_components_transactionduplicatescanner_buildduplicatecandidate",
+      "toNode": "n_src_components_transactionduplicatescanner_normalizedreceipt",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_buildduplicatecandidate_src_components_transactionduplicatescanner_tokencomparison",
+      "fromNode": "n_src_components_transactionduplicatescanner_buildduplicatecandidate",
+      "toNode": "n_src_components_transactionduplicatescanner_tokencomparison",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_findduplicatecandidates_src_components_transactionduplicatescanner_buildduplicatecandidate",
+      "fromNode": "n_src_components_transactionduplicatescanner_findduplicatecandidates",
+      "toNode": "n_src_components_transactionduplicatescanner_buildduplicatecandidate",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_buildduplicatecandidate",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_buildduplicatecandidate",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_datedistanceindays",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_datedistanceindays",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_transactionduplicatescanner_src_components_transactionduplicatescanner_findduplicatecandidates",
+      "fromNode": "n_src_components_transactionduplicatescanner_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_findduplicatecandidates",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_transactions_src_components_transactionduplicatescanner_findduplicatecandidates",
+      "fromNode": "n_src_pages_transactions_transactions",
+      "toNode": "n_src_components_transactionduplicatescanner_findduplicatecandidates",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_src_components_transactionduplicatescanner_findduplicatecandidates",
+      "fromNode": "n_src_pages_transactions",
+      "toNode": "n_src_components_transactionduplicatescanner_findduplicatecandidates",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_findduplicatecandidates",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_findduplicatecandidates",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_transactionduplicatescanner_src_components_transactionduplicatescanner_formatphp",
+      "fromNode": "n_src_components_transactionduplicatescanner_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_formatphp",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_formatphp",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_formatphp",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_meaningfultokens_src_components_transactionduplicatescanner_normalizetext",
+      "fromNode": "n_src_components_transactionduplicatescanner_meaningfultokens",
+      "toNode": "n_src_components_transactionduplicatescanner_normalizetext",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_tokencomparison_src_components_transactionduplicatescanner_meaningfultokens",
+      "fromNode": "n_src_components_transactionduplicatescanner_tokencomparison",
+      "toNode": "n_src_components_transactionduplicatescanner_meaningfultokens",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_meaningfultokens",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_meaningfultokens",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_normalizedreceipt",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_normalizedreceipt",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_tokencomparison_src_components_transactionduplicatescanner_normalizetext",
+      "fromNode": "n_src_components_transactionduplicatescanner_tokencomparison",
+      "toNode": "n_src_components_transactionduplicatescanner_normalizetext",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_normalizetext",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_normalizetext",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_tokencomparison",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_tokencomparison",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_transactions_src_components_transactionduplicatescanner_transactionduplicatescanner",
+      "fromNode": "n_src_pages_transactions_transactions",
+      "toNode": "n_src_components_transactionduplicatescanner_transactionduplicatescanner",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_src_components_transactionduplicatescanner_transactionduplicatescanner",
+      "fromNode": "n_src_pages_transactions",
+      "toNode": "n_src_components_transactionduplicatescanner_transactionduplicatescanner",
+      "label": "imports [EXTRACTED]"
+    },
+    {
+      "id": "e_src_components_transactionduplicatescanner_src_components_transactionduplicatescanner_transactionduplicatescanner",
+      "fromNode": "n_src_components_transactionduplicatescanner",
+      "toNode": "n_src_components_transactionduplicatescanner_transactionduplicatescanner",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_transactions_src_components_animatednumber_animatednumber",
+      "fromNode": "n_src_pages_transactions_transactions",
+      "toNode": "n_src_components_animatednumber_animatednumber",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_transactions_src_components_transactionlogsmodal_transactionlogsmodal",
+      "fromNode": "n_src_pages_transactions_transactions",
+      "toNode": "n_src_components_transactionlogsmodal_transactionlogsmodal",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_pages_transactions_transactions_src_components_transactionmodal_transactionmodal",
+      "fromNode": "n_src_pages_transactions_transactions",
+      "toNode": "n_src_components_transactionmodal_transactionmodal",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_src_app_src_pages_transactions_transactions",
+      "fromNode": "n_src_app",
+      "toNode": "n_src_pages_transactions_transactions",
+      "label": "imports [EXTRACTED]"
+    }
+  ]
+}
